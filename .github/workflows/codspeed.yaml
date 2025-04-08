@@ -5,6 +5,7 @@ on:
     branches:
       - "main"
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 env:
@@ -24,37 +25,76 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
-          enable-cache: true
+          # enable-cache: true
+          working-directory: pymoors
+          activate-environment: true
 
-      - name: sync uv environment
-        run: uv sync --group testing
+      - name: Install deps
+        working-directory: pymoors
+        run: |
+          uv sync --group testing
 
       - name: build pymoors optimized wheel
         id: build
         uses: PyO3/maturin-action@v1
         with:
           manylinux: auto
-          args: --release --out dist --interpreter  ${{ env.DEFAULT_PYTHON }}
+          args: --release --out dist --interpreter ${{ env.DEFAULT_PYTHON }}
           rust-toolchain: stable
+          working-directory: pymoors
 
-      - name: find built wheel
+      - name: Find built wheel (full path)
         id: find_wheel
         run: |
-          echo "Finding wheel"
-          WHEEL_PATH=$(ls dist/*.whl)
-          echo "Found wheel: $WHEEL_PATH"
-          echo "wheel=$WHEEL_PATH" >> $GITHUB_OUTPUT
+          echo "🔍 Current working directory: $(pwd)"
+          echo "📂 Contents of pymoors/dist/:"
+          echo "VIRTUAL_ENV: $(VIRTUAL_ENV)"
+          ls -lah pymoors/dist
+
+          # Grab the relative path and resolve it to an absolute path
+          WHEEL_RELATIVE=$(ls pymoors/dist/*.whl)
+          WHEEL_FULL=$(realpath "$WHEEL_RELATIVE")
+
+          echo "📦 Wheel (relative): $WHEEL_RELATIVE"
+          echo "📦 Wheel (absolute): $WHEEL_FULL"
+          echo "wheel=$WHEEL_FULL" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: install built wheel
-        run: uv run pip install ${{ steps.find_wheel.outputs.wheel }} --force-reinstall
+      - name: Install built wheel and inspect venv location
+        working-directory: pymoors
+        run: |
+          echo "🏗️ Creating virtual environment with uv venv"
+          echo "VENV = $VIRTUAL_ENV"
+          echo "🔍 Checking for venv and .venv in current directory (pymoors/)"
+          for d in venv .venv; do
+            if [ -d "$d" ]; then
+              echo "✅ Found pymoors/$d"
+            else
+              echo "❌ pymoors/$d not found"
+            fi
+          done
+
+          echo "🔍 Checking for venv and .venv in repository root"
+          for d in venv .venv; do
+            if [ -d "${GITHUB_WORKSPACE}/$d" ]; then
+              echo "✅ Found $d in repo root"
+            else
+              echo "❌ $d not found in repo root"
+            fi
+          done
+          echo "📦 Wheel path from step output: '${{ steps.find_wheel.outputs.wheel }}'"
+          echo "📦 Installing the built wheel"
+          uv pip install --no-build-isolation --force-reinstall "file://${{ steps.find_wheel.outputs.wheel }}"
+          echo "VENV = $VIRTUAL_ENV"
 
       - name: Run benchmarks
         uses: CodSpeedHQ/action@v3
         with:
-          run: uv run pytest -s -vvv tests/benchmarks --codspeed
+          working-directory: pymoors
+          run: |
+            uv run pytest tests/benchmarks --codspeed
         env:
           CODSPEED_RUNNER_MODE: "walltime"

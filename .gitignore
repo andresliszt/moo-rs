@@ -8,7 +8,7 @@ package-lock.json
 test.py
 example.py
 
-/python/pymoors/*.so
+*.so
 .cache/
 .hypothesis/
 build/
@@ -26,7 +26,7 @@ node_modules/
 /pytest-speed/
 /sandbox/
 /sandbox/
-/site/
+**/site/
 **/target/
 /worktree/
 .DS_Store

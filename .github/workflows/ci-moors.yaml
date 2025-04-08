@@ -1,0 +1,55 @@
+name: Moors Rust CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Make every `run:` step start in moors/
+defaults:
+  run:
+    working-directory: moors
+
+jobs:
+  coverage-rust:
+    name: Rust Coverage & Lint
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: moors
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Add rustfmt & clippy components
+        run: |
+          rustup component add rustfmt --toolchain nightly
+          rustup component add clippy --toolchain nightly
+
+      - name: Lint
+        run: make lint
+
+      - name: Install rustfilt and coverage-prepare
+        run: cargo install rustfilt coverage-prepare
+
+      - name: Install llvm-tools-preview
+        run: rustup component add llvm-tools-preview
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Run coverage
+        run: cargo llvm-cov --workspace --lcov --output-path lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: lcov.info
+          flags: moors
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
