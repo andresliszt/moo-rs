@@ -3,7 +3,7 @@ use ndarray::Array2;
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
-    genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
+    genetic::{ConstraintsFn, FitnessFn},
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
         selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
@@ -12,13 +12,11 @@ use crate::{
 };
 
 // Define the RNSGA2
-pub struct Rnsga2<S, Cross, Mut, F, G, DC>
+pub struct Rnsga2<S, Cross, Mut, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     pub inner: MultiObjectiveAlgorithm<
@@ -27,19 +25,15 @@ where
         Rnsga2ReferencePointsSurvival,
         Cross,
         Mut,
-        F,
-        G,
         DC,
     >,
 }
 
-impl<S, Cross, Mut, F, G, DC> Rnsga2<S, Cross, Mut, F, G, DC>
+impl<S, Cross, Mut, DC> Rnsga2<S, Cross, Mut, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     #[allow(clippy::too_many_arguments)]
@@ -50,7 +44,7 @@ where
         crossover: Cross,
         mutation: Mut,
         duplicates_cleaner: Option<DC>,
-        fitness_fn: F,
+        fitness_fn: FitnessFn,
         n_vars: usize,
         population_size: usize,
         n_offsprings: usize,
@@ -59,7 +53,7 @@ where
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        constraints_fn: Option<G>,
+        constraints_fn: Option<ConstraintsFn>,
         // Optional lower and upper bounds for each gene.
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
@@ -93,9 +87,8 @@ where
         Ok(Self { inner: algorithm })
     }
 
-    pub fn run(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
-        self.inner.run()
-    }
+    // Delegate methods from inner
+    delegate_algorithm_methods!();
 }
 
 // delegate_inner_getters_and_run!(Nsga2);

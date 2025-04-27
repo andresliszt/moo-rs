@@ -83,7 +83,7 @@ def test_small_real_biobjective(algorithm_class, extra_kw):
 
     with x,y in [0,1].
 
-    The real front is (x, y) in (0,1): x = y
+    The rxeal front is (x, y) in (0,1): x = y
 
     """
 

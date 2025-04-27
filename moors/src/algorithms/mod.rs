@@ -9,7 +9,7 @@ use std::fmt;
 use crate::{
     duplicates::PopulationCleaner,
     evaluator::{Evaluator, EvaluatorError},
-    genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes},
+    genetic::{ConstraintsFn, FitnessFn, Population},
     helpers::printer::print_minimum_objectives,
     operators::{
         CrossoverOperator, Evolve, EvolveError, MutationOperator, SamplingOperator,
@@ -17,6 +17,20 @@ use crate::{
     },
     random::MOORandomGenerator,
 };
+
+macro_rules! delegate_algorithm_methods {
+    () => {
+        /// Delegate `run` to the inner algorithm
+        pub fn run(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
+            self.inner.run()
+        }
+
+        /// Delegate `population` to the inner algorithm
+        pub fn population(&self) -> &crate::genetic::Population {
+            &self.inner.population
+        }
+    };
+}
 
 mod agemoea;
 mod nsga2;
@@ -146,36 +160,32 @@ impl AlgorithmContext {
     }
 }
 
-pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
+pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, DC>
 where
     S: SamplingOperator,
     Sel: SelectionOperator,
     Sur: SurvivalOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     pub population: Population,
     survivor: Sur,
     evolve: Evolve<Sel, Cross, Mut, DC>,
-    evaluator: Evaluator<F, G>,
+    evaluator: Evaluator,
     context: AlgorithmContext,
     verbose: bool,
     rng: MOORandomGenerator,
     phantom: PhantomData<S>,
 }
 
-impl<S, Sel, Sur, Cross, Mut, F, G, DC> MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
+impl<S, Sel, Sur, Cross, Mut, DC> MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, DC>
 where
     S: SamplingOperator,
     Sel: SelectionOperator,
     Sur: SurvivalOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     #[allow(clippy::too_many_arguments)]
@@ -186,7 +196,7 @@ where
         crossover: Cross,
         mutation: Mut,
         duplicates_cleaner: Option<DC>,
-        fitness_fn: F,
+        fitness_fn: FitnessFn,
         n_vars: usize,
         population_size: usize,
         n_offsprings: usize,
@@ -195,7 +205,7 @@ where
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        constraints_fn: Option<G>,
+        constraints_fn: Option<ConstraintsFn>,
         // Optional lower and upper bounds for each gene.
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,

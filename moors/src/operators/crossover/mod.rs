@@ -8,6 +8,12 @@ pub mod sbx;
 pub mod single_point;
 pub mod uniform_binary;
 
+pub use exponential::ExponentialCrossover;
+pub use order::OrderCrossover;
+pub use sbx::SimulatedBinaryCrossover;
+pub use single_point::SinglePointBinaryCrossover;
+pub use uniform_binary::UniformBinaryCrossover;
+
 pub trait CrossoverOperator: GeneticOperator {
     fn n_offsprings_per_crossover(&self) -> usize {
         2
