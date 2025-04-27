@@ -29,7 +29,7 @@ jobs:
           python-version: ${{ env.DEFAULT_PYTHON }}
 
       - name: Install pymoors
-        run: make pymoors-build-docs
+        run: make pymoors-docs
 
       - name: Deploy to GitHub Pages
         run: mkdocs gh-deploy --force
