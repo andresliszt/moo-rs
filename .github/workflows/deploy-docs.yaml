@@ -11,6 +11,10 @@ env:
 permissions:
   contents: write
 
+defaults:
+  run:
+    working-directory: pymoors
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -29,7 +33,7 @@ jobs:
           python-version: ${{ env.DEFAULT_PYTHON }}
 
       - name: Install pymoors
-        run: make pymoors-docs
+        run: make docs
 
       - name: Deploy to GitHub Pages
         run: uv run mkdocs gh-deploy --force
