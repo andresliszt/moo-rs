@@ -1,12 +1,12 @@
-site_name: pymoors
+site_name: moo-rs
 site_author: Andrés Sandoval
-site_description: A Python library for multi-objective optimization using genetic algorithms.
+site_description: Multi-objective optimization using genetic algorithms in Rust and Python.
 use_directory_urls: false
 
 theme:
   language: en
-  logo: images/logo2.png
-  favicon: images/logo2.png
+  logo: images/moors-logo.png
+  favicon: images/moors-logo.png
   name: material
   palette:
   - media: '(prefers-color-scheme: light)'
@@ -36,8 +36,8 @@ theme:
   - content.code.select
   - navigation.tabs
   - navigation.footer
-repo_url: https://github.com/andresliszt/pymoors
-repo_name: "andresliszt/pymoors"
+repo_url: https://github.com/andresliszt/moo-rs
+repo_name: "andresliszt/moo-rs"
 
 markdown_extensions:
   - pymdownx.superfences
@@ -59,9 +59,11 @@ extra_css:
 
 nav:
   - 🏠 Home: index.md
-  - 🚀 Getting Started: getting_started.md
+  - 🚀 Getting Started:
+       - pymoors: getting_started_pymoors.md
+       - moors: getting_started_moors.md
   - 💻 Development: development.md
-  - 📖 User Guide:
+  - 📖 User Guide Pymoors:
       - Fitness and Constraints: user_guide/fitness_and_constraints.md
       - Genetic Operators: user_guide/operators.md
       - Duplicates Cleaner: user_guide/duplicates.md

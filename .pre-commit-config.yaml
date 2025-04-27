@@ -9,7 +9,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-added-large-files
-
+        exclude: 'pymoors/docs/images/moors-logo\.png$'
   - repo: local
     hooks:
       - id: lint-python-pymoors

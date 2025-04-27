@@ -1,9 +1,16 @@
+/* keep your sizing tweaks */
 .md-header {
-    min-height: 80px !important;
-    align-items: center;
-  }
-  .md-header__button.md-logo img {
-    max-height: none !important;
-    height: 60px !important;
-    width: auto !important;
-  }
+  --md-header-height: 75px !important;
+  min-height: 75px !important;
+  align-items: center;
+}
+
+.md-header__button.md-logo img {
+  max-height: none !important;
+  height: 65px !important;
+  width: auto !important;
+}
+
+.md-header-nav {
+  top: var(--md-header-height) !important;
+}

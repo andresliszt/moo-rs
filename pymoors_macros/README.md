@@ -1,6 +1,6 @@
 # pymoors_macros
 
-A collection of procedural macros to bridge the **moors** Rust crate with Python via PyO3.
+A collection of procedural macros to bridge the **moors** Rust crate with Python via pyo3.
 These macros generate boilerplate for:
 
 - **Operator wrappers** (`mutation`, `crossover`, `sampling`, `duplicates`)

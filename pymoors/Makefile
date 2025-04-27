@@ -21,7 +21,7 @@ pre-commit-run:                   ## Run all enabled hooks against all files
 	  && uv run pre-commit run --all-files
 
 #-------------------------------------------------
-# Python/PyO3 (pymoors)
+# Python/pyo3 (pymoors)
 #-------------------------------------------------
 .PHONY:  lock build-dev build-release \
         lint-python lint-rust pyright \

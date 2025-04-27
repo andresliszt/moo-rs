@@ -3,16 +3,18 @@ hide:
   - navigation
 ---
 
-# 📚 Welcome to the pymoors Documentation
+# 📚 Welcome to the moo-rs Documentation
 
-> This is the official documentation for the **pymoors** project.
+> This is the official documentation for the **moo-rs** project.
 
-## What is pymoors?
+## What is moo-rs?
 
-pymoors is a library of genetic algorithms for solving multi-objective optimization problems.
-Its main goal is to provide a faster tool than current Python libraries, as it is built purely in **Rust**.
+**moo-rs** is a project for implementing genetic algorithms to solve multi-objective optimization problems in Rust, leveraging the language’s full performance. The acronym “moo” stands for Multi-Objective Optimization. The repository houses `moors`, the mathematical and software core where all genetic algorithms are defined, and `pymoors`, the Python wrapper exposing the `moors` core via [pyo3](https://github.com/PyO3/pyo3).
 
-Genetic Algorithms are exposed to Python via [pyo3](https://github.com/PyO3/pyo3).
+- **moors**: a pure-Rust crate for high-performance implementations of genetic algorithms
+- **pymoors**: a Python extension crate (via pyo3) exposing `moors` algorithms with a Pythonic API
+
+> The use of `moors` in Rust is completely independent of Python
 
 ## Key Features
 
