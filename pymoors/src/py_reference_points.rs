@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 
 /// Expose the DanAndDenisReferencePoints struct to Python.
 #[pyclass(name = "DanAndDenisReferencePoints")]
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct PyDanAndDenisReferencePoints {
     pub inner: DanAndDenisReferencePoints,
 }

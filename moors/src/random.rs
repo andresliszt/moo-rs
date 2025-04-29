@@ -47,6 +47,7 @@ pub trait RandomGenerator {
 }
 
 /// The production implementation of `RandomGenerator` using `StdRng`.
+#[derive(Debug)]
 pub struct MOORandomGenerator {
     rng: StdRng,
 }

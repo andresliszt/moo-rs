@@ -19,10 +19,10 @@ build-release:  ## cargo build --release
 # Run Rust tests
 test:  ## cargo test
 	@echo "[moors] test"
-	cargo test
+	cargo test --all-features
 
 # Format
-fmt:  ## cargo fmt + clippy
+fmt:  ## cargo fmt
 	@echo "[moors] format"
 	cargo fmt
 

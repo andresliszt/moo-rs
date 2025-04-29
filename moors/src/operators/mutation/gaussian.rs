@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// Mutation operator that adds Gaussian noise to float variables.
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct GaussianMutation {
     pub gene_mutation_rate: f64,
     pub sigma: f64,

@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use moors::{
     algorithms::{AgeMoea, Nsga2, Nsga3, Revea, Rnsga2},
     duplicates::CloseDuplicatesCleaner,
-    genetic::{FitnessFn, Population, PopulationFitness, PopulationGenes},
+    genetic::{ConstraintsFn, FitnessFn, Population, PopulationFitness, PopulationGenes},
     operators::{
         crossover::SimulatedBinaryCrossover,
         mutation::GaussianMutation,
@@ -63,18 +63,18 @@ fn test_nsga2() {
         GaussianMutation::new(0.5, 0.01),
         Some(CloseDuplicatesCleaner::new(1e-6)),
         fitness_biobjective as FitnessFn,
-        2,         // n_vars
-        100,       // population_size
-        100,       // n_offsprings
-        100,       // n_iterations
-        0.1,       // mutation_rate
-        0.9,       // crossover_rate
-        false,     // keep_infeasible
-        false,     // verbose
-        None,      // no constraints_fn
-        Some(0.0), // lower_bound
-        Some(1.0), // upper_bound
-        Some(42),  // seed
+        2,                     // n_vars
+        100,                   // population_size
+        100,                   // n_offsprings
+        100,                   // n_iterations
+        0.1,                   // mutation_rate
+        0.9,                   // crossover_rate
+        false,                 // keep_infeasible
+        false,                 // verbose
+        None::<ConstraintsFn>, // no constraints_fn
+        Some(0.0),             // lower_bound
+        Some(1.0),             // upper_bound
+        Some(42),              // seed
     )
     .expect("failed to build NSGA2");
 
@@ -90,18 +90,18 @@ fn test_agemoea() {
         GaussianMutation::new(0.5, 0.01),
         Some(CloseDuplicatesCleaner::new(1e-6)),
         fitness_biobjective as FitnessFn,
-        2,          // n_vars
-        100,        // population_size
-        100,        // n_offsprings
-        100,        // n_iterations
-        0.1,        // mutation_rate
-        0.9,        // crossover_rate
-        false,      // keep_infeasible
-        false,      // verbose
-        None,       // no constraints_fn
-        Some(0.0),  // lower_bound
-        Some(1.0),  // upper_bound
-        Some(1729), // seed
+        2,                     // n_vars
+        100,                   // population_size
+        100,                   // n_offsprings
+        100,                   // n_iterations
+        0.1,                   // mutation_rate
+        0.9,                   // crossover_rate
+        false,                 // keep_infeasible
+        false,                 // verbose
+        None::<ConstraintsFn>, // no constraints_fn
+        Some(0.0),             // lower_bound
+        Some(1.0),             // upper_bound
+        Some(1729),            // seed
     )
     .expect("failed to build AgeMoea");
 
@@ -120,18 +120,18 @@ fn test_nsga3() {
         GaussianMutation::new(0.5, 0.01),
         Some(CloseDuplicatesCleaner::new(1e-6)),
         fitness_biobjective as FitnessFn,
-        2,         // n_vars
-        100,       // population_size
-        100,       // n_offsprings
-        100,       // n_iterations
-        0.1,       // mutation_rate
-        0.9,       // crossover_rate
-        false,     // keep_infeasible
-        false,     // verbose
-        None,      // no constraints_fn
-        Some(0.0), // lower_bound
-        Some(1.0), // upper_bound
-        Some(42),  // seed
+        2,                     // n_vars
+        100,                   // population_size
+        100,                   // n_offsprings
+        100,                   // n_iterations
+        0.1,                   // mutation_rate
+        0.9,                   // crossover_rate
+        false,                 // keep_infeasible
+        false,                 // verbose
+        None::<ConstraintsFn>, // no constraints_fn
+        Some(0.0),             // lower_bound
+        Some(1.0),             // upper_bound
+        Some(42),              // seed
     )
     .expect("failed to build NSGA3");
 
@@ -150,18 +150,18 @@ fn test_rnsga2() {
         GaussianMutation::new(0.5, 0.01),
         Some(CloseDuplicatesCleaner::new(1e-6)),
         fitness_biobjective as FitnessFn,
-        2,         // n_vars
-        100,       // population_size
-        100,       // n_offsprings
-        100,       // n_iterations
-        0.1,       // mutation_rate
-        0.9,       // crossover_rate
-        false,     // keep_infeasible
-        false,     // verbose
-        None,      // no constraints_fn
-        Some(0.0), // lower_bound
-        Some(1.0), // upper_bound
-        Some(42),  // seed
+        2,                     // n_vars
+        100,                   // population_size
+        100,                   // n_offsprings
+        100,                   // n_iterations
+        0.1,                   // mutation_rate
+        0.9,                   // crossover_rate
+        false,                 // keep_infeasible
+        false,                 // verbose
+        None::<ConstraintsFn>, // no constraints_fn
+        Some(0.0),             // lower_bound
+        Some(1.0),             // upper_bound
+        Some(42),              // seed
     )
     .expect("failed to build Rnsga2");
 
@@ -181,18 +181,18 @@ fn test_revea() {
         GaussianMutation::new(0.5, 0.01),
         Some(CloseDuplicatesCleaner::new(1e-6)),
         fitness_biobjective as FitnessFn,
-        2,         // n_vars
-        100,       // population_size
-        100,       // n_offsprings
-        100,       // n_iterations
-        0.1,       // mutation_rate
-        0.9,       // crossover_rate
-        false,     // keep_infeasible
-        false,     // verbose
-        None,      // no constraints_fn
-        Some(0.0), // lower_bound
-        Some(1.0), // upper_bound
-        None,      // seed
+        2,                     // n_vars
+        100,                   // population_size
+        100,                   // n_offsprings
+        100,                   // n_iterations
+        0.1,                   // mutation_rate
+        0.9,                   // crossover_rate
+        false,                 // keep_infeasible
+        false,                 // verbose
+        None::<ConstraintsFn>, // no constraints_fn
+        Some(0.0),             // lower_bound
+        Some(1.0),             // upper_bound
+        None,                  // seed
     )
     .expect("failed to build Revea");
 

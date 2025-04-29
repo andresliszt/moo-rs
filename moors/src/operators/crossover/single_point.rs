@@ -4,7 +4,7 @@ use crate::genetic::IndividualGenes;
 use crate::operators::{CrossoverOperator, GeneticOperator};
 use crate::random::RandomGenerator;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Single-point crossover operator for binary-encoded individuals.
 pub struct SinglePointBinaryCrossover;
 

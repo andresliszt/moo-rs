@@ -1,6 +1,4 @@
-use crate::genetic::{
-    ConstraintsFn, FitnessFn, Population, PopulationConstraints, PopulationFitness, PopulationGenes,
-};
+use crate::genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes};
 use ndarray::Axis;
 use std::fmt;
 
@@ -23,9 +21,14 @@ impl fmt::Display for EvaluatorError {
 /// Evaluator struct for calculating fitness and (optionally) constraints,
 /// then assembling a `Population`. In addition to the user-provided constraints function,
 /// optional lower and upper bounds can be specified for the decision variables (genes).
-pub struct Evaluator {
-    fitness_fn: FitnessFn,
-    constraints_fn: Option<ConstraintsFn>,
+#[derive(Debug)]
+pub struct Evaluator<F, G>
+where
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
+{
+    fitness_fn: F,
+    constraints_fn: Option<G>,
     keep_infeasible: bool,
     /// Optional lower bound for each gene.
     lower_bound: Option<f64>,
@@ -33,12 +36,16 @@ pub struct Evaluator {
     upper_bound: Option<f64>,
 }
 
-impl Evaluator {
+impl<F, G> Evaluator<F, G>
+where
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
+{
     /// Creates a new `Evaluator` with a fitness function, an optional constraints function,
     /// a flag to keep infeasible individuals, and optional lower/upper bounds.
     pub fn new(
-        fitness_fn: FitnessFn,
-        constraints_fn: Option<ConstraintsFn>,
+        fitness_fn: F,
+        constraints_fn: Option<G>,
         keep_infeasible: bool,
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,

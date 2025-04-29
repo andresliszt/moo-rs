@@ -4,7 +4,7 @@ use crate::duplicates::PopulationCleaner;
 use crate::genetic::PopulationGenes;
 use crate::helpers::linalg::cross_euclidean_distances;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Computes the cross squared Euclidean distance matrix between `data` and `reference`
 /// using matrix algebra.
 ///

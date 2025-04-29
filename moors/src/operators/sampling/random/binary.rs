@@ -6,8 +6,8 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Clone, Debug)]
 /// Sampling operator for binary variables.
+#[derive(Debug, Clone)]
 pub struct RandomSamplingBinary;
 
 impl RandomSamplingBinary {

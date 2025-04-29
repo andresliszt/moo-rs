@@ -12,7 +12,7 @@ use crate::random::RandomGenerator;
 /// Implementation of the survival operator for the REVEA algorithm presented in the paper
 /// A Reference Vector Guided Evolutionary Algorithm for Many-objective Optimization
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct ReveaReferencePointsSurvival {
     reference_points: Array2<f64>,
     initial_reference_points: Array2<f64>,

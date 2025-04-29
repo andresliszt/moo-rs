@@ -6,7 +6,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Displacement Mutation operator that extracts a segment from the chromosome
 /// and reinserts it at a different random position using ndarray operations.
 pub struct DisplacementMutation {}

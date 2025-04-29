@@ -2,7 +2,7 @@ use ndarray::Array2;
 
 use crate::operators::survival::reference_points::StructuredReferencePoints;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct DanAndDenisReferencePoints {
     n_reference_points: usize,
     n_objectives: usize,

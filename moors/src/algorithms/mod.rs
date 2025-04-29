@@ -9,7 +9,7 @@ use std::fmt;
 use crate::{
     duplicates::PopulationCleaner,
     evaluator::{Evaluator, EvaluatorError},
-    genetic::{ConstraintsFn, FitnessFn, Population},
+    genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes},
     helpers::printer::print_minimum_objectives,
     operators::{
         CrossoverOperator, Evolve, EvolveError, MutationOperator, SamplingOperator,
@@ -118,6 +118,7 @@ fn validate_bounds(
     Ok(())
 }
 
+#[derive(Debug)]
 pub struct AlgorithmContext {
     pub n_vars: usize,
     pub population_size: usize,
@@ -160,32 +161,37 @@ impl AlgorithmContext {
     }
 }
 
-pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, DC>
+#[derive(Debug)]
+pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Sel: SelectionOperator,
     Sur: SurvivalOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     pub population: Population,
     survivor: Sur,
     evolve: Evolve<Sel, Cross, Mut, DC>,
-    evaluator: Evaluator,
+    evaluator: Evaluator<F, G>,
     context: AlgorithmContext,
     verbose: bool,
     rng: MOORandomGenerator,
     phantom: PhantomData<S>,
 }
 
-impl<S, Sel, Sur, Cross, Mut, DC> MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, DC>
+impl<S, Sel, Sur, Cross, Mut, F, G, DC> MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Sel: SelectionOperator,
     Sur: SurvivalOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     #[allow(clippy::too_many_arguments)]
@@ -196,7 +202,7 @@ where
         crossover: Cross,
         mutation: Mut,
         duplicates_cleaner: Option<DC>,
-        fitness_fn: FitnessFn,
+        fitness_fn: F,
         n_vars: usize,
         population_size: usize,
         n_offsprings: usize,
@@ -205,7 +211,7 @@ where
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        constraints_fn: Option<ConstraintsFn>,
+        constraints_fn: Option<G>,
         // Optional lower and upper bounds for each gene.
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,

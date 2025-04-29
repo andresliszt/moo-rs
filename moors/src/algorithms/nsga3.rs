@@ -1,7 +1,7 @@
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
-    genetic::{ConstraintsFn, FitnessFn},
+    genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
         selection::random_tournament::RandomSelection,
@@ -10,22 +10,34 @@ use crate::{
 };
 
 // Define the NSGA-III algorithm
-pub struct Nsga3<S, Cross, Mut, DC>
+pub struct Nsga3<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
-    pub inner:
-        MultiObjectiveAlgorithm<S, RandomSelection, Nsga3ReferencePointsSurvival, Cross, Mut, DC>,
+    pub inner: MultiObjectiveAlgorithm<
+        S,
+        RandomSelection,
+        Nsga3ReferencePointsSurvival,
+        Cross,
+        Mut,
+        F,
+        G,
+        DC,
+    >,
 }
 
-impl<S, Cross, Mut, DC> Nsga3<S, Cross, Mut, DC>
+impl<S, Cross, Mut, F, G, DC> Nsga3<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     pub fn new(
@@ -34,7 +46,7 @@ where
         crossover: Cross,
         mutation: Mut,
         duplicates_cleaner: Option<DC>,
-        fitness_fn: FitnessFn,
+        fitness_fn: F,
         n_vars: usize,
         population_size: usize,
         n_offsprings: usize,
@@ -43,7 +55,7 @@ where
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        constraints_fn: Option<ConstraintsFn>,
+        constraints_fn: Option<G>,
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
         seed: Option<u64>,

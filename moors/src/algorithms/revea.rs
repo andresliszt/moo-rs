@@ -3,7 +3,7 @@ use ndarray::Array2;
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
-    genetic::{ConstraintsFn, FitnessFn},
+    genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
         selection::random_tournament::RandomSelection,
@@ -12,22 +12,34 @@ use crate::{
 };
 
 // Define the REVEA
-pub struct Revea<S, Cross, Mut, DC>
+pub struct Revea<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
-    pub inner:
-        MultiObjectiveAlgorithm<S, RandomSelection, ReveaReferencePointsSurvival, Cross, Mut, DC>,
+    pub inner: MultiObjectiveAlgorithm<
+        S,
+        RandomSelection,
+        ReveaReferencePointsSurvival,
+        Cross,
+        Mut,
+        F,
+        G,
+        DC,
+    >,
 }
 
-impl<S, Cross, Mut, DC> Revea<S, Cross, Mut, DC>
+impl<S, Cross, Mut, F, G, DC> Revea<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     #[allow(clippy::too_many_arguments)]
@@ -39,7 +51,7 @@ where
         crossover: Cross,
         mutation: Mut,
         duplicates_cleaner: Option<DC>,
-        fitness_fn: FitnessFn,
+        fitness_fn: F,
         n_vars: usize,
         population_size: usize,
         n_offsprings: usize,
@@ -48,7 +60,7 @@ where
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        constraints_fn: Option<ConstraintsFn>,
+        constraints_fn: Option<G>,
         // Optional lower and upper bounds for each gene.
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
@@ -85,5 +97,3 @@ where
     // Delegate methods from inner
     delegate_algorithm_methods!();
 }
-
-// delegate_inner_getters_and_run!(Nsga2);

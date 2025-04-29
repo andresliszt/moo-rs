@@ -4,7 +4,7 @@ use crate::genetic::IndividualGenes;
 use crate::operators::{CrossoverOperator, GeneticOperator};
 use crate::random::RandomGenerator;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Crossover operator for permutation-based individuals using Order Crossover (OX).
 pub struct OrderCrossover;
 

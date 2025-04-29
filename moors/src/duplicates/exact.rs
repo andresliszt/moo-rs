@@ -6,7 +6,7 @@ use ordered_float::OrderedFloat;
 use crate::duplicates::PopulationCleaner;
 use crate::genetic::PopulationGenes;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Exact duplicates cleaner based on Hash
 pub struct ExactDuplicatesCleaner;
 

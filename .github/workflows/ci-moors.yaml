@@ -1,4 +1,9 @@
-name: Moors Rust CI
+name: CI
+
+# Make every `run:` step start in moors/
+defaults:
+  run:
+    working-directory: moors
 
 on:
   push:
@@ -6,42 +11,48 @@ on:
   pull_request:
     branches: [main]
 
-# Make every `run:` step start in moors/
-defaults:
-  run:
-    working-directory: moors
-
 jobs:
-  coverage-rust:
-    name: Rust Coverage & Lint
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: moors
+  lint-test:
+    name: Lint & Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Install nightly toolchain
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: clippy, rustfmt
 
-      - name: Add rustfmt & clippy components
-        run: |
-          rustup component add rustfmt --toolchain nightly
-          rustup component add clippy --toolchain nightly
-
-      - name: Lint
+      - name: Lint and Check formatting
         run: make lint
 
-      - name: Install rustfilt and coverage-prepare
-        run: cargo install rustfilt coverage-prepare
+      - name: Run tests
+        run: make test
 
-      - name: Install llvm-tools-preview
-        run: rustup component add llvm-tools-preview
+  coverage:
+    name: Coverage report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust for coverage
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: llvm-tools-preview
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
 
       - name: Run coverage
         run: cargo llvm-cov --workspace --lcov --output-path lcov.info
@@ -50,6 +61,5 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           files: lcov.info
-          flags: moors
+          flags: coverage
           fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}

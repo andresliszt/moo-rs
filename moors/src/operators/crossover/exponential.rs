@@ -2,7 +2,7 @@ use crate::genetic::IndividualGenes;
 use crate::operators::{CrossoverOperator, GeneticOperator};
 use crate::random::RandomGenerator;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Crossover operator that combines parent genes based on an exponential distribution.
 pub struct ExponentialCrossover {
     pub exponential_crossover_rate: f64,
