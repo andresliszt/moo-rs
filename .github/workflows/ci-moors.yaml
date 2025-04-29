@@ -1,4 +1,4 @@
-name: CI
+name: Moors CI
 
 # Make every `run:` step start in moors/
 defaults:
@@ -63,3 +63,4 @@ jobs:
           files: lcov.info
           flags: coverage
           fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
