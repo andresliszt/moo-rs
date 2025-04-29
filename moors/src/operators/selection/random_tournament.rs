@@ -4,7 +4,7 @@ use crate::genetic::Individual;
 use crate::operators::selection::{DuelResult, GeneticOperator, SelectionOperator};
 use crate::random::RandomGenerator;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct RandomSelection {}
 
 impl RandomSelection {

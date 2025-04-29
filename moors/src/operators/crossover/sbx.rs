@@ -16,7 +16,7 @@ use crate::random::RandomGenerator;
 ///
 /// **Reference**: Deb, Kalyanmoy, and R. B. Agrawal. "Simulated binary crossover for continuous search space."
 ///              Complex systems 9.2 (1995): 115-148.
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct SimulatedBinaryCrossover {
     /// Distribution index (η) that controls offspring spread.
     pub distribution_index: f64,

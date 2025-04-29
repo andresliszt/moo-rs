@@ -2,7 +2,7 @@ use crate::genetic::IndividualGenes;
 use crate::operators::{CrossoverOperator, GeneticOperator};
 use crate::random::RandomGenerator;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Uniform binary crossover operator for genetic algorithms.
 pub struct UniformBinaryCrossover;
 

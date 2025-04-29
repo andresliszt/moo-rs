@@ -4,7 +4,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Mutation operator that flips bits in a binary individual with a specified mutation rate
 pub struct BitFlipMutation {
     pub gene_mutation_rate: f64,

@@ -84,6 +84,11 @@ docs:  ## Build documentation
 	  && uv sync --group docs \
 	  && uv run mkdocs build --strict
 
+# Format
+fmt-rust:  ## cargo fmt
+	@echo "[pymoors] format src"
+	cargo fmt
+
 #-------------------------------------------------
 # Misc
 #-------------------------------------------------

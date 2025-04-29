@@ -68,7 +68,7 @@ fn generate_py_operator_mutation(inner: Ident) -> proc_macro2::TokenStream {
 
     quote! {
         #[pyo3::prelude::pyclass(name = #inner_name_lit)]
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub struct #wrapper_ident {
             pub inner: #inner,
         }
@@ -117,7 +117,7 @@ fn generate_py_operator_crossover(inner: Ident) -> proc_macro2::TokenStream {
 
     quote! {
         #[pyo3::prelude::pyclass(name = #inner_name_lit)]
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub struct #wrapper_ident {
             pub inner: #inner,
         }
@@ -160,7 +160,7 @@ fn generate_py_operator_sampling(inner: Ident) -> proc_macro2::TokenStream {
 
     quote! {
         #[pyo3::prelude::pyclass(name = #inner_name_lit)]
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub struct #wrapper_ident {
             pub inner: #inner,
         }
@@ -210,7 +210,7 @@ fn generate_py_operator_duplicates(inner: Ident) -> proc_macro2::TokenStream {
 
     quote! {
         #[pyo3::prelude::pyclass(name = #inner_name_lit)]
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub struct #wrapper_ident {
             pub inner: #inner,
         }
@@ -273,7 +273,7 @@ pub fn register_py_operators_mutation(input: TokenStream) -> TokenStream {
         }
     });
     let enum_def = quote! {
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub enum MutationOperatorDispatcher {
             #(#enum_variants),*
         }
@@ -385,7 +385,7 @@ pub fn register_py_operators_crossover(input: TokenStream) -> TokenStream {
         }
     });
     let enum_def = quote! {
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub enum CrossoverOperatorDispatcher {
             #(#enum_variants),*
         }
@@ -495,7 +495,7 @@ pub fn register_py_operators_sampling(input: TokenStream) -> TokenStream {
         }
     });
     let enum_def = quote! {
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub enum SamplingOperatorDispatcher {
             #(#enum_variants),*
         }
@@ -600,7 +600,7 @@ pub fn register_py_operators_duplicates(input: TokenStream) -> TokenStream {
         }
     });
     let enum_def = quote! {
-        #[derive(Clone, Debug)]
+        #[derive(Debug, Clone)]
         pub enum DuplicatesCleanerDispatcher {
             #(#enum_variants),*
         }

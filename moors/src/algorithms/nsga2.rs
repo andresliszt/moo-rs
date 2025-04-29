@@ -10,6 +10,7 @@ use crate::{
 };
 
 // Define the NSGA-II
+#[derive(Debug)]
 pub struct Nsga2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
@@ -89,7 +90,6 @@ where
         Ok(Self { inner: algorithm })
     }
 
-    pub fn run(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
-        self.inner.run()
-    }
+    // Delegate methods from inner
+    delegate_algorithm_methods!();
 }

@@ -12,6 +12,12 @@ pub mod gaussian;
 pub mod scramble;
 pub mod swap;
 
+pub use bitflip::BitFlipMutation;
+pub use displacement::DisplacementMutation;
+pub use gaussian::GaussianMutation;
+pub use scramble::ScrambleMutation;
+pub use swap::SwapMutation;
+
 /// MutationOperator defines an in-place mutation where the individual is modified directly.
 pub trait MutationOperator: GeneticOperator {
     /// Mutates a single individual in place.

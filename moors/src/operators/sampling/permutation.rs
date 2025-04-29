@@ -8,7 +8,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Sampling operator for permutation-based variables.
 pub struct PermutationSampling;
 

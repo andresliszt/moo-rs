@@ -14,8 +14,14 @@ pub mod reference_points;
 pub mod revea;
 pub mod rnsga2;
 
+pub use agemoea::AgeMoeaSurvival;
+pub use nsga2::RankCrowdingSurvival;
+pub use nsga3::Nsga3ReferencePoints;
+pub use revea::ReveaReferencePointsSurvival;
+pub use rnsga2::Rnsga2ReferencePointsSurvival;
+
 /// Controls how the diversity (crowding) metric is compared during tournament selection.
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub enum SurvivalScoringComparison {
     /// Larger survival scoring (e.g crowding sitance) is preferred.
     Maximize,

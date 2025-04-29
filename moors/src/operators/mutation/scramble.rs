@@ -6,7 +6,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Scramble Mutation operator that selects a subset of the chromosome and randomly reorders it.
 pub struct ScrambleMutation {}
 

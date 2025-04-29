@@ -81,7 +81,6 @@ where
         Ok(AgeMoea { inner })
     }
 
-    pub fn run(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
-        self.inner.run()
-    }
+    // Delegate methods from inner
+    delegate_algorithm_methods!();
 }

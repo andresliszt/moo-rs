@@ -6,7 +6,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Sampling operator for floating-point variables using uniform random distribution.
 pub struct RandomSamplingFloat {
     pub min: f64,

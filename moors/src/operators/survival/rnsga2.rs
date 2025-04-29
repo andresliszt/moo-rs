@@ -12,7 +12,7 @@ use crate::random::RandomGenerator;
 /// Implementation of the survival operator for the R-NSGA2 algorithm presented in the paper
 /// Reference Point Based Multi-Objective Optimization Using Evolutionary Algorithms
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct Rnsga2ReferencePointsSurvival {
     reference_points: Array2<f64>,
     epsilon: f64,

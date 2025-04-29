@@ -45,7 +45,7 @@ pub type PopulationGenes = Array2<f64>;
 pub type PopulationFitness = Array2<f64>;
 pub type PopulationConstraints = Array2<f64>;
 /// Type aliases for functions
-pub type FitnessFunc = fn(&PopulationGenes) -> PopulationFitness;
+pub type FitnessFn = fn(&PopulationGenes) -> PopulationFitness;
 pub type ConstraintsFn = fn(&PopulationGenes) -> PopulationConstraints;
 
 /// The `Population` struct contains genes, fitness, constraints (if any),

@@ -8,7 +8,7 @@ use crate::genetic::{Fronts, PopulationFitness};
 use crate::operators::{GeneticOperator, SurvivalOperator};
 use crate::random::RandomGenerator;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct RankCrowdingSurvival;
 
 impl GeneticOperator for RankCrowdingSurvival {

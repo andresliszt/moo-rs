@@ -4,7 +4,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 /// Mutation operator that swaps two genes in a permutation-based individual.
 pub struct SwapMutation;
 

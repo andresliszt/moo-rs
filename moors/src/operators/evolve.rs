@@ -8,7 +8,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Evolve<Sel, Cross, Mut, DC>
 where
     Sel: SelectionOperator,
@@ -26,7 +26,7 @@ where
     upper_bound: Option<f64>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum EvolveError {
     EmptyMatingResult {
         message: String,

@@ -8,7 +8,7 @@ use crate::operators::{
 };
 use crate::random::RandomGenerator;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct RankAndScoringSelection {
     diversity_comparison: SurvivalScoringComparison,
 }

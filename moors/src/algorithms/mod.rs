@@ -18,6 +18,20 @@ use crate::{
     random::MOORandomGenerator,
 };
 
+macro_rules! delegate_algorithm_methods {
+    () => {
+        /// Delegate `run` to the inner algorithm
+        pub fn run(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
+            self.inner.run()
+        }
+
+        /// Delegate `population` to the inner algorithm
+        pub fn population(&self) -> &crate::genetic::Population {
+            &self.inner.population
+        }
+    };
+}
+
 mod agemoea;
 mod nsga2;
 mod nsga3;
@@ -104,6 +118,7 @@ fn validate_bounds(
     Ok(())
 }
 
+#[derive(Debug)]
 pub struct AlgorithmContext {
     pub n_vars: usize,
     pub population_size: usize,
@@ -146,6 +161,7 @@ impl AlgorithmContext {
     }
 }
 
+#[derive(Debug)]
 pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,

@@ -21,6 +21,7 @@ impl fmt::Display for EvaluatorError {
 /// Evaluator struct for calculating fitness and (optionally) constraints,
 /// then assembling a `Population`. In addition to the user-provided constraints function,
 /// optional lower and upper bounds can be specified for the decision variables (genes).
+#[derive(Debug)]
 pub struct Evaluator<F, G>
 where
     F: Fn(&PopulationGenes) -> PopulationFitness,

@@ -94,9 +94,6 @@ where
         Ok(Self { inner: algorithm })
     }
 
-    pub fn run(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
-        self.inner.run()
-    }
+    // Delegate methods from inner
+    delegate_algorithm_methods!();
 }
-
-// delegate_inner_getters_and_run!(Nsga2);
