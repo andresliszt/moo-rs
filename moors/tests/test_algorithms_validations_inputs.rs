@@ -1,14 +1,13 @@
 // tests/algorithms/test_nsga2_params.rs
 
 use moors::{
-    algorithms::Nsga2,
-    genetic::{FitnessFn, ConstraintsFn, PopulationGenes, PopulationFitness},
-    operators::{
-        sampling::RandomSamplingFloat,
-        crossover::SimulatedBinaryCrossover,
-        mutation::GaussianMutation,
-    },
     algorithms::MultiObjectiveAlgorithmError,
+    algorithms::Nsga2,
+    genetic::{ConstraintsFn, FitnessFn, PopulationFitness, PopulationGenes},
+    operators::{
+        crossover::SimulatedBinaryCrossover, mutation::GaussianMutation,
+        sampling::RandomSamplingFloat,
+    },
 };
 
 /// A trivial fitness function that just clones the genes matrix.
@@ -97,7 +96,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         GaussianMutation::new(0.1, 0.05),
         None::<()>,
         dummy_fitness as FitnessFn,
-        0,  // invalid n_vars
+        0, // invalid n_vars
         100,
         50,
         50,
@@ -122,7 +121,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         None::<()>,
         dummy_fitness as FitnessFn,
         10,
-        0,  // invalid population_size
+        0, // invalid population_size
         50,
         50,
         0.1,
@@ -147,7 +146,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         dummy_fitness as FitnessFn,
         10,
         100,
-        0,  // invalid n_offsprings
+        0, // invalid n_offsprings
         50,
         0.1,
         0.9,
@@ -172,7 +171,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         10,
         100,
         50,
-        0,  // invalid n_iterations
+        0, // invalid n_iterations
         0.1,
         0.9,
         false,
