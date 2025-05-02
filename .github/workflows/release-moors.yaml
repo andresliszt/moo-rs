@@ -10,22 +10,24 @@ defaults:
 
 jobs:
   publish:
-    name: Publish 🚀
+    # only proceed if this is a “moors-…” release
+    if: startsWith(github.event.release.tag_name, 'moors-')
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Rust toolchain
+      - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           override: true
 
+      - name: Build release
+        run: cargo build --release
+
       - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          # make sure everything builds in release
-          cargo build --release
-          cargo publish
+        run: cargo publish
