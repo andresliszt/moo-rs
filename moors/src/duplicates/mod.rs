@@ -36,13 +36,3 @@ impl PopulationCleaner for NoDuplicatesCleaner {
         )
     }
 }
-
-impl PopulationCleaner for () {
-    fn remove(
-        &self,
-        population: &PopulationGenes,
-        _reference: Option<&PopulationGenes>,
-    ) -> PopulationGenes {
-        population.to_owned()
-    }
-}
