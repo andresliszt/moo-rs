@@ -55,7 +55,7 @@ use moors::{
     algorithms::Nsga2Builder,
     duplicates::ExactDuplicatesCleaner,
     genetic::{
-        ConstraintsFn, FitnessFn, PopulationConstraints, PopulationFitness, PopulationGenes,
+        PopulationConstraints, PopulationFitness, PopulationGenes,
     },
     operators::{
         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
