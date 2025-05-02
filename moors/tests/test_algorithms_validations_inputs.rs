@@ -27,8 +27,8 @@ fn test_invalid_mutation_rate(#[case] invalid: f64) {
         .fitness_fn(dummy_fitness)
         .n_vars(10)
         .population_size(100)
-        .n_offsprings(50)
-        .n_iterations(50)
+        .num_offsprings(50)
+        .num_iterations(50)
         .mutation_rate(invalid) // ← invalid here
         .crossover_rate(0.9)
         .build()
@@ -61,8 +61,8 @@ fn test_invalid_crossover_rate(#[case] invalid: f64) {
         .fitness_fn(dummy_fitness)
         .n_vars(10)
         .population_size(100)
-        .n_offsprings(50)
-        .n_iterations(50)
+        .num_offsprings(50)
+        .num_iterations(50)
         .mutation_rate(0.1)
         .crossover_rate(invalid) // ← invalid here
         .build()
@@ -94,8 +94,8 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .n_vars(0) // ← invalid
         .population_size(100)
-        .n_offsprings(50)
-        .n_iterations(50)
+        .num_offsprings(50)
+        .num_iterations(50)
         .mutation_rate(0.1)
         .crossover_rate(0.9)
         .build()
@@ -117,8 +117,8 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .n_vars(10)
         .population_size(0) // ← invalid
-        .n_offsprings(50)
-        .n_iterations(50)
+        .num_offsprings(50)
+        .num_iterations(50)
         .mutation_rate(0.1)
         .crossover_rate(0.9)
         .build()
@@ -132,7 +132,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         err
     );
 
-    // n_offsprings = 0
+    // num_offsprings = 0
     let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(2.0))
@@ -140,13 +140,13 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .n_vars(10)
         .population_size(100)
-        .n_offsprings(0) // ← invalid
-        .n_iterations(50)
+        .num_offsprings(0) // ← invalid
+        .num_iterations(50)
         .mutation_rate(0.1)
         .crossover_rate(0.9)
         .build()
     {
-        Ok(_) => panic!("Expected error for n_offsprings = 0"),
+        Ok(_) => panic!("Expected error for num_offsprings = 0"),
         Err(e) => e,
     };
     assert!(
@@ -155,7 +155,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         err
     );
 
-    // n_iterations = 0
+    // num_iterations = 0
     let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(2.0))
@@ -163,13 +163,13 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .n_vars(10)
         .population_size(100)
-        .n_offsprings(50)
-        .n_iterations(0) // ← invalid
+        .num_offsprings(50)
+        .num_iterations(0) // ← invalid
         .mutation_rate(0.1)
         .crossover_rate(0.9)
         .build()
     {
-        Ok(_) => panic!("Expected error for n_iterations = 0"),
+        Ok(_) => panic!("Expected error for num_iterations = 0"),
         Err(e) => e,
     };
     assert!(
@@ -190,8 +190,8 @@ fn test_invalid_bounds(#[case] lower: f64, #[case] upper: f64) {
         .fitness_fn(dummy_fitness)
         .n_vars(10)
         .population_size(100)
-        .n_offsprings(50)
-        .n_iterations(50)
+        .num_offsprings(50)
+        .num_iterations(50)
         .mutation_rate(0.1)
         .crossover_rate(0.9)
         .lower_bound(lower) // ← invalid lower

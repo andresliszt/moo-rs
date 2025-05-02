@@ -74,7 +74,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
             gamma,
             algorithm_context.n_objectives,
             algorithm_context.current_iteration,
-            algorithm_context.n_iterations,
+            algorithm_context.num_iterations,
             self.alpha,
         );
         // Elitism Selection
@@ -94,7 +94,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
             }
         }
         // Update reference points if needed
-        if (algorithm_context.current_iteration as f64 / algorithm_context.n_iterations as f64)
+        if (algorithm_context.current_iteration as f64 / algorithm_context.num_iterations as f64)
             % self.frequency
             == 0.0
         {

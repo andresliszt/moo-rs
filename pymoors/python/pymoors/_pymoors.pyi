@@ -302,8 +302,8 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
         fitness_fn (FitnessPopuAgeMoealationCallable): Function to evaluate the fitness of the population.
         n_vars (int): Number of variables in the optimization problem.
         population_size (int): Population size.
-        n_offsprings (int): Number of offsprings generated in each generation.
-        n_iterations (int): Number of generations to run the algorithm.
+        num_offsprings (int): Number of offsprings generated in each generation.
+        num_iterations (int): Number of generations to run the algorithm.
         mutation_rate (float): Probability of mutation.
         crossover_rate (float): Probability of crossover.
         keep_infeasible (bool, optional): Whether to keep infeasible solutions. Defaults to False.
@@ -321,8 +321,8 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
     fitness_fn: FitnessPopulationCallable
     n_vars: int
     population_size: int
-    n_offsprings: int
-    n_iterations: int
+    num_offsprings: int
+    num_iterations: int
     mutation_rate: float
     crossover_rate: float
     keep_infeasible: bool
