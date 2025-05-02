@@ -49,49 +49,68 @@ moors = { git = "https://github.com/andresliszt/moo-rs", package = "moors" }
 ### Quickstart
 
 ```rust
-use ndarray::{Axis, stack};
+use ndarray::{Array1, Axis, stack};
+
 use moors::{
-    algorithms::Nsga2,
-    duplicates::CloseDuplicatesCleaner,
-    genetic::{PopulationGenes, PopulationFitness},
-    operators::sampling::RandomSamplingFloat,
-    operators::crossover::sbx::SimulatedBinaryCrossover,
-    operators::mutation::gaussian::GaussianMutation,
+    algorithms::Nsga2Builder,
+    duplicates::ExactDuplicatesCleaner,
+    genetic::{
+        ConstraintsFn, FitnessFn, PopulationConstraints, PopulationFitness, PopulationGenes,
+    },
+    operators::{
+        crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
+        sampling::RandomSamplingBinary,
+    },
 };
 
-// Define your fitness function:
-fn fitness(pop: &PopulationGenes) -> PopulationFitness {
-    let x = pop.column(0);
-    let y = pop.column(1);
-    let f1 = &x * &x + &y * &y;
-    let f2 = (&x - 1.0).mapv(|v| v * v) + (&y - 1.0).mapv(|v| v * v);
-    stack(Axis(1), &[f1.view(), f2.view()]).unwrap()
+// problem data
+const WEIGHTS: [f64; 5] = [12.0, 2.0, 1.0, 4.0, 10.0];
+const VALUES: [f64; 5] = [4.0, 2.0, 1.0, 5.0, 3.0];
+const CAPACITY: f64 = 15.0;
+
+/// Compute multi-objective fitness [–total_value, total_weight]
+/// Returns an Array2<f64> of shape (population_size, 2)
+fn fitness_knapsack(population_genes: &PopulationGenes) -> PopulationFitness {
+    // lift our fixed arrays into Array1 for dot products
+    let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
+    let values_arr = Array1::from_vec(VALUES.to_vec());
+
+    let total_values = population_genes.dot(&values_arr);
+    let total_weights = population_genes.dot(&weights_arr);
+
+    // stack two columns: [-total_values, total_weights]
+    stack(Axis(1), &[(-&total_values).view(), total_weights.view()]).expect("stack failed")
 }
 
-fn main() {
-    let sampler = RandomSamplingFloat::new(0.0, 1.0);
-    let crossover = SimulatedBinaryCrossover::new(15.0);
-    let mutation = GaussianMutation::new(0.5, 0.01);
-    let cleaner = CloseDuplicatesCleaner::new(1e-8);
+fn constraints_knapsack(population_genes: &PopulationGenes) -> PopulationConstraints {
+    // build a 1-D array of weights in one shot
+    let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
 
-    let mut nsga2 = Nsga2::new(
-        sampler,
-        crossover,
-        mutation,
-        cleaner,
-        fitness,
-        2,    // n_vars
-        50,   // population_size
-        50,   // n_offsprings
-        100,  // n_iterations
-        0.1,  // mutation_rate
-        0.9,  // crossover_rate
-        false, // keep_infeasible
-    ).unwrap();
-
-    nsga2.inner.run().unwrap();
-    println!("Done! Population size: {}", nsga2.inner.population.len());
+    // dot → Array1<f64>, subtract capacity → Array1<f64>,
+    // then promote to 2-D (n×1) with insert_axis
+    (population_genes.dot(&weights_arr) - CAPACITY).insert_axis(Axis(1))
 }
+
+// build and run the NSGA-II algorithm
+let mut algorithm = Nsga2Builder::default()
+    .fitness_fn(fitness_knapsack)
+    .constraints_fn(constraints_knapsack)
+    .sampler(RandomSamplingBinary::new())
+    .crossover(SinglePointBinaryCrossover::new())
+    .mutation(BitFlipMutation::new(0.5))
+    .duplicates_cleaner(ExactDuplicatesCleaner::new())
+    .n_vars(5)
+    .population_size(100)
+    .crossover_rate(0.9)
+    .mutation_rate(0.1)
+    .n_offsprings(32)
+    .n_iterations(2)
+    .build()
+    .unwrap();
+
+algorithm.run().unwrap();
+println!("Done! Population size: {}", algorithm.population.len());
+
 ```
 
 ## pymoors (Python)
@@ -108,6 +127,7 @@ pip install pymoors
 
 ```python
 import numpy as np
+
 from pymoors import (
     Nsga2,
     RandomSamplingBinary,
@@ -115,24 +135,46 @@ from pymoors import (
     SinglePointBinaryCrossover,
     ExactDuplicatesCleaner,
 )
+from pymoors.typing import TwoDArray
 
-# Example fitness function
-def knapsack_fitness(genes):
-    PROFITS = np.array([2, 3, 6, 1, 4])
-    QUALITY = np.array([5, 2, 1, 6, 4])
-    profit = np.sum(PROFITS * genes, axis=1, keepdims=True)
-    quality = np.sum(QUALITY * genes, axis=1, keepdims=True)
-    return np.column_stack([-profit, -quality])
+
+PROFITS = np.array([2, 3, 6, 1, 4])
+QUALITIES = np.array([5, 2, 1, 6, 4])
+WEIGHTS = np.array([2, 3, 6, 2, 3])
+CAPACITY = 7
+
+
+def knapsack_fitness(genes: TwoDArray) -> TwoDArray:
+    # Calculate total profit
+    profit_sum = np.sum(PROFITS * genes, axis=1, keepdims=True)
+    # Calculate total quality
+    quality_sum = np.sum(QUALITIES * genes, axis=1, keepdims=True)
+
+    # We want to maximize profit and quality,
+    # so in pymoors we minimize the negative values
+    f1 = -profit_sum
+    f2 = -quality_sum
+    return np.column_stack([f1, f2])
+
+
+def knapsack_constraint(genes: TwoDArray) -> TwoDArray:
+    # Calculate total weight
+    weight_sum = np.sum(WEIGHTS * genes, axis=1, keepdims=True)
+    # Inequality constraint: weight_sum <= capacity
+    return weight_sum - CAPACITY
+
 
 algorithm = Nsga2(
     sampler=RandomSamplingBinary(),
     crossover=SinglePointBinaryCrossover(),
     mutation=BitFlipMutation(gene_mutation_rate=0.5),
     fitness_fn=knapsack_fitness,
+    constraints_fn=knapsack_constraint,
+    duplicates_cleaner=ExactDuplicatesCleaner(),
     n_vars=5,
     population_size=32,
     n_offsprings=32,
-    n_iterations=10,
+    num_iterations=10,
     mutation_rate=0.1,
     crossover_rate=0.9,
     keep_infeasible=False,
