@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
@@ -9,7 +11,22 @@ use crate::{
     },
 };
 
-// Define the NSGA-II
+use moors_macros::algorithm_builder;
+
+/// A no-op cleaner for the “default” case:
+#[derive(Debug)]
+pub struct NoDuplicatesCleaner;
+
+impl PopulationCleaner for NoDuplicatesCleaner {
+    fn remove(
+        &self,
+        population: &PopulationGenes,
+        _reference: Option<&PopulationGenes>,
+    ) -> PopulationGenes {
+        population.clone()
+    }
+}
+
 #[derive(Debug)]
 pub struct Nsga2<S, Cross, Mut, F, G, DC>
 where
@@ -32,13 +49,14 @@ where
     >,
 }
 
+#[algorithm_builder]
 impl<S, Cross, Mut, F, G, DC> Nsga2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
+    F: Fn(&PopulationGenes) -> PopulationFitness + Debug,
+    G: Fn(&PopulationGenes) -> PopulationConstraints + Debug,
     DC: PopulationCleaner,
 {
     #[allow(clippy::too_many_arguments)]

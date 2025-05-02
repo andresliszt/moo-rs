@@ -17,6 +17,8 @@ rayon = "1.10.0"
 ndarray-stats = "0.6.0"
 faer-ext = { version = "0.5.0", features = ["ndarray"] }
 faer = "0.21.9"
+derive_builder = "0.20.2"
+moors_macros = { path = "moors_macros"}
 
 [dev-dependencies]
 criterion = "0.5.1"

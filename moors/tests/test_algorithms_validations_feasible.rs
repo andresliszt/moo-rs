@@ -1,13 +1,11 @@
-// tests/algorithms/test_infeasible.rs
-
-use moors::algorithms::MultiObjectiveAlgorithmError;
+use moors::algorithms::{MultiObjectiveAlgorithmError, Nsga2};
+use moors::duplicates::ExactDuplicatesCleaner;
 use moors::evaluator::EvaluatorError;
+use moors::genetic::{ConstraintsFn, FitnessFn};
 use moors::{
-    algorithms::Nsga2,
-    duplicates::CloseDuplicatesCleaner,
-    genetic::{
-        ConstraintsFn, FitnessFn, PopulationConstraints, PopulationFitness, PopulationGenes,
-    },
+    algorithms::Nsga2Builder,
+    duplicates::NoDuplicatesCleaner,
+    genetic::{NoConstraintsFn, PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{
         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
         sampling::RandomSamplingBinary,
@@ -33,82 +31,68 @@ fn constraints_always_infeasible(genes: &PopulationGenes) -> PopulationConstrain
 
 #[test]
 fn test_keep_infeasible() {
-    let mut alg = Nsga2::new(
-        RandomSamplingBinary::new(),
-        SinglePointBinaryCrossover::new(),
-        BitFlipMutation::new(0.5),
-        None::<CloseDuplicatesCleaner>,    // no duplicates cleaner
-        fitness_binary_biobj as FitnessFn, // fitness function
-        5,                                 // n_vars
-        100,                               // population_size
-        32,                                // n_offsprings
-        20,                                // n_iterations
-        0.1,                               // mutation_rate
-        0.9,                               // crossover_rate
-        true,                              // keep_infeasible
-        false,                             // verbose
-        Some(constraints_always_infeasible as ConstraintsFn), // always‐infeasible constraints
-        None::<f64>,                       // lower_bound
-        None::<f64>,                       // upper_bound
-        None::<u64>,                       // seed
-    )
-    .expect("failed to build NSGA2");
+    let mut algorithm: Nsga2<_, _, _, _, _, NoDuplicatesCleaner> = Nsga2Builder::default()
+        .fitness_fn(fitness_binary_biobj as FitnessFn)
+        .constraints_fn(constraints_always_infeasible as ConstraintsFn)
+        .sampler(RandomSamplingBinary::new())
+        .crossover(SinglePointBinaryCrossover::new())
+        .mutation(BitFlipMutation::new(0.5))
+        .n_vars(5)
+        .n_iterations(100)
+        .population_size(100)
+        .n_offsprings(32)
+        .keep_infeasible(true)
+        .build()
+        .unwrap();
 
-    alg.run()
+    algorithm
+        .run()
         .expect("run should succeed when keep_infeasible = true");
-    assert_eq!(alg.population().len(), 100);
+    assert_eq!(algorithm.population().len(), 100);
 }
-
 #[test]
 fn test_keep_infeasible_out_of_bounds() {
-    let mut alg = Nsga2::new(
-        RandomSamplingBinary::new(),
-        SinglePointBinaryCrossover::new(),
-        BitFlipMutation::new(0.5),
-        None::<CloseDuplicatesCleaner>,
-        fitness_binary_biobj as FitnessFn,
-        5,                     // n_vars
-        100,                   // population_size
-        32,                    // n_offsprings
-        20,                    // n_iterations
-        0.1,                   // mutation_rate
-        0.9,                   // crossover_rate
-        true,                  // keep_infeasible = true
-        false,                 // verbose = false
-        None::<ConstraintsFn>, // no constraints_fn
-        Some(2.0),             // lower_bound = 2.0 (out‐of‐bounds)
-        Some(10.0),            // upper_bound = 10.0
-        None::<u64>,           // seed
-    )
-    .expect("failed to build NSGA2");
+    let mut algorithm: Nsga2<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner> =
+        Nsga2Builder::default()
+            .fitness_fn(fitness_binary_biobj as FitnessFn)
+            .sampler(RandomSamplingBinary::new())
+            .crossover(SinglePointBinaryCrossover::new())
+            .mutation(BitFlipMutation::new(0.5))
+            .n_vars(5)
+            .population_size(100)
+            .n_offsprings(32)
+            .n_iterations(20)
+            .keep_infeasible(true)
+            .lower_bound(2.0)
+            .upper_bound(10.0)
+            .build()
+            .unwrap();
 
-    alg.run()
+    algorithm
+        .run()
         .expect("run should succeed even if genes are out of bounds");
-    assert_eq!(alg.population().len(), 100);
+    assert_eq!(algorithm.population().len(), 100);
 }
 
 #[test]
-fn test_remove_infeasible() {
-    let err = Nsga2::new(
-        RandomSamplingBinary::new(),
-        SinglePointBinaryCrossover::new(),
-        BitFlipMutation::new(0.5),
-        None::<CloseDuplicatesCleaner>,
-        fitness_binary_biobj as FitnessFn,
-        5,                                                    // n_vars
-        100,                                                  // population_size
-        100,                                                  // n_offsprings
-        20,                                                   // n_iterations
-        0.1,                                                  // mutation_rate
-        0.9,                                                  // crossover_rate
-        false,                                                // keep infeasible
-        false,                                                // verbose
-        Some(constraints_always_infeasible as ConstraintsFn), // infeasible constraints
-        None::<f64>,                                          // upper bound
-        None::<f64>,                                          // lower bound
-        Some(1729),
-    )
-    .expect_err("expected no feasible individuals error");
+fn test_keep_infeasible_false() {
+    // This should fail, no feasible is generated ever
+    let err = Nsga2Builder::default()
+        .fitness_fn(fitness_binary_biobj as FitnessFn)
+        .constraints_fn(constraints_always_infeasible as ConstraintsFn)
+        .sampler(RandomSamplingBinary::new())
+        .crossover(SinglePointBinaryCrossover::new())
+        .mutation(BitFlipMutation::new(0.5))
+        .duplicates_cleaner(ExactDuplicatesCleaner::new())
+        .n_vars(5)
+        .population_size(100)
+        .n_offsprings(100)
+        .n_iterations(20)
+        .keep_infeasible(false)
+        .seed(1729)
+        .build()
+        .expect_err("expected no feasible individuals error");
+
     assert!(matches!(
         err,
         MultiObjectiveAlgorithmError::Evaluator(EvaluatorError::NoFeasibleIndividuals)

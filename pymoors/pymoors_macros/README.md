@@ -16,7 +16,7 @@ Added directly as:
 ```toml
 # In Cargo.toml
 [dependencies]
-pymoors_macros = { path = "../pymoors_macros" }
+pymoors_macros = { path = pymoors_macros" }
 
 [features]
 default = []

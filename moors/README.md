@@ -1,1 +1,1 @@
-../README.md
+[Project readme](../README.md)

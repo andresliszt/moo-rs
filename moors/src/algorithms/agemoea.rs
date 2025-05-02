@@ -9,7 +9,10 @@ use crate::{
     },
 };
 
+use moors_macros::algorithm_builder;
+
 // Define the AGEMOEA algorithm
+#[derive(Debug)]
 pub struct AgeMoea<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
@@ -23,6 +26,7 @@ where
         MultiObjectiveAlgorithm<S, RankAndScoringSelection, AgeMoeaSurvival, Cross, Mut, F, G, DC>,
 }
 
+#[algorithm_builder]
 impl<S, Cross, Mut, F, G, DC> AgeMoea<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,

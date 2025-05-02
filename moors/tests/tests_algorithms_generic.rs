@@ -3,9 +3,9 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    algorithms::{AgeMoea, Nsga2, Nsga3, Revea, Rnsga2},
+    algorithms::{AgeMoeaBuilder, Nsga2Builder, Nsga3Builder, ReveaBuilder, Rnsga2Builder},
     duplicates::CloseDuplicatesCleaner,
-    genetic::{ConstraintsFn, FitnessFn, Population, PopulationFitness, PopulationGenes},
+    genetic::{NoConstraintsFn, FitnessFn, Population, PopulationFitness, PopulationGenes},
     operators::{
         crossover::SimulatedBinaryCrossover,
         mutation::GaussianMutation,
@@ -39,13 +39,11 @@ fn assert_small_real_front(pop: &Population) {
     let mut seen = HashSet::new();
     for i in 0..front.len() {
         let g = front.get(i).genes;
-        // near diagonal
         assert!(
             (g[0] - g[1]).abs() < 0.2,
             "point {:?} too far from diagonal",
             g
         );
-        // uniqueness
         let key = (OrderedFloat(g[0]), OrderedFloat(g[1]));
         assert!(
             seen.insert(key),
@@ -57,26 +55,25 @@ fn assert_small_real_front(pop: &Population) {
 
 #[test]
 fn test_nsga2() {
-    let mut algorithm = Nsga2::new(
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(15.0),
-        GaussianMutation::new(0.5, 0.01),
-        Some(CloseDuplicatesCleaner::new(1e-6)),
-        fitness_biobjective as FitnessFn,
-        2,                     // n_vars
-        100,                   // population_size
-        100,                   // n_offsprings
-        100,                   // n_iterations
-        0.1,                   // mutation_rate
-        0.9,                   // crossover_rate
-        false,                 // keep_infeasible
-        false,                 // verbose
-        None::<ConstraintsFn>, // no constraints_fn
-        Some(0.0),             // lower_bound
-        Some(1.0),             // upper_bound
-        Some(42),              // seed
-    )
-    .expect("failed to build NSGA2");
+    let mut algorithm = Nsga2Builder::<_, _, _, _, NoConstraintsFn, _>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.5, 0.01))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective as FitnessFn)
+        .n_vars(2)
+        .population_size(100)
+        .n_offsprings(100)
+        .n_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .seed(42)
+        .build()
+        .expect("failed to build NSGA2");
 
     algorithm.run().expect("NSGA2 run failed");
     assert_small_real_front(&algorithm.population());
@@ -84,26 +81,25 @@ fn test_nsga2() {
 
 #[test]
 fn test_agemoea() {
-    let mut algorithm = AgeMoea::new(
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(15.0),
-        GaussianMutation::new(0.5, 0.01),
-        Some(CloseDuplicatesCleaner::new(1e-6)),
-        fitness_biobjective as FitnessFn,
-        2,                     // n_vars
-        100,                   // population_size
-        100,                   // n_offsprings
-        100,                   // n_iterations
-        0.1,                   // mutation_rate
-        0.9,                   // crossover_rate
-        false,                 // keep_infeasible
-        false,                 // verbose
-        None::<ConstraintsFn>, // no constraints_fn
-        Some(0.0),             // lower_bound
-        Some(1.0),             // upper_bound
-        Some(1729),            // seed
-    )
-    .expect("failed to build AgeMoea");
+    let mut algorithm = AgeMoeaBuilder::<_, _, _, _, NoConstraintsFn, _>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.5, 0.01))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective as FitnessFn)
+        .n_vars(2)
+        .population_size(100)
+        .n_offsprings(100)
+        .n_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .seed(1729)
+        .build()
+        .expect("failed to build AgeMoea");
 
     algorithm.run().expect("AgeMoea run failed");
     assert_small_real_front(&algorithm.population());
@@ -112,28 +108,27 @@ fn test_agemoea() {
 #[test]
 fn test_nsga3() {
     let reference_points = DanAndDenisReferencePoints::new(100, 2);
-    let reference_points_nsga3 = Nsga3ReferencePoints::new(reference_points.generate(), false);
-    let mut algorithm = Nsga3::new(
-        reference_points_nsga3,
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(15.0),
-        GaussianMutation::new(0.5, 0.01),
-        Some(CloseDuplicatesCleaner::new(1e-6)),
-        fitness_biobjective as FitnessFn,
-        2,                     // n_vars
-        100,                   // population_size
-        100,                   // n_offsprings
-        100,                   // n_iterations
-        0.1,                   // mutation_rate
-        0.9,                   // crossover_rate
-        false,                 // keep_infeasible
-        false,                 // verbose
-        None::<ConstraintsFn>, // no constraints_fn
-        Some(0.0),             // lower_bound
-        Some(1.0),             // upper_bound
-        Some(42),              // seed
-    )
-    .expect("failed to build NSGA3");
+    let rp = Nsga3ReferencePoints::new(reference_points.generate(), false);
+    let mut algorithm = Nsga3Builder::<_, _, _, _, NoConstraintsFn, _>::default()
+        .reference_points(rp)
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.5, 0.01))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective as FitnessFn)
+        .n_vars(2)
+        .population_size(100)
+        .n_offsprings(100)
+        .n_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .seed(42)
+        .build()
+        .expect("failed to build NSGA3");
 
     algorithm.run().expect("NSGA3 run failed");
     assert_small_real_front(&algorithm.population());
@@ -142,28 +137,27 @@ fn test_nsga3() {
 #[test]
 fn test_rnsga2() {
     let reference_points: Array2<f64> = array![[0.8, 0.8], [0.9, 0.9]];
-    let mut algorithm = Rnsga2::new(
-        reference_points,
-        0.001, // epsilon
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(15.0),
-        GaussianMutation::new(0.5, 0.01),
-        Some(CloseDuplicatesCleaner::new(1e-6)),
-        fitness_biobjective as FitnessFn,
-        2,                     // n_vars
-        100,                   // population_size
-        100,                   // n_offsprings
-        100,                   // n_iterations
-        0.1,                   // mutation_rate
-        0.9,                   // crossover_rate
-        false,                 // keep_infeasible
-        false,                 // verbose
-        None::<ConstraintsFn>, // no constraints_fn
-        Some(0.0),             // lower_bound
-        Some(1.0),             // upper_bound
-        Some(42),              // seed
-    )
-    .expect("failed to build Rnsga2");
+    let mut algorithm = Rnsga2Builder::<_, _, _, _, NoConstraintsFn, _>::default()
+        .reference_points(reference_points)
+        .epsilon(0.001)
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.5, 0.01))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective as FitnessFn)
+        .n_vars(2)
+        .population_size(100)
+        .n_offsprings(100)
+        .n_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .seed(42)
+        .build()
+        .expect("failed to build RNSGA2");
 
     algorithm.run().expect("RNSGA2 run failed");
     assert_small_real_front(&algorithm.population());
@@ -172,29 +166,27 @@ fn test_rnsga2() {
 #[test]
 fn test_revea() {
     let reference_points = DanAndDenisReferencePoints::new(100, 2).generate();
-    let mut algorithm = Revea::new(
-        reference_points,
-        2.5, // alpha
-        0.2, // frequency
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(15.0),
-        GaussianMutation::new(0.5, 0.01),
-        Some(CloseDuplicatesCleaner::new(1e-6)),
-        fitness_biobjective as FitnessFn,
-        2,                     // n_vars
-        100,                   // population_size
-        100,                   // n_offsprings
-        100,                   // n_iterations
-        0.1,                   // mutation_rate
-        0.9,                   // crossover_rate
-        false,                 // keep_infeasible
-        false,                 // verbose
-        None::<ConstraintsFn>, // no constraints_fn
-        Some(0.0),             // lower_bound
-        Some(1.0),             // upper_bound
-        None,                  // seed
-    )
-    .expect("failed to build Revea");
+    let mut algorithm = ReveaBuilder::<_, _, _, _, NoConstraintsFn, _>::default()
+        .reference_points(reference_points)
+        .alpha(2.5)
+        .frequency(0.2)
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.5, 0.01))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective as FitnessFn)
+        .n_vars(2)
+        .population_size(100)
+        .n_offsprings(100)
+        .n_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .build()
+        .expect("failed to build REVEA");
 
     algorithm.run().expect("Revea run failed");
     assert_small_real_front(&algorithm.population());

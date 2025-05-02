@@ -11,7 +11,10 @@ use crate::{
     },
 };
 
+use moors_macros::algorithm_builder;
+
 // Define the RNSGA2
+#[derive(Debug)]
 pub struct Rnsga2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
@@ -33,6 +36,7 @@ where
     >,
 }
 
+#[algorithm_builder]
 impl<S, Cross, Mut, F, G, DC> Rnsga2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,

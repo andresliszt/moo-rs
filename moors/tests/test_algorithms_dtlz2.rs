@@ -1,7 +1,9 @@
+use ndarray::{Axis, stack};
+
 use moors::{
-    algorithms::{Nsga3, Revea},
+    algorithms::{Nsga3Builder, ReveaBuilder},
     duplicates::CloseDuplicatesCleaner,
-    genetic::{ConstraintsFn, FitnessFn, Population, PopulationFitness, PopulationGenes},
+    genetic::{NoConstraintsFn, FitnessFn, Population, PopulationFitness, PopulationGenes},
     operators::{
         crossover::SimulatedBinaryCrossover,
         mutation::GaussianMutation,
@@ -12,7 +14,6 @@ use moors::{
         },
     },
 };
-use ndarray::{Axis, stack};
 
 /// DTLZ2 for 3 objectives (m = 3) with k = 0 (so n_vars = m−1 = 2):
 /// f1 = cos(π/2 ⋅ x0) ⋅ cos(π/2 ⋅ x1)
@@ -39,7 +40,6 @@ fn fitness_dtlz2_3obj(pop: &PopulationGenes) -> PopulationFitness {
 /// and each objective vector must lie on the unit sphere f1² + f2² + f3² = 1
 fn assert_full_unit_sphere(pop: &Population) {
     let front = pop.best();
-    // full front
     assert_eq!(
         front.len(),
         pop.len(),
@@ -47,7 +47,6 @@ fn assert_full_unit_sphere(pop: &Population) {
         front.len(),
         pop.len()
     );
-    // each point on unit sphere
     for i in 0..front.len() {
         let fit = front.get(i).fitness;
         let norm2 = fit[0] * fit[0] + fit[1] * fit[1] + fit[2] * fit[2];
@@ -66,32 +65,31 @@ fn test_nsga3_dtlz2_three_objectives() {
     let rp = DanAndDenisReferencePoints::new(200, 3).generate();
     let nsga3_rp = Nsga3ReferencePoints::new(rp, false);
 
-    // 2) instantiate NSGA-III
-    let mut algo = Nsga3::new(
-        nsga3_rp,
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(20.0),
-        GaussianMutation::new(0.05, 0.1),
-        Some(CloseDuplicatesCleaner::new(1e-6)),
-        fitness_dtlz2_3obj as FitnessFn,
-        2,                     // n_vars = 2
-        100,                   // population_size
-        100,                   // n_offsprings
-        200,                   // n_iterations
-        0.05,                  // mutation_rate
-        0.9,                   // crossover_rate
-        false,                 // keep_infeasible
-        false,                 // verbose
-        None::<ConstraintsFn>, // no constraints_fn
-        Some(0.0),
-        Some(1.0),
-        Some(123),
-    )
-    .expect("failed to build NSGA3");
+    // 2) instantiate via builder
+    let mut algorithm = Nsga3Builder::<_, _, _, _, NoConstraintsFn, _>::default()
+        .reference_points(nsga3_rp)
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(20.0))
+        .mutation(GaussianMutation::new(0.05, 0.1))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
+        .n_vars(2)
+        .population_size(100)
+        .n_offsprings(100)
+        .n_iterations(200)
+        .mutation_rate(0.05)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .seed(123)
+        .build()
+        .expect("failed to build NSGA3");
 
     // 3) run & assert
-    algo.run().expect("NSGA3 run failed");
-    assert_full_unit_sphere(&algo.population());
+    algorithm.run().expect("NSGA3 run failed");
+    assert_full_unit_sphere(&algorithm.population());
 }
 
 #[test]
@@ -99,32 +97,30 @@ fn test_revea_dtlz2_three_objectives() {
     // 1) build 3-objective reference points
     let rp = DanAndDenisReferencePoints::new(200, 3).generate();
 
-    // 2) instantiate REVEA
-    let mut algo = Revea::new(
-        rp,
-        2.5, // alpha
-        0.2, // update frequency
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(20.0),
-        GaussianMutation::new(0.05, 0.1),
-        Some(CloseDuplicatesCleaner::new(1e-6)),
-        fitness_dtlz2_3obj as FitnessFn,
-        2,                     // n_vars = 2
-        100,                   // population_size
-        100,                   // n_offsprings
-        200,                   // n_iterations
-        0.05,                  // mutation_rate
-        0.9,                   // crossover_rate
-        false,                 // keep_infeasible
-        false,                 // verbose
-        None::<ConstraintsFn>, // no constraints_fn
-        Some(0.0),
-        Some(1.0),
-        Some(123),
-    )
-    .expect("failed to build REVEA");
+    // 2) instantiate via builder
+    let mut algorithm = ReveaBuilder::<_, _, _, _, NoConstraintsFn, _>::default()
+        .reference_points(rp)
+        .alpha(2.5)
+        .frequency(0.2)
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(20.0))
+        .mutation(GaussianMutation::new(0.05, 0.1))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
+        .n_vars(2)
+        .population_size(100)
+        .n_offsprings(100)
+        .n_iterations(200)
+        .mutation_rate(0.05)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .build()
+        .expect("failed to build REVEA");
 
     // 3) run & assert
-    algo.run().expect("REVEA run failed");
-    assert_full_unit_sphere(&algo.population());
+    algorithm.run().expect("REVEA run failed");
+    assert_full_unit_sphere(&algorithm.population());
 }
