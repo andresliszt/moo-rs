@@ -7,6 +7,8 @@ on:
 
 jobs:
   build:
+    # only proceed if this is a "pymoors-…” release
+    if: startsWith(github.event.release.tag_name, 'pymoors-')
     name: Build on ${{ matrix.os }} (${{ matrix.target }} - ${{ matrix.interpreter || 'all' }}${{ matrix.os == 'linux' && format(' - {0}', matrix.manylinux == 'auto' && 'manylinux' || matrix.manylinux) || '' }})
     strategy:
       fail-fast: false
