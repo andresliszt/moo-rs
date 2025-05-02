@@ -27,7 +27,6 @@ impl PopulationCleaner for NoDuplicatesCleaner {
     }
 }
 
-#[derive(Debug)]
 pub struct Nsga2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
@@ -55,8 +54,8 @@ where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness + Debug,
-    G: Fn(&PopulationGenes) -> PopulationConstraints + Debug,
+    F: Fn(&PopulationGenes) -> PopulationFitness,
+    G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
     #[allow(clippy::too_many_arguments)]

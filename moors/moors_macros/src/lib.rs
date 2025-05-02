@@ -141,7 +141,6 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     /* ── final builder implementation ────────────────────────────────── */
     let builder_code = quote! {
-        #[derive(Debug)]
         pub struct #builder_ident #impl_generics #where_clause {
             #( #builder_fields ),*
         }
