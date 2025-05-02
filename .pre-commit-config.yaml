@@ -18,6 +18,12 @@ repos:
         language: system
         pass_filenames: false
 
+      - id: lint-rust-moors
+        name: Lint Python (pymoors)
+        entry: make moors-lint
+        language: system
+        pass_filenames: false
+
       - id: typecheck-python-pymoors
         name: Typecheck Python (pymoors)
         entry: make pymoors-pyright
