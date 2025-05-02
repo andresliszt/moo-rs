@@ -1,7 +1,7 @@
 use moors::{
+    algorithms::{MultiObjectiveAlgorithmError, Nsga2, Nsga2Builder},
+    duplicates::{ExactDuplicatesCleaner, NoDuplicatesCleaner},
     evaluator::EvaluatorError,
-    algorithms::{Nsga2Builder, MultiObjectiveAlgorithmError, Nsga2},
-    duplicates::{NoDuplicatesCleaner, ExactDuplicatesCleaner},
     genetic::{NoConstraintsFn, PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{
         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,

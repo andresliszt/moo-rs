@@ -1,16 +1,15 @@
 // tests/algorithms/test_nsga2_params.rs
 
-use rstest::rstest;
 use moors::{
     algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
+    duplicates::NoDuplicatesCleaner,
     genetic::{NoConstraintsFn, PopulationFitness, PopulationGenes},
     operators::{
-        crossover::SimulatedBinaryCrossover,
-        mutation::GaussianMutation,
+        crossover::SimulatedBinaryCrossover, mutation::GaussianMutation,
         sampling::RandomSamplingFloat,
     },
-    duplicates::NoDuplicatesCleaner,
 };
+use rstest::rstest;
 
 /// A trivial fitness function that just clones the genes matrix.
 fn dummy_fitness(genes: &PopulationGenes) -> PopulationFitness {
@@ -30,7 +29,7 @@ fn test_invalid_mutation_rate(#[case] invalid: f64) {
         .population_size(100)
         .n_offsprings(50)
         .n_iterations(50)
-        .mutation_rate(invalid)  // ← invalid here
+        .mutation_rate(invalid) // ← invalid here
         .crossover_rate(0.9)
         .build()
     {
@@ -65,7 +64,7 @@ fn test_invalid_crossover_rate(#[case] invalid: f64) {
         .n_offsprings(50)
         .n_iterations(50)
         .mutation_rate(0.1)
-        .crossover_rate(invalid)  // ← invalid here
+        .crossover_rate(invalid) // ← invalid here
         .build()
     {
         Ok(_) => panic!("Expected an error for invalid crossover_rate"),
@@ -93,7 +92,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
-        .n_vars(0)                      // ← invalid
+        .n_vars(0) // ← invalid
         .population_size(100)
         .n_offsprings(50)
         .n_iterations(50)
@@ -117,7 +116,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
         .n_vars(10)
-        .population_size(0)             // ← invalid
+        .population_size(0) // ← invalid
         .n_offsprings(50)
         .n_iterations(50)
         .mutation_rate(0.1)
@@ -141,7 +140,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .n_vars(10)
         .population_size(100)
-        .n_offsprings(0)                // ← invalid
+        .n_offsprings(0) // ← invalid
         .n_iterations(50)
         .mutation_rate(0.1)
         .crossover_rate(0.9)
@@ -165,7 +164,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .n_vars(10)
         .population_size(100)
         .n_offsprings(50)
-        .n_iterations(0)                // ← invalid
+        .n_iterations(0) // ← invalid
         .mutation_rate(0.1)
         .crossover_rate(0.9)
         .build()
@@ -195,8 +194,8 @@ fn test_invalid_bounds(#[case] lower: f64, #[case] upper: f64) {
         .n_iterations(50)
         .mutation_rate(0.1)
         .crossover_rate(0.9)
-        .lower_bound(lower)           // ← invalid lower
-        .upper_bound(upper)           // ← invalid upper
+        .lower_bound(lower) // ← invalid lower
+        .upper_bound(upper) // ← invalid upper
         .build()
     {
         Ok(_) => panic!("Expected error for invalid bounds"),

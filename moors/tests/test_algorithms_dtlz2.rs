@@ -3,7 +3,7 @@ use ndarray::{Axis, stack};
 use moors::{
     algorithms::{Nsga3Builder, ReveaBuilder},
     duplicates::CloseDuplicatesCleaner,
-    genetic::{NoConstraintsFn, FitnessFn, Population, PopulationFitness, PopulationGenes},
+    genetic::{FitnessFn, NoConstraintsFn, Population, PopulationFitness, PopulationGenes},
     operators::{
         crossover::SimulatedBinaryCrossover,
         mutation::GaussianMutation,
