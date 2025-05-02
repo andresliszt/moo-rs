@@ -225,4 +225,3 @@ Contributions welcome! Please read the [contribution guide](https://andresliszt.
 ## License
 
 This project is licensed under the MIT License.
-```
