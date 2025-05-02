@@ -119,9 +119,9 @@ fn validate_bounds(
 pub struct AlgorithmContext {
     pub n_vars: usize,
     pub population_size: usize,
-    pub n_offsprings: usize,
+    pub num_offsprings: usize,
     pub n_objectives: usize,
-    pub n_iterations: usize,
+    pub num_iterations: usize,
     pub current_iteration: usize,
     pub n_constraints: Option<usize>,
     pub upper_bound: Option<f64>,
@@ -132,9 +132,9 @@ impl AlgorithmContext {
     pub fn new(
         n_vars: usize,
         population_size: usize,
-        n_offsprings: usize,
+        num_offsprings: usize,
         n_objectives: usize,
-        n_iterations: usize,
+        num_iterations: usize,
         n_constraints: Option<usize>,
         upper_bound: Option<f64>,
         lower_bound: Option<f64>,
@@ -143,9 +143,9 @@ impl AlgorithmContext {
         Self {
             n_vars,
             population_size,
-            n_offsprings,
+            num_offsprings,
             n_objectives,
-            n_iterations,
+            num_iterations,
             current_iteration,
             n_constraints,
             upper_bound,
@@ -202,8 +202,8 @@ where
         fitness_fn: F,
         n_vars: usize,
         population_size: usize,
-        n_offsprings: usize,
-        n_iterations: usize,
+        num_offsprings: usize,
+        num_iterations: usize,
         mutation_rate: f64,
         crossover_rate: f64,
         keep_infeasible: bool,
@@ -221,8 +221,8 @@ where
         // Validate positive values
         validate_positive(n_vars, "Number of variables")?;
         validate_positive(population_size, "Population size")?;
-        validate_positive(n_offsprings, "Number of offsprings")?;
-        validate_positive(n_iterations, "Number of iterations")?;
+        validate_positive(num_offsprings, "Number of offsprings")?;
+        validate_positive(num_iterations, "Number of iterations")?;
 
         // Validate bounds
         validate_bounds(lower_bound, upper_bound)?;
@@ -262,9 +262,9 @@ where
         let context: AlgorithmContext = AlgorithmContext::new(
             n_vars,
             population_size,
-            n_offsprings,
+            num_offsprings,
             population.fitness.ncols(),
-            n_iterations,
+            num_iterations,
             population.constraints.as_ref().map(|c| c.ncols()),
             upper_bound,
             lower_bound,
@@ -288,7 +288,7 @@ where
             .evolve
             .evolve(
                 &self.population,
-                self.context.n_offsprings,
+                self.context.num_offsprings,
                 200,
                 &mut self.rng,
             )
@@ -324,7 +324,7 @@ where
     }
 
     pub fn run(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
-        for current_iter in 0..self.context.n_iterations {
+        for current_iter in 0..self.context.num_iterations {
             match self.next() {
                 Ok(()) => {
                     if self.verbose {

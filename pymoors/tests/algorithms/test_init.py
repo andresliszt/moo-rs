@@ -34,8 +34,8 @@ def common_kwargs():
         "fitness_fn": fitness,
         "n_vars": 3,  # We have 2 variables: x,y
         "population_size": 100,
-        "n_offsprings": 10,
-        "n_iterations": 10,
+        "num_offsprings": 10,
+        "num_iterations": 10,
         "mutation_rate": 0.1,
         "crossover_rate": 0.9,
         "lower_bound": 0,

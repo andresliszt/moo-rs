@@ -127,7 +127,7 @@ where
         }
     }
 
-    /// Generates up to `n_offsprings` unique offspring in multiple iterations (up to `max_iter`).
+    /// Generates up to `num_offsprings` unique offspring in multiple iterations (up to `max_iter`).
     ///
     /// The logic is as follows:
     /// 1) Accumulate offspring rows in a Vec<Vec<f64>>.
@@ -140,17 +140,17 @@ where
     pub fn evolve(
         &self,
         population: &Population,
-        n_offsprings: usize,
+        num_offsprings: usize,
         max_iter: usize,
         rng: &mut dyn RandomGenerator,
     ) -> Result<PopulationGenes, EvolveError> {
         // Accumulate offspring rows in a Vec<Vec<f64>>
-        let mut all_offsprings: Vec<Vec<f64>> = Vec::with_capacity(n_offsprings);
+        let mut all_offsprings: Vec<Vec<f64>> = Vec::with_capacity(num_offsprings);
         let num_genes = population.genes.ncols();
         let mut iterations = 0;
 
-        while all_offsprings.len() < n_offsprings && iterations < max_iter {
-            let remaining = n_offsprings - all_offsprings.len();
+        while all_offsprings.len() < num_offsprings && iterations < max_iter {
+            let remaining = num_offsprings - all_offsprings.len();
             // NOTE: Currently, pymoors implements 2-parent crossover producing 2 children.
             let crossover_needed = remaining / 2 + 1;
             let (parents_a, parents_b) = self.selection.operate(population, crossover_needed, rng);
@@ -172,7 +172,7 @@ where
             }
             // Append the new unique offspring to the accumulator.
             for row in new_offsprings.outer_iter() {
-                if all_offsprings.len() >= n_offsprings {
+                if all_offsprings.len() >= num_offsprings {
                     break;
                 }
                 all_offsprings.push(row.to_vec());
@@ -184,7 +184,7 @@ where
             return Err(EvolveError::EmptyMatingResult {
                 message: "No offspring were generated.".to_string(),
                 current_offspring_count: 0,
-                required_offsprings: n_offsprings,
+                required_offsprings: num_offsprings,
             });
         }
 
@@ -195,11 +195,11 @@ where
             PopulationGenes::from_shape_vec((all_offsprings_len, num_genes), offspring_data)
                 .expect("Failed to create offspring array from the accumulated data");
 
-        if offspring_array.nrows() < n_offsprings {
+        if offspring_array.nrows() < num_offsprings {
             println!(
                 "Warning: Only {} offspring were generated out of the desired {}.",
                 offspring_array.nrows(),
-                n_offsprings
+                num_offsprings
             );
         }
 

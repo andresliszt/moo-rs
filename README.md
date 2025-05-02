@@ -103,8 +103,8 @@ let mut algorithm = Nsga2Builder::default()
     .population_size(100)
     .crossover_rate(0.9)
     .mutation_rate(0.1)
-    .n_offsprings(32)
-    .n_iterations(2)
+    .num_offsprings(32)
+    .num_iterations(2)
     .build()
     .unwrap();
 
@@ -173,7 +173,7 @@ algorithm = Nsga2(
     duplicates_cleaner=ExactDuplicatesCleaner(),
     n_vars=5,
     population_size=32,
-    n_offsprings=32,
+    num_offsprings=32,
     num_iterations=10,
     mutation_rate=0.1,
     crossover_rate=0.9,
