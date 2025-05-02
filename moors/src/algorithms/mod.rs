@@ -171,12 +171,12 @@ where
     DC: PopulationCleaner,
 {
     pub population: Population,
-    pub survivor: Sur,
-    pub evolve: Evolve<Sel, Cross, Mut, DC>,
-    pub evaluator: Evaluator<F, G>,
-    pub context: AlgorithmContext,
-    pub verbose: bool,
-    pub rng: MOORandomGenerator,
+    survivor: Sur,
+    evolve: Evolve<Sel, Cross, Mut, DC>,
+    evaluator: Evaluator<F, G>,
+    context: AlgorithmContext,
+    verbose: bool,
+    rng: MOORandomGenerator,
     phantom: PhantomData<S>,
 }
 
