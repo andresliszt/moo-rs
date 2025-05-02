@@ -9,6 +9,8 @@ use crate::{
     },
 };
 
+use moors_macros::algorithm_builder;
+
 // Define the NSGA-III algorithm
 pub struct Nsga3<S, Cross, Mut, F, G, DC>
 where
@@ -31,6 +33,7 @@ where
     >,
 }
 
+#[algorithm_builder]
 impl<S, Cross, Mut, F, G, DC> Nsga3<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,

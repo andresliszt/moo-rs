@@ -3,7 +3,7 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    algorithms::Nsga2,
+    algorithms::Nsga2Builder,
     duplicates::ExactDuplicatesCleaner,
     genetic::{
         ConstraintsFn, FitnessFn, PopulationConstraints, PopulationFitness, PopulationGenes,
@@ -45,26 +45,23 @@ fn constraints_knapsack(population_genes: &PopulationGenes) -> PopulationConstra
 #[test]
 fn test_knapsack_nsga2_small_binary() {
     // build and run the NSGA-II algorithm
-    let mut algorithm = Nsga2::new(
-        RandomSamplingBinary::new(),
-        SinglePointBinaryCrossover::new(),
-        BitFlipMutation::new(0.5),
-        Some(ExactDuplicatesCleaner::new()),
-        fitness_knapsack as FitnessFn,
-        5,     // n_vars
-        100,   // population_size
-        32,    // n_offsprings
-        2,     // n_iterations
-        0.1,   // mutation_rate
-        0.9,   // crossover_rate
-        false, // keep_infeasible
-        false, // verbose
-        Some(constraints_knapsack as ConstraintsFn),
-        Some(0.0), // lower_bound
-        Some(1.0), // upper_bound
-        Some(42),  // seed
-    )
-    .expect("failed to build NSGA2");
+    let mut algorithm = Nsga2Builder::default()
+        .fitness_fn(fitness_knapsack as FitnessFn)
+        .constraints_fn(constraints_knapsack as ConstraintsFn)
+        .sampler(RandomSamplingBinary::new())
+        .crossover(SinglePointBinaryCrossover::new())
+        .mutation(BitFlipMutation::new(0.5))
+        .duplicates_cleaner(ExactDuplicatesCleaner::new())
+        .n_vars(5)
+        .population_size(100)
+        .n_offsprings(32)
+        .n_iterations(2)
+        .crossover_rate(0.9)
+        .mutation_rate(0.1)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .build()
+        .unwrap();
 
     algorithm.run().expect("NSGA2 run failed");
     let pareto = algorithm.population().best();

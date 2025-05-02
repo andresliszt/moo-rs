@@ -1,8 +1,8 @@
 [package]
-name = "pymoors_macros"
+name = "moors_macros"
 edition = "2024"
 authors = ["Andrés Sandoval Abarca <andres.sndbrca@gmail.com>"]
-description = "Procedural macros for pymoors project"
+description = "Procedural macros for moors project"
 license = "MIT"
 
 [lib]
@@ -10,5 +10,5 @@ proc-macro = true
 
 [dependencies]
 quote = "1.0.38"
-syn = "2.0.0"
 proc-macro2 = "1.0.94"
+syn = { version = "2", features = ["full", "extra-traits"] }

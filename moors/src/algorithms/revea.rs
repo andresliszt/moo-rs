@@ -11,6 +11,8 @@ use crate::{
     },
 };
 
+use moors_macros::algorithm_builder;
+
 // Define the REVEA
 pub struct Revea<S, Cross, Mut, F, G, DC>
 where
@@ -33,6 +35,7 @@ where
     >,
 }
 
+#[algorithm_builder]
 impl<S, Cross, Mut, F, G, DC> Revea<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,

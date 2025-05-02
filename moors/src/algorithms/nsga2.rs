@@ -9,8 +9,8 @@ use crate::{
     },
 };
 
-// Define the NSGA-II
-#[derive(Debug)]
+use moors_macros::algorithm_builder;
+
 pub struct Nsga2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
@@ -32,6 +32,7 @@ where
     >,
 }
 
+#[algorithm_builder]
 impl<S, Cross, Mut, F, G, DC> Nsga2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,

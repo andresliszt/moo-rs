@@ -21,12 +21,18 @@ pub trait PopulationCleaner: Debug {
     ) -> PopulationGenes;
 }
 
-impl PopulationCleaner for () {
+/// A no-op cleaner for the “default” case:
+#[derive(Debug, Default)]
+pub struct NoDuplicatesCleaner;
+
+impl PopulationCleaner for NoDuplicatesCleaner {
     fn remove(
         &self,
-        population: &PopulationGenes,
+        _population: &PopulationGenes,
         _reference: Option<&PopulationGenes>,
     ) -> PopulationGenes {
-        population.to_owned()
+        unimplemented!(
+            "This is just for annotation when the duplicates cleaner is not set. See moors_macros::algorithm_builder"
+        )
     }
 }

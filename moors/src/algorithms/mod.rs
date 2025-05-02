@@ -1,10 +1,7 @@
-use std::marker::PhantomData;
+use rand::{SeedableRng, rngs::StdRng};
+use std::{error::Error, fmt, marker::PhantomData};
 
 use ndarray::{Axis, concatenate};
-use rand::SeedableRng;
-use rand::rngs::StdRng;
-use std::error::Error;
-use std::fmt;
 
 use crate::{
     duplicates::PopulationCleaner,
@@ -38,11 +35,11 @@ mod nsga3;
 mod revea;
 mod rnsga2;
 
-pub use agemoea::AgeMoea;
-pub use nsga2::Nsga2;
-pub use nsga3::Nsga3;
-pub use revea::Revea;
-pub use rnsga2::Rnsga2;
+pub use agemoea::{AgeMoea, AgeMoeaBuilder};
+pub use nsga2::{Nsga2, Nsga2Builder};
+pub use nsga3::{Nsga3, Nsga3Builder};
+pub use revea::{Revea, ReveaBuilder};
+pub use rnsga2::{Rnsga2, Rnsga2Builder};
 
 #[derive(Debug)]
 pub enum MultiObjectiveAlgorithmError {
@@ -118,7 +115,7 @@ fn validate_bounds(
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AlgorithmContext {
     pub n_vars: usize,
     pub population_size: usize,

@@ -1,224 +1,216 @@
 // tests/algorithms/test_nsga2_params.rs
 
 use moors::{
-    algorithms::MultiObjectiveAlgorithmError,
-    algorithms::Nsga2,
-    genetic::{ConstraintsFn, FitnessFn, PopulationFitness, PopulationGenes},
+    algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
+    duplicates::NoDuplicatesCleaner,
+    genetic::{NoConstraintsFn, PopulationFitness, PopulationGenes},
     operators::{
         crossover::SimulatedBinaryCrossover, mutation::GaussianMutation,
         sampling::RandomSamplingFloat,
     },
 };
+use rstest::rstest;
 
 /// A trivial fitness function that just clones the genes matrix.
 fn dummy_fitness(genes: &PopulationGenes) -> PopulationFitness {
     genes.clone()
 }
 
-#[test]
-fn test_invalid_mutation_rate() {
-    for &invalid in &[-0.1, 1.5] {
-        let err = Nsga2::new(
-            RandomSamplingFloat::new(0.0, 1.0),
-            SimulatedBinaryCrossover::new(2.0),
-            GaussianMutation::new(0.1, 0.05),
-            None::<()>,
-            dummy_fitness as FitnessFn,
-            10,
-            100,
-            50,
-            50,
-            invalid, // invalid mutation_rate
-            0.9,
-            false,
-            false,
-            None::<ConstraintsFn>,
-            Some(0.0),
-            Some(1.0),
-            Some(42),
-        )
-        .expect_err("Expected an error for invalid mutation_rate");
-        assert!(matches!(
-            err,
-            MultiObjectiveAlgorithmError::InvalidParameter(_)
-        ));
-        let msg = format!("{}", err);
-        assert!(
-            msg.contains("Mutation rate must be between 0 and 1"),
-            "Unexpected message: {}",
-            msg
-        );
-    }
+#[rstest]
+#[case(-0.1)]
+#[case(1.5)]
+fn test_invalid_mutation_rate(#[case] invalid: f64) {
+    let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(2.0))
+        .mutation(GaussianMutation::new(0.1, 0.05))
+        .fitness_fn(dummy_fitness)
+        .n_vars(10)
+        .population_size(100)
+        .n_offsprings(50)
+        .n_iterations(50)
+        .mutation_rate(invalid) // ← invalid here
+        .crossover_rate(0.9)
+        .build()
+    {
+        Ok(_) => panic!("Expected an error for invalid mutation_rate"),
+        Err(e) => e,
+    };
+
+    assert!(
+        matches!(err, MultiObjectiveAlgorithmError::InvalidParameter(_)),
+        "got wrong error: {:?}",
+        err
+    );
+    let msg = format!("{}", err);
+    assert!(
+        msg.contains("Mutation rate must be between 0 and 1"),
+        "Unexpected message: {}",
+        msg
+    );
 }
 
-#[test]
-fn test_invalid_crossover_rate() {
-    for &invalid in &[-0.5, 2.0] {
-        let err = Nsga2::new(
-            RandomSamplingFloat::new(0.0, 1.0),
-            SimulatedBinaryCrossover::new(2.0),
-            GaussianMutation::new(0.1, 0.05),
-            None::<()>,
-            dummy_fitness as FitnessFn,
-            10,
-            100,
-            50,
-            50,
-            0.1,
-            invalid, // invalid crossover_rate
-            false,
-            false,
-            None::<ConstraintsFn>,
-            Some(0.0),
-            Some(1.0),
-            Some(42),
-        )
-        .expect_err("Expected an error for invalid crossover_rate");
-        assert!(matches!(
-            err,
-            MultiObjectiveAlgorithmError::InvalidParameter(_)
-        ));
-        let msg = format!("{}", err);
-        assert!(
-            msg.contains("Crossover rate must be between 0 and 1"),
-            "Unexpected message: {}",
-            msg
-        );
-    }
+#[rstest]
+#[case(-0.5)]
+#[case(2.0)]
+fn test_invalid_crossover_rate(#[case] invalid: f64) {
+    let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(2.0))
+        .mutation(GaussianMutation::new(0.1, 0.05))
+        .fitness_fn(dummy_fitness)
+        .n_vars(10)
+        .population_size(100)
+        .n_offsprings(50)
+        .n_iterations(50)
+        .mutation_rate(0.1)
+        .crossover_rate(invalid) // ← invalid here
+        .build()
+    {
+        Ok(_) => panic!("Expected an error for invalid crossover_rate"),
+        Err(e) => e,
+    };
+
+    assert!(
+        matches!(err, MultiObjectiveAlgorithmError::InvalidParameter(_)),
+        "got wrong error: {:?}",
+        err
+    );
+    let msg = format!("{}", err);
+    assert!(
+        msg.contains("Crossover rate must be between 0 and 1"),
+        "Unexpected message: {}",
+        msg
+    );
 }
 
 #[test]
 fn test_invalid_n_vars_population_offsprings_iterations() {
     // n_vars = 0
-    let err = Nsga2::new(
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(2.0),
-        GaussianMutation::new(0.1, 0.05),
-        None::<()>,
-        dummy_fitness as FitnessFn,
-        0, // invalid n_vars
-        100,
-        50,
-        50,
-        0.1,
-        0.9,
-        false,
-        false,
-        None::<ConstraintsFn>,
-        Some(0.0),
-        Some(1.0),
-        Some(42),
-    )
-    .expect_err("Expected error for n_vars = 0");
-    let msg = format!("{}", err);
-    assert!(msg.contains("Number of variables must be greater than 0"));
+    let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(2.0))
+        .mutation(GaussianMutation::new(0.1, 0.05))
+        .fitness_fn(dummy_fitness)
+        .n_vars(0) // ← invalid
+        .population_size(100)
+        .n_offsprings(50)
+        .n_iterations(50)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .build()
+    {
+        Ok(_) => panic!("Expected error for n_vars = 0"),
+        Err(e) => e,
+    };
+    assert!(
+        format!("{}", err).contains("Number of variables must be greater than 0"),
+        "Unexpected message: {}",
+        err
+    );
 
     // population_size = 0
-    let err = Nsga2::new(
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(2.0),
-        GaussianMutation::new(0.1, 0.05),
-        None::<()>,
-        dummy_fitness as FitnessFn,
-        10,
-        0, // invalid population_size
-        50,
-        50,
-        0.1,
-        0.9,
-        false,
-        false,
-        None::<ConstraintsFn>,
-        Some(0.0),
-        Some(1.0),
-        Some(42),
-    )
-    .expect_err("Expected error for population_size = 0");
-    let msg = format!("{}", err);
-    assert!(msg.contains("Population size must be greater than 0"));
+    let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(2.0))
+        .mutation(GaussianMutation::new(0.1, 0.05))
+        .fitness_fn(dummy_fitness)
+        .n_vars(10)
+        .population_size(0) // ← invalid
+        .n_offsprings(50)
+        .n_iterations(50)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .build()
+    {
+        Ok(_) => panic!("Expected error for population_size = 0"),
+        Err(e) => e,
+    };
+    assert!(
+        format!("{}", err).contains("Population size must be greater than 0"),
+        "Unexpected message: {}",
+        err
+    );
 
     // n_offsprings = 0
-    let err = Nsga2::new(
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(2.0),
-        GaussianMutation::new(0.1, 0.05),
-        None::<()>,
-        dummy_fitness as FitnessFn,
-        10,
-        100,
-        0, // invalid n_offsprings
-        50,
-        0.1,
-        0.9,
-        false,
-        false,
-        None::<ConstraintsFn>,
-        Some(0.0),
-        Some(1.0),
-        Some(42),
-    )
-    .expect_err("Expected error for n_offsprings = 0");
-    let msg = format!("{}", err);
-    assert!(msg.contains("Number of offsprings must be greater than 0"));
+    let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(2.0))
+        .mutation(GaussianMutation::new(0.1, 0.05))
+        .fitness_fn(dummy_fitness)
+        .n_vars(10)
+        .population_size(100)
+        .n_offsprings(0) // ← invalid
+        .n_iterations(50)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .build()
+    {
+        Ok(_) => panic!("Expected error for n_offsprings = 0"),
+        Err(e) => e,
+    };
+    assert!(
+        format!("{}", err).contains("Number of offsprings must be greater than 0"),
+        "Unexpected message: {}",
+        err
+    );
 
     // n_iterations = 0
-    let err = Nsga2::new(
-        RandomSamplingFloat::new(0.0, 1.0),
-        SimulatedBinaryCrossover::new(2.0),
-        GaussianMutation::new(0.1, 0.05),
-        None::<()>,
-        dummy_fitness as FitnessFn,
-        10,
-        100,
-        50,
-        0, // invalid n_iterations
-        0.1,
-        0.9,
-        false,
-        false,
-        None::<ConstraintsFn>,
-        Some(0.0),
-        Some(1.0),
-        Some(42),
-    )
-    .expect_err("Expected error for n_iterations = 0");
-    let msg = format!("{}", err);
-    assert!(msg.contains("Number of iterations must be greater than 0"));
+    let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(2.0))
+        .mutation(GaussianMutation::new(0.1, 0.05))
+        .fitness_fn(dummy_fitness)
+        .n_vars(10)
+        .population_size(100)
+        .n_offsprings(50)
+        .n_iterations(0) // ← invalid
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .build()
+    {
+        Ok(_) => panic!("Expected error for n_iterations = 0"),
+        Err(e) => e,
+    };
+    assert!(
+        format!("{}", err).contains("Number of iterations must be greater than 0"),
+        "Unexpected message: {}",
+        err
+    );
 }
 
-#[test]
-fn test_invalid_bounds() {
-    for &(lower, upper) in &[(1.0, 1.0), (2.0, 1.0)] {
-        let err = Nsga2::new(
-            RandomSamplingFloat::new(0.0, 1.0),
-            SimulatedBinaryCrossover::new(2.0),
-            GaussianMutation::new(0.1, 0.05),
-            None::<()>,
-            dummy_fitness as FitnessFn,
-            10,
-            100,
-            50,
-            50,
-            0.1,
-            0.9,
-            false,
-            false,
-            None::<ConstraintsFn>,
-            Some(lower), // invalid lower_bound
-            Some(upper), // invalid upper_bound
-            Some(42),
-        )
-        .expect_err("Expected error for invalid bounds");
-        let msg = format!("{}", err);
-        assert!(
-            msg.contains("Lower bound"),
-            "Error message did not reference lower bound: {}",
-            msg
-        );
-        assert!(
-            msg.contains("must be less than upper bound"),
-            "Error message did not explain bound ordering: {}",
-            msg
-        );
-    }
+#[rstest]
+#[case(1.0, 1.0)]
+#[case(2.0, 1.0)]
+fn test_invalid_bounds(#[case] lower: f64, #[case] upper: f64) {
+    let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(2.0))
+        .mutation(GaussianMutation::new(0.1, 0.05))
+        .fitness_fn(dummy_fitness)
+        .n_vars(10)
+        .population_size(100)
+        .n_offsprings(50)
+        .n_iterations(50)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .lower_bound(lower) // ← invalid lower
+        .upper_bound(upper) // ← invalid upper
+        .build()
+    {
+        Ok(_) => panic!("Expected error for invalid bounds"),
+        Err(e) => e,
+    };
+
+    let msg = format!("{}", err);
+    assert!(
+        msg.contains("Lower bound"),
+        "Error message did not reference lower bound: {}",
+        msg
+    );
+    assert!(
+        msg.contains("must be less than upper bound"),
+        "Error message did not explain bound ordering: {}",
+        msg
+    );
 }

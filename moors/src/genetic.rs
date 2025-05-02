@@ -47,6 +47,12 @@ pub type PopulationConstraints = Array2<f64>;
 /// Type aliases for functions
 pub type FitnessFn = fn(&PopulationGenes) -> PopulationFitness;
 pub type ConstraintsFn = fn(&PopulationGenes) -> PopulationConstraints;
+// this below type is tricky: When any algorithm builder e.g Nsga2Builder omits
+// contraints_fn from the set process, then an explicit type must be given
+// algorithm: Nsga2<_, _, _, _, NoConstraintsFn, _> = Nsga2Builder::default().fitness_fn....
+// See moors_macros and several tests using the annotation
+// See also: https://github.com/colin-kiegel/rust-derive-builder/issues/343
+pub type NoConstraintsFn = fn(&PopulationGenes) -> PopulationConstraints;
 
 /// The `Population` struct contains genes, fitness, constraints (if any),
 /// rank (optional), and optionally a survival score vector.
