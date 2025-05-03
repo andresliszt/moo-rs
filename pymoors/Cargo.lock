@@ -804,6 +804,8 @@ dependencies = [
 [[package]]
 name = "moors"
 version = "0.1.0-alpha.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70672ad56611c0c14a3bfe58dd17f72b79f4062d2bc1346ad95ef7b677812567"
 dependencies = [
  "derive_builder",
  "faer",
@@ -821,6 +823,8 @@ dependencies = [
 [[package]]
 name = "moors_macros"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f26a686ddac74da2b8eb0df788363074e846397cf084c57d5cf671bb6a6d8722"
 dependencies = [
  "proc-macro2",
  "quote",

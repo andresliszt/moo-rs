@@ -19,7 +19,7 @@ repos:
         pass_filenames: false
 
       - id: lint-rust-moors
-        name: Lint Python (pymoors)
+        name: Lint Rust (moors)
         entry: make moors-lint
         language: system
         pass_filenames: false
