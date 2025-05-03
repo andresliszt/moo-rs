@@ -1,0 +1,29 @@
+name: CodSpeed – moors bench
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  bench-moors:
+    name: Run Rust Benchmarks (moors)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Rust benchmarks via CodSpeed
+        uses: CodSpeedHQ/action@v3
+        with:
+          working-directory: moors
+          run: |
+            cargo bench -- --nocapture
