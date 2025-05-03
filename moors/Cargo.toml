@@ -27,6 +27,21 @@ criterion = "0.5.1"
 rstest = "0.25.0"
 codspeed-criterion-compat = "2"
 
+[[bench]]
+name = "fds"
+path = "benches/fds.rs"
+harness = false
+
+[[bench]]
+name = "dtlz2"
+path = "benches/dtlz2.rs"
+harness = false
+
+[[bench]]
+name = "zdt1"
+path = "benches/zdt1.rs"
+harness = false
+
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage,coverage_nightly)'] }
 
