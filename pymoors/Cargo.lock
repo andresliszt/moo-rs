@@ -803,9 +803,9 @@ dependencies = [
 
 [[package]]
 name = "moors"
-version = "0.1.0-alpha.0"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70672ad56611c0c14a3bfe58dd17f72b79f4062d2bc1346ad95ef7b677812567"
+checksum = "1aa33cf2c8c420e777304ab9e14b5b51a57c171ad47e1a14533f021b2c56fe3a"
 dependencies = [
  "derive_builder",
  "faer",
@@ -1190,7 +1190,7 @@ dependencies = [
 
 [[package]]
 name = "pymoors"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "faer",
