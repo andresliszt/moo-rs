@@ -57,7 +57,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .n_vars(2)
                 .population_size(1000)
                 .num_offsprings(1000)
-                .num_iterations(50)
+                .num_iterations(10)
                 .mutation_rate(0.05)
                 .crossover_rate(0.9)
                 .keep_infeasible(false)
@@ -75,11 +75,11 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
     });
 }
 
-/// Create a Criterion configuration with only 20 samples per benchmark.
+/// Create a Criterion configuration with only 10 samples per benchmark.
 fn custom_criterion() -> Criterion {
     Criterion::default()
-        .sample_size(15)
-        .measurement_time(Duration::from_secs(180))
+        .sample_size(10)
+        .measurement_time(Duration::from_secs(120))
 }
 
 criterion_group! {
