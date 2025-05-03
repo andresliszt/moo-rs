@@ -1,5 +1,7 @@
 extern crate moors;
 
+use std::time::Duration;
+
 use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion_main};
 use ndarray::{Axis, stack};
 
@@ -55,7 +57,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .n_vars(2)
                 .population_size(1000)
                 .num_offsprings(1000)
-                .num_iterations(200)
+                .num_iterations(50)
                 .mutation_rate(0.05)
                 .crossover_rate(0.9)
                 .keep_infeasible(false)
@@ -73,5 +75,17 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_nsga3_dtlz2);
+/// Create a Criterion configuration with only 20 samples per benchmark.
+fn custom_criterion() -> Criterion {
+    Criterion::default()
+        .sample_size(15)
+        .measurement_time(Duration::from_secs(180))
+}
+
+criterion_group! {
+    name = benches;
+    config = custom_criterion();
+    targets = bench_nsga3_dtlz2
+}
+
 criterion_main!(benches);
