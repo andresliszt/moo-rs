@@ -1,4 +1,4 @@
-name: Moors CI
+name: moors CI
 
 # Make every `run:` step start in moors/
 defaults:

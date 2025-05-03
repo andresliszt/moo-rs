@@ -1,4 +1,4 @@
-name: Pymoors CI
+name: pymoors CI
 
 on:
   push:
