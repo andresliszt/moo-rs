@@ -1,13 +1,14 @@
 # pymoors
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Python Versions](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
-[![codecov](https://codecov.io/gh/andresliszt/moo-rs/graph/badge.svg?token=KC6EAVYGHX?flag=pymoors)](https://codecov.io/gh/andresliszt/moo-rs?flag=pymoors)
+[![PyPI version](https://img.shields.io/pypi/v/pymoors.svg)](https://pypi.org/project/pymoors/)
+[![codecov](https://codecov.io/gh/andresliszt/moo-rs/graph/badge.svg?token=KC6EAVYGHX)](https://codecov.io/gh/andresliszt/moo-rs?flag=pymoors)
 [![Docs](https://img.shields.io/website?label=Docs&style=flat&url=https%3A%2F%2Fandresliszt.github.io%2Fmoo-rs%2F)](https://andresliszt.github.io/moo-rs/)
 [![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/andresliszt/moo-rs)
 
 ## Overview
 
-`pymoors` is the python implementation of the [moo-rs](../README.md) project. It's an extension crate (via [pyo3](https://github.com/PyO3/pyo3)) exposing `moors` algorithms with a Pythonic API
+`pymoors` is the python implementation of the [moo-rs](https://github.com/andresliszt/moo-rs/) project. It's an extension crate (via [pyo3](https://github.com/PyO3/pyo3)) exposing `moors` algorithms with a Pythonic API
 
 Inspired by the amazing Python project [pymoo](https://github.com/anyoptimization/pymoo), `pymoors` delivers both the speed of Rust and the ease-of-use of Python.
 

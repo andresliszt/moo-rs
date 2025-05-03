@@ -1,13 +1,12 @@
 # moors
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 [![codecov](https://codecov.io/gh/andresliszt/moo-rs/graph/badge.svg?token=KC6EAVYGHX?flag=moors)](https://codecov.io/gh/andresliszt/moo-rs?flag=moors)
-[![Docs](https://img.shields.io/website?label=Docs&style=flat&url=https%3A%2F%2Fandresliszt.github.io%2Fmoo-rs%2F)](https://andresliszt.github.io/moo-rs/)
 [![crates.io](https://img.shields.io/crates/v/moors.svg)](https://crates.io/crates/moors)
 [![crates.io downloads](https://img.shields.io/crates/d/moors.svg)](https://crates.io/crates/moors)
 
 ## Overview
 
-`moors` is the core crate of the `moo-rs` project for solving multi-objective optimization problems with evolutionary algorithms. It's a pure-Rust crate for high-performance implementations of genetic algorithms
+`moors` is the core crate of the [moo-rs](https://github.com/andresliszt/moo-rs/) project for solving multi-objective optimization problems with evolutionary algorithms. It's a pure-Rust crate for high-performance implementations of genetic algorithms
 
 ## Features
 
