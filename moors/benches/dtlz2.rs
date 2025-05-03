@@ -1,6 +1,6 @@
 extern crate moors;
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion_main};
 use ndarray::{Axis, stack};
 
 use moors::{

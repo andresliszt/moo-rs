@@ -2,7 +2,7 @@ extern crate moors;
 
 use std::time::Duration;
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion_main};
 use ndarray::Array2;
 use rand::Rng;
 use rand::SeedableRng;

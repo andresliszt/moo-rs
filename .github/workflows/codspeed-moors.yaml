@@ -21,14 +21,23 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Cache Rust dependencies
+      - name: Cache Rust compilation artifacts
         uses: Swatinem/rust-cache@v2
         with:
+          # Cache the `moors/target` directory to speed up rebuilds
           workspaces: |
             moors -> target
 
-      - name: Run benchmarks via CodSpeed
+      - name: Install cargo-codspeed
+        run: cargo install cargo-codspeed --locked
+
+      - name: Build benchmarks
+        working-directory: moors
+        run: cargo codspeed build --release
+
+      - name: Run & upload to CodSpeed
         uses: CodSpeedHQ/action@v3
         with:
           working-directory: moors
-          run: cargo bench -- --nocapture
+          run: cargo codspeed run --release
+          token: ${{ secrets.CODSPEED_TOKEN }}
