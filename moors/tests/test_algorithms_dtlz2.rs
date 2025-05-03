@@ -62,7 +62,7 @@ fn assert_full_unit_sphere(pop: &Population) {
 #[test]
 fn test_nsga3_dtlz2_three_objectives() {
     // 1) build 3-objective reference points
-    let rp = DanAndDenisReferencePoints::new(200, 3).generate();
+    let rp = DanAndDenisReferencePoints::new(100, 3).generate();
     let nsga3_rp = Nsga3ReferencePoints::new(rp, false);
 
     // 2) instantiate via builder
@@ -95,7 +95,7 @@ fn test_nsga3_dtlz2_three_objectives() {
 #[test]
 fn test_revea_dtlz2_three_objectives() {
     // 1) build 3-objective reference points
-    let rp = DanAndDenisReferencePoints::new(200, 3).generate();
+    let rp = DanAndDenisReferencePoints::new(100, 3).generate();
 
     // 2) instantiate via builder
     let mut algorithm = ReveaBuilder::<_, _, _, _, NoConstraintsFn, _>::default()

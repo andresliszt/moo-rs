@@ -1,6 +1,8 @@
 extern crate moors;
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use std::time::Duration;
+
+use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion_main};
 use ndarray::Array2;
 use rand::Rng;
 use rand::SeedableRng;
@@ -46,7 +48,9 @@ fn bench_fast_non_dominated_sorting(c: &mut Criterion) {
 
 /// Create a Criterion configuration with only 20 samples per benchmark.
 fn custom_criterion() -> Criterion {
-    Criterion::default().sample_size(20) // reduce from the default 100 to 20 samples
+    Criterion::default()
+        .sample_size(20)
+        .measurement_time(Duration::from_secs(180))
 }
 
 criterion_group! {
