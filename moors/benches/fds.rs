@@ -44,5 +44,14 @@ fn bench_fast_non_dominated_sorting(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_fast_non_dominated_sorting);
+/// Create a Criterion configuration with only 20 samples per benchmark.
+fn custom_criterion() -> Criterion {
+    Criterion::default().sample_size(20) // reduce from the default 100 to 20 samples
+}
+
+criterion_group! {
+    name = benches;
+    config = custom_criterion();
+    targets = bench_fast_non_dominated_sorting
+}
 criterion_main!(benches);

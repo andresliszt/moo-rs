@@ -1,12 +1,10 @@
-name: CodSpeed – moors
+name: CodSpeed – moors bench
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -19,11 +17,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Rust (stable)
-        uses: dtolnay/rust-toolchain@stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
 
-      - name: Run Rust benchmarks via CodSpeed
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            moors -> target
+
+      - name: Run benchmarks via CodSpeed
         uses: CodSpeedHQ/action@v3
         with:
           working-directory: moors
-          run: |
-            cargo bench -- --nocapture
+          run: cargo bench -- --nocapture
