@@ -26,11 +26,6 @@ moors_macros = { version = "0.1.0", path = "moors_macros"}
 criterion = "0.5.1"
 rstest = "0.25.0"
 
-[[bench]]
-name = "benches"
-path = "benches/fds.rs"
-harness = false
-
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage,coverage_nightly)'] }
 

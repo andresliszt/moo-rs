@@ -39,7 +39,7 @@ fn fitness_dtlz2_3obj(pop: &PopulationGenes) -> PopulationFitness {
 
 fn bench_nsga3_dtlz2(c: &mut Criterion) {
     // 1) prepare 3-objective reference points once
-    let base_rp = DanAndDenisReferencePoints::new(200, 3).generate();
+    let base_rp = DanAndDenisReferencePoints::new(1000, 3).generate();
     let nsga3_rp = Nsga3ReferencePoints::new(base_rp, false);
 
     c.bench_function("nsga3_dtlz2_3obj", |b| {
@@ -53,8 +53,8 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
                 .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
                 .n_vars(2)
-                .population_size(100)
-                .num_offsprings(100)
+                .population_size(1000)
+                .num_offsprings(1000)
                 .num_iterations(200)
                 .mutation_rate(0.05)
                 .crossover_rate(0.9)
