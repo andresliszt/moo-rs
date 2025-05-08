@@ -205,3 +205,37 @@ fn test_invalid_params() {
         other => panic!("Incorrect error raised: {:?}", other),
     }
 }
+
+#[test]
+fn test_invalid_algorithm_not_initialized() {
+    let nsga2 = Nsga2Builder::default()
+        .fitness_fn(dummy_fitness)
+        .constraints_fn(dummy_constraints)
+        .sampler(RandomSamplingFloat::new(2.0, 10.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.1, 0.01))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-8))
+        .num_vars(10)
+        .num_constraints(10)
+        .num_objectives(10)
+        .num_iterations(100)
+        .population_size(10)
+        .num_offsprings(10)
+        .build()
+        .expect("Failed to Build Nsga2");
+
+    let err = match nsga2.population() {
+        Ok(_) => panic!("Should not be Ok in this"),
+        Err(e) => e,
+    };
+    match err {
+        MultiObjectiveAlgorithmError::Initialization(inner) => {
+            let msg = inner.to_string();
+            assert_eq!(
+                msg,
+                "Algorithm is not initialized yet: population is not set",
+            );
+        }
+        other => panic!("Incorrect error raised: {:?}", other),
+    }
+}

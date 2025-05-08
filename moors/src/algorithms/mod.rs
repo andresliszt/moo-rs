@@ -31,18 +31,18 @@ macro_rules! delegate_algorithm_methods {
             &self,
         ) -> Result<
             &crate::genetic::Population,
-            crate::algorithms::helpers::error::InitializationError,
+            crate::algorithms::helpers::error::MultiObjectiveAlgorithmError,
         > {
-            let pop =
-                match &self.inner.population {
-                    Some(v) => v,
-                    None => return Err(
+            match &self.inner.population {
+                Some(v) => Ok(v),
+                None => Err(
+                    crate::algorithms::helpers::error::MultiObjectiveAlgorithmError::Initialization(
                         crate::algorithms::helpers::error::InitializationError::NotInitializated(
                             "population is not set".into(),
                         ),
                     ),
-                };
-            Ok(pop)
+                ),
+            }
         }
     };
 }
