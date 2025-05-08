@@ -98,9 +98,8 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
         _rng: &mut dyn RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) {
-        unimplemented!(
-            "NSGA3 doesn't use survival score. It uses random tournament which doesn't depend on the score"
-        )
+
+        // NSGA3 doesn't use survival score. It uses random tournament which doesn't depend on the score"
     }
 
     fn operate(

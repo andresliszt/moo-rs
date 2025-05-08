@@ -55,7 +55,7 @@ mod revea;
 mod rnsga2;
 
 pub use agemoea::{AgeMoea, AgeMoeaBuilder};
-pub use helpers::error::MultiObjectiveAlgorithmError;
+pub use helpers::error::{InitializationError, MultiObjectiveAlgorithmError};
 pub use nsga2::{Nsga2, Nsga2Builder};
 pub use nsga3::{Nsga3, Nsga3Builder};
 pub use revea::{Revea, ReveaBuilder};

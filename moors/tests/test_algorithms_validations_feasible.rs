@@ -1,5 +1,5 @@
 use moors::{
-    algorithms::{MultiObjectiveAlgorithmError, Nsga2, Nsga2Builder},
+    algorithms::{InitializationError, MultiObjectiveAlgorithmError, Nsga2, Nsga2Builder},
     duplicates::{ExactDuplicatesCleaner, NoDuplicatesCleaner},
     evaluator::EvaluatorError,
     genetic::{NoConstraintsFn, PopulationConstraints, PopulationFitness, PopulationGenes},
@@ -35,6 +35,8 @@ fn test_keep_infeasible() {
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
         .num_vars(5)
+        .num_objectives(2)
+        .num_constraints(1)
         .num_iterations(100)
         .population_size(100)
         .num_offsprings(32)
@@ -59,6 +61,7 @@ fn test_keep_infeasible_out_of_bounds() {
             .crossover(SinglePointBinaryCrossover::new())
             .mutation(BitFlipMutation::new(0.5))
             .num_vars(5)
+            .num_objectives(2)
             .population_size(100)
             .num_offsprings(32)
             .num_iterations(20)
@@ -79,7 +82,7 @@ fn test_keep_infeasible_out_of_bounds() {
 
 #[test]
 fn test_keep_infeasible_false() {
-    let err = match Nsga2Builder::default()
+    let mut algorithm = Nsga2Builder::default()
         .fitness_fn(fitness_binary_biobj)
         .constraints_fn(constraints_always_infeasible)
         .sampler(RandomSamplingBinary::new())
@@ -87,19 +90,25 @@ fn test_keep_infeasible_false() {
         .mutation(BitFlipMutation::new(0.5))
         .duplicates_cleaner(ExactDuplicatesCleaner::new())
         .num_vars(5)
+        .num_objectives(2)
+        .num_constraints(1)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(20)
         .keep_infeasible(false)
         .seed(1729)
         .build()
-    {
+        .expect("Builder must not fail");
+
+    let err = match algorithm.run() {
         Ok(_) => panic!("expected no feasible individuals error"),
         Err(e) => e,
     };
 
     assert!(matches!(
         err,
-        MultiObjectiveAlgorithmError::Evaluator(EvaluatorError::NoFeasibleIndividuals)
+        MultiObjectiveAlgorithmError::Initialization(InitializationError::Evaluator(
+            EvaluatorError::NoFeasibleIndividuals
+        ))
     ));
 }

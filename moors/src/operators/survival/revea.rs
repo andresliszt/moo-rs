@@ -45,7 +45,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
         _rng: &mut dyn RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) {
-        unimplemented!("REVEA doesn't use fronts")
+        // REVEA doesn't use fronts. It uses random tournament which doesn't depend on the score"
     }
 
     fn operate(

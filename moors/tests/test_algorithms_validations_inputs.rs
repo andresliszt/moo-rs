@@ -26,6 +26,7 @@ fn test_invalid_mutation_rate(#[case] invalid: f64) {
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
         .num_vars(10)
+        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -60,6 +61,7 @@ fn test_invalid_crossover_rate(#[case] invalid: f64) {
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
         .num_vars(10)
+        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -93,6 +95,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
         .num_vars(0) // ← invalid
+        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -116,6 +119,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
         .num_vars(10)
+        .num_objectives(10)
         .population_size(0) // ← invalid
         .num_offsprings(50)
         .num_iterations(50)
@@ -139,6 +143,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
         .num_vars(10)
+        .num_objectives(10)
         .population_size(100)
         .num_offsprings(0) // ← invalid
         .num_iterations(50)
@@ -162,6 +167,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
         .num_vars(10)
+        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(0) // ← invalid
@@ -189,6 +195,7 @@ fn test_invalid_bounds(#[case] lower: f64, #[case] upper: f64) {
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
         .num_vars(10)
+        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)

@@ -5,13 +5,14 @@
 //!   • verbose         = false
 //!   • crossover_rate  = 0.9
 //!   • mutation_rate   = 0.1
+//!   • num_constraints = 0
 
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::{format_ident, quote};
 use syn::{
-    parse_macro_input, parse_quote, FnArg, GenericArgument, ImplItem, ImplItemFn,
-    ItemImpl, Pat, PathArguments, ReturnType, Type,
+    FnArg, GenericArgument, ImplItem, ImplItemFn, ItemImpl, Pat, PathArguments, ReturnType, Type,
+    parse_macro_input, parse_quote,
 };
 
 #[proc_macro_attribute]
@@ -42,7 +43,11 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
         .expect("algorithm_builder: `fn new` not found");
 
     /* ── collect constructor params into builder fields ──────────── */
-    struct Field { ident: Ident, ty_inner: Type, is_optional: bool }
+    struct Field {
+        ident: Ident,
+        ty_inner: Type,
+        is_optional: bool,
+    }
     let mut fields = Vec::new();
     for arg in &new_fn.sig.inputs {
         if let FnArg::Typed(pat_ty) = arg {
@@ -67,7 +72,11 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
                 _ => (ty.clone(), false),
             };
-            fields.push(Field { ident, ty_inner: inner_ty, is_optional });
+            fields.push(Field {
+                ident,
+                ty_inner: inner_ty,
+                is_optional,
+            });
         }
     }
 
@@ -75,12 +84,16 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let err_ty: Type = match &new_fn.sig.output {
         ReturnType::Type(_, boxed) => match &**boxed {
             Type::Path(tp) if tp.path.segments.last().unwrap().ident == "Result" => {
-                if let PathArguments::AngleBracketed(ab) = &tp.path.segments.last().unwrap().arguments {
+                if let PathArguments::AngleBracketed(ab) =
+                    &tp.path.segments.last().unwrap().arguments
+                {
                     match &ab.args[1] {
                         GenericArgument::Type(t) => t.clone(),
                         _ => parse_quote!(()),
                     }
-                } else { parse_quote!(()) }
+                } else {
+                    parse_quote!(())
+                }
             }
             _ => parse_quote!(()),
         },
@@ -90,7 +103,7 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
     /* ── builder struct fields & default values ───────────────────────── */
     let builder_fields = fields.iter().map(|f| {
         let name = &f.ident;
-        let ty   = &f.ty_inner;
+        let ty = &f.ty_inner;
         quote!( #name: ::std::option::Option<#ty> )
     });
     let builder_defaults = fields.iter().map(|f| {
@@ -106,7 +119,7 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
     /* ── fluent setters ───────────────────────────────────────────────── */
     let setter_methods = fields.iter().map(|f| {
         let ident = &f.ident;
-        let ty    = &f.ty_inner;
+        let ty = &f.ty_inner;
         quote! {
             pub fn #ident(mut self, value: #ty) -> Self {
                 self.#ident = ::std::option::Option::Some(value);
@@ -119,8 +132,9 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
     fn default_expr(field: &str) -> Option<proc_macro2::TokenStream> {
         match field {
             "keep_infeasible" | "verbose" => Some(quote!(false)),
-            "crossover_rate"              => Some(quote!(0.9)),
-            "mutation_rate"               => Some(quote!(0.1)),
+            "crossover_rate" => Some(quote!(0.9)),
+            "mutation_rate" => Some(quote!(0.1)),
+            "num_constraints" => Some(quote!(0)),
             _ => None,
         }
     }
@@ -128,7 +142,7 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
     /* ── build() arguments ────────────────────────────────────────────── */
     let build_args = fields.iter().map(|f| {
         let name = &f.ident;
-        let key  = name.to_string();
+        let key = name.to_string();
         if f.is_optional {
             quote!( self.#name )
         } else if let Some(def) = default_expr(&key) {
