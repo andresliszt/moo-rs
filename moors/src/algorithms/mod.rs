@@ -1,4 +1,3 @@
-use rand::{SeedableRng, rngs::StdRng};
 use std::marker::PhantomData;
 
 use ndarray::{Axis, concatenate};
@@ -6,7 +5,6 @@ use ndarray::{Axis, concatenate};
 use crate::{
     algorithms::helpers::{
         context::AlgorithmContext,
-        error::MultiObjectiveAlgorithmError,
         initialization::Initialization,
         validators::{validate_bounds, validate_positive, validate_probability},
     },
@@ -29,8 +27,8 @@ macro_rules! delegate_algorithm_methods {
         }
 
         /// Delegate `population` to the inner algorithm
-        pub fn population(&self) -> &Option<crate::genetic::Population> {
-            &self.inner.population
+        pub fn population(&self) -> &crate::genetic::Population {
+            self.inner.population.as_ref().unwrap()
         }
     };
 }
@@ -43,6 +41,7 @@ mod revea;
 mod rnsga2;
 
 pub use agemoea::{AgeMoea, AgeMoeaBuilder};
+pub use helpers::error::MultiObjectiveAlgorithmError;
 pub use nsga2::{Nsga2, Nsga2Builder};
 pub use nsga3::{Nsga3, Nsga3Builder};
 pub use revea::{Revea, ReveaBuilder};
@@ -120,9 +119,7 @@ where
         // Validate bounds
         validate_bounds(lower_bound, upper_bound)?;
 
-        let rng = MOORandomGenerator::new(
-            seed.map_or_else(|| StdRng::from_rng(&mut rand::rng()), StdRng::seed_from_u64),
-        );
+        let rng = MOORandomGenerator::new_from_seed(seed);
         // Create the context
         let context: AlgorithmContext = AlgorithmContext::new(
             num_vars,
