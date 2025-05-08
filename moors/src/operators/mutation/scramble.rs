@@ -23,7 +23,7 @@ impl GeneticOperator for ScrambleMutation {
 }
 
 impl MutationOperator for ScrambleMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut dyn RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
         let n = individual.len();
         // Select two random indices to define the segment.
         let idx1 = rng.gen_range_usize(0, n);
@@ -52,7 +52,6 @@ mod tests {
     use super::*;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::{Array1, array};
-    use rand::RngCore;
     use rstest::rstest;
 
     /// A fake RandomGenerator for scramble mutation testing.
@@ -72,7 +71,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandomGeneratorScramble {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.fake_rng
         }
 

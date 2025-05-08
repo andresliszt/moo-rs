@@ -27,7 +27,11 @@ impl GeneticOperator for PermutationSampling {
 impl SamplingOperator for PermutationSampling {
     /// Generates a single individual of length `num_vars` where the genes
     /// are a shuffled permutation of the integers [0, 1, 2, ..., num_vars - 1].
-    fn sample_individual(&self, num_vars: usize, rng: &mut dyn RandomGenerator) -> IndividualGenes {
+    fn sample_individual(
+        &self,
+        num_vars: usize,
+        rng: &mut impl RandomGenerator,
+    ) -> IndividualGenes {
         // 1) Create a vector of indices [0, 1, 2, ..., num_vars - 1]
         let mut indices: Vec<f64> = (0..num_vars).map(|i| i as f64).collect();
 
@@ -42,10 +46,9 @@ impl SamplingOperator for PermutationSampling {
 mod tests {
     use super::*;
     use crate::random::{RandomGenerator, TestDummyRng};
-    use rand::RngCore;
 
     /// A fake RandomGenerator for testing. It contains a TestDummyRng to provide
-    /// the required RngCore behavior.
+    /// the required RandomGenerator behavior.
     struct FakeRandomGenerator {
         dummy: TestDummyRng,
     }
@@ -59,7 +62,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandomGenerator {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             // Return a mutable reference to the internal dummy RNG.
             &mut self.dummy
         }

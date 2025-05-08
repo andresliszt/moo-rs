@@ -49,7 +49,7 @@ pub fn sbx_crossover_array(
     p2: &Array1<f64>,
     distribution_index: f64,
     prob_exchange: f64,
-    rng: &mut dyn RandomGenerator,
+    rng: &mut impl RandomGenerator,
 ) -> (Array1<f64>, Array1<f64>) {
     let n = p1.len();
     let eps = 1e-16;
@@ -115,7 +115,7 @@ impl CrossoverOperator for SimulatedBinaryCrossover {
         &self,
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> (IndividualGenes, IndividualGenes) {
         // TODO: Enable prob_exchange
         sbx_crossover_array(parent_a, parent_b, self.distribution_index, 0.0, rng)
@@ -151,7 +151,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandom {
-        fn rng(&mut self) -> &mut dyn rand::RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn gen_proability(&mut self) -> f64 {

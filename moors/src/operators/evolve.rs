@@ -90,7 +90,7 @@ where
         &self,
         parents_a: &PopulationGenes,
         parents_b: &PopulationGenes,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> PopulationGenes {
         // 1) Perform crossover in one batch.
         let mut offsprings = self
@@ -142,7 +142,7 @@ where
         population: &Population,
         num_offsprings: usize,
         max_iter: usize,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> Result<PopulationGenes, EvolveError> {
         // Accumulate offspring rows in a Vec<Vec<f64>>
         let mut all_offsprings: Vec<Vec<f64>> = Vec::with_capacity(num_offsprings);

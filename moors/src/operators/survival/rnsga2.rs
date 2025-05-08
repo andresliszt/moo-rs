@@ -41,7 +41,7 @@ impl SurvivalOperator for Rnsga2ReferencePointsSurvival {
     fn set_survival_score(
         &self,
         fronts: &mut Fronts,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) {
         let len_fronts = fronts.len();
@@ -156,7 +156,7 @@ fn distance_to_reference(
 /// - `reference_points`: An Array2<f64> where each row is a reference point.
 /// - `weights`, `ideal`, `nadir`: Parameters used to normalize the distance.
 /// - `epsilon`: The threshold used to group similar solutions.
-/// - `rng`: A mutable reference to an object implementing `RngCore` to be used for random shuffling.
+/// - `rng`: A mutable reference to an object implementing `RandomGenerator` to be used for random shuffling.
 ///
 /// # Returns
 /// A vector of crowding distances (as f64) for each solution.
@@ -177,7 +177,7 @@ fn assign_crowding_distance_splitting_front(
     epsilon: f64,
     nadir: &Array1<f64>,
     ideal: &Array1<f64>,
-    rng: &mut dyn RandomGenerator,
+    rng: &mut impl RandomGenerator,
 ) -> Array1<f64> {
     let num_front_individuals = front_fitness.nrows();
     let mut crowding = assign_crowding_distance_to_inner_front(

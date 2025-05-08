@@ -23,7 +23,7 @@ impl GeneticOperator for SwapMutation {
 /// In a typical permutation-based setup, each row is an array of distinct values.
 /// The "swap" mutation picks two indices at random and swaps them.
 impl MutationOperator for SwapMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut dyn RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
         let length = individual.len();
         // If there is at most one element, there's nothing to swap.
         if length > 1 {
@@ -46,7 +46,6 @@ mod tests {
     use crate::genetic::PopulationGenes;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
-    use rand::RngCore;
 
     /// A controlled fake RandomGenerator that returns predetermined values for `gen_range_usize`.
     struct ControlledFakeRandomGenerator {
@@ -67,7 +66,8 @@ mod tests {
     }
 
     impl RandomGenerator for ControlledFakeRandomGenerator {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
 

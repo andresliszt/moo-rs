@@ -29,7 +29,7 @@ impl GeneticOperator for GaussianMutation {
 }
 
 impl MutationOperator for GaussianMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut dyn RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
         // Create a normal distribution with mean 0.0 and standard deviation sigma.
         let normal_dist = Normal::new(0.0, self.sigma)
             .expect("Failed to create normal distribution. Sigma must be > 0.");

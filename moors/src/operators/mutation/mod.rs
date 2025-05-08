@@ -26,14 +26,14 @@ pub trait MutationOperator: GeneticOperator {
     ///
     /// * `individual` - The individual to mutate, provided as a mutable view.
     /// * `rng` - A random number generator.
-    fn mutate<'a>(&self, individual: IndividualGenesMut<'a>, rng: &mut dyn RandomGenerator);
+    fn mutate<'a>(&self, individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator);
 
     /// Selects individuals for mutation based on the mutation rate.
     fn select_individuals_for_mutation(
         &self,
         population_size: usize,
         mutation_rate: f64,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> Vec<bool> {
         (0..population_size)
             .map(|_| rng.gen_bool(mutation_rate))
@@ -51,7 +51,7 @@ pub trait MutationOperator: GeneticOperator {
         &self,
         population: &mut PopulationGenes,
         mutation_rate: f64,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) {
         // Get the number of individuals (i.e. the number of rows).
         let population_size = population.len_of(Axis(0));

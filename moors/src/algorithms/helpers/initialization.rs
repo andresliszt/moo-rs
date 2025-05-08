@@ -20,7 +20,7 @@ impl Initialization {
         survivor: &Sur,
         evaluator: &Evaluator<F, G>,
         duplicates_cleaner: &Option<DC>,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
         context: &AlgorithmContext,
     ) -> Result<Population, InitializationError>
     where

@@ -30,7 +30,7 @@ impl CrossoverOperator for ExponentialCrossover {
         &self,
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> (IndividualGenes, IndividualGenes) {
         let len = parent_a.len();
         assert_eq!(len, parent_b.len());
@@ -107,7 +107,8 @@ mod tests {
 
     impl RandomGenerator for FakeRandom {
         /// Returns a mutable reference to the underlying dummy RNG.
-        fn rng(&mut self) -> &mut dyn rand::RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
 

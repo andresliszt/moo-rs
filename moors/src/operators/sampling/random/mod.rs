@@ -9,7 +9,6 @@ pub use int::RandomSamplingInt;
 #[cfg(test)]
 mod tests {
     use crate::random::{RandomGenerator, TestDummyRng};
-    use rand::RngCore;
 
     use crate::operators::sampling::random::binary::RandomSamplingBinary;
     use crate::operators::sampling::random::float::RandomSamplingFloat;
@@ -33,7 +32,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandomGenerator {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn gen_range_usize(&mut self, min: usize, _max: usize) -> usize {

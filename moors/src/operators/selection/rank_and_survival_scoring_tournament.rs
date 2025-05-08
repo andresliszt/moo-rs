@@ -41,7 +41,7 @@ impl SelectionOperator for RankAndScoringSelection {
         &self,
         p1: &Individual,
         p2: &Individual,
-        _rng: &mut dyn RandomGenerator,
+        _rng: &mut impl RandomGenerator,
     ) -> DuelResult {
         // Check feasibility.
         let p1_feasible = p1.is_feasible();
@@ -117,7 +117,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandomGenerator {
-        fn rng(&mut self) -> &mut dyn rand::RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn shuffle_vec_usize(&mut self, _vector: &mut Vec<usize>) {

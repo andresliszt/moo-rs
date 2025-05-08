@@ -24,7 +24,7 @@ impl SelectionOperator for RandomSelection {
         &self,
         p1: &Individual,
         p2: &Individual,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> DuelResult {
         let p1_feasible = p1.is_feasible();
         let p2_feasible = p2.is_feasible();
@@ -68,7 +68,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandomGenerator {
-        fn rng(&mut self) -> &mut dyn rand::RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn gen_bool(&mut self, _p: f64) -> bool {

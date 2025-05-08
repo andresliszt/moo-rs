@@ -25,7 +25,7 @@ impl CrossoverOperator for SinglePointBinaryCrossover {
         &self,
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> (IndividualGenes, IndividualGenes) {
         let num_genes = parent_a.len();
         assert_eq!(
@@ -63,7 +63,6 @@ mod tests {
     use super::*;
     use ndarray::Array1;
     use ndarray::array;
-    use rand::RngCore;
 
     use crate::random::{RandomGenerator, TestDummyRng};
 
@@ -85,7 +84,8 @@ mod tests {
     }
 
     impl RandomGenerator for ControlledFakeRandomGenerator {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn gen_range_usize(&mut self, _min: usize, _max: usize) -> usize {

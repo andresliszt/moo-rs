@@ -27,7 +27,7 @@ impl SurvivalOperator for RankCrowdingSurvival {
     fn set_survival_score(
         &self,
         fronts: &mut Fronts,
-        _rng: &mut dyn RandomGenerator,
+        _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) {
         for front in fronts.iter_mut() {

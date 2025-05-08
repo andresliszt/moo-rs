@@ -42,7 +42,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
     fn set_survival_score(
         &self,
         _fronts: &mut crate::genetic::Fronts,
-        _rng: &mut dyn RandomGenerator,
+        _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) {
         // REVEA doesn't use fronts. It uses random tournament which doesn't depend on the score"
@@ -52,7 +52,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
         &mut self,
         population: Population,
         _n_survive: usize,
-        _rng: &mut dyn RandomGenerator,
+        _rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
     ) -> Population {
         let z_min = get_ideal(&population.fitness);
