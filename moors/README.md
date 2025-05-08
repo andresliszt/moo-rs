@@ -19,7 +19,7 @@
 
 ```toml
 [dependencies]
-moors = "0.1.0"
+moors = "0.1.1"
 ```
 
 ## Quickstart
