@@ -89,7 +89,10 @@ fn test_nsga3_dtlz2_three_objectives() {
 
     // 3) run & assert
     algorithm.run().expect("NSGA3 run failed");
-    assert_full_unit_sphere(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_full_unit_sphere(&population);
 }
 
 #[test]
@@ -122,5 +125,8 @@ fn test_revea_dtlz2_three_objectives() {
 
     // 3) run & assert
     algorithm.run().expect("REVEA run failed");
-    assert_full_unit_sphere(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_full_unit_sphere(&population);
 }

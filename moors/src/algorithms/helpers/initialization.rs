@@ -1,9 +1,7 @@
-use std::{error::Error, fmt};
-
 use crate::{
-    algorithms::helpers::context::AlgorithmContext,
+    algorithms::helpers::{context::AlgorithmContext, error::InitializationError},
     duplicates::PopulationCleaner,
-    evaluator::{Evaluator, EvaluatorError},
+    evaluator::Evaluator,
     genetic::{
         FrontsExt, Individual, Population, PopulationConstraints, PopulationFitness,
         PopulationGenes,
@@ -12,39 +10,6 @@ use crate::{
     operators::{SamplingOperator, SurvivalOperator},
     random::RandomGenerator,
 };
-
-/// Errors that can occur during initialization of the population.
-#[derive(Debug)]
-pub enum InitializationError {
-    /// Error from the evaluator.
-    Evaluator(EvaluatorError),
-    /// Fitness array length does not match number of objectives.
-    InvalidFitness(String),
-    /// Constraints array length mismatch or unexpected absence.
-    InvalidConstraints(String),
-}
-
-impl fmt::Display for InitializationError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            InitializationError::Evaluator(e) => {
-                write!(f, "Error during evaluation in initialization: {}", e)
-            }
-            InitializationError::InvalidFitness(msg) => write!(f, "Invalid fitness setup: {}", msg),
-            InitializationError::InvalidConstraints(msg) => {
-                write!(f, "Invalid constraints setup: {}", msg)
-            }
-        }
-    }
-}
-
-impl From<EvaluatorError> for InitializationError {
-    fn from(e: EvaluatorError) -> Self {
-        InitializationError::Evaluator(e)
-    }
-}
-
-impl Error for InitializationError {}
 
 pub struct Initialization;
 

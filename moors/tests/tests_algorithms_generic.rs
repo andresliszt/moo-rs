@@ -76,7 +76,10 @@ fn test_nsga2() {
         .expect("failed to build NSGA2");
 
     algorithm.run().expect("NSGA2 run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }
 
 #[test]
@@ -102,7 +105,10 @@ fn test_agemoea() {
         .expect("failed to build AgeMoea");
 
     algorithm.run().expect("AgeMoea run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }
 
 #[test]
@@ -131,7 +137,10 @@ fn test_nsga3() {
         .expect("failed to build NSGA3");
 
     algorithm.run().expect("NSGA3 run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }
 
 #[test]
@@ -160,7 +169,10 @@ fn test_rnsga2() {
         .expect("failed to build RNSGA2");
 
     algorithm.run().expect("RNSGA2 run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }
 
 #[test]
@@ -189,5 +201,8 @@ fn test_revea() {
         .expect("failed to build REVEA");
 
     algorithm.run().expect("Revea run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }

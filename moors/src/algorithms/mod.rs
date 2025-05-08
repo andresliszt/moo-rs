@@ -27,8 +27,22 @@ macro_rules! delegate_algorithm_methods {
         }
 
         /// Delegate `population` to the inner algorithm
-        pub fn population(&self) -> &crate::genetic::Population {
-            self.inner.population.as_ref().unwrap()
+        pub fn population(
+            &self,
+        ) -> Result<
+            &crate::genetic::Population,
+            crate::algorithms::helpers::error::InitializationError,
+        > {
+            let pop =
+                match &self.inner.population {
+                    Some(v) => v,
+                    None => return Err(
+                        crate::algorithms::helpers::error::InitializationError::NotInitializated(
+                            "population is not set".into(),
+                        ),
+                    ),
+                };
+            Ok(pop)
         }
     };
 }
