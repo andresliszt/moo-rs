@@ -11,6 +11,7 @@ use crate::{
 
 use moors_macros::algorithm_builder;
 
+#[derive(Debug)]
 pub struct Nsga2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,

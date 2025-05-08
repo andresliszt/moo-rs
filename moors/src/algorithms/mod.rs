@@ -78,7 +78,7 @@ where
     survivor: Sur,
     evolve: Evolve<Sel, Cross, Mut, DC>,
     evaluator: Evaluator<F, G>,
-    context: AlgorithmContext,
+    pub context: AlgorithmContext,
     verbose: bool,
     rng: MOORandomGenerator,
     phantom: PhantomData<S>,
