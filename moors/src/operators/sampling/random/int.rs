@@ -26,8 +26,8 @@ impl GeneticOperator for RandomSamplingInt {
 }
 
 impl SamplingOperator for RandomSamplingInt {
-    fn sample_individual(&self, n_vars: usize, rng: &mut dyn RandomGenerator) -> IndividualGenes {
-        (0..n_vars)
+    fn sample_individual(&self, num_vars: usize, rng: &mut dyn RandomGenerator) -> IndividualGenes {
+        (0..num_vars)
             .map(|_| rng.gen_range_f64(self.min as f64, self.max as f64))
             .collect()
     }

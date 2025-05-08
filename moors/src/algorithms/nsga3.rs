@@ -12,6 +12,7 @@ use crate::{
 use moors_macros::algorithm_builder;
 
 // Define the NSGA-III algorithm
+#[derive(Debug)]
 pub struct Nsga3<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
@@ -50,7 +51,9 @@ where
         mutation: Mut,
         duplicates_cleaner: Option<DC>,
         fitness_fn: F,
-        n_vars: usize,
+        num_vars: usize,
+        num_constraints: usize,
+        num_objectives: usize,
         population_size: usize,
         num_offsprings: usize,
         num_iterations: usize,
@@ -76,7 +79,9 @@ where
             mutation,
             duplicates_cleaner,
             fitness_fn,
-            n_vars,
+            num_vars,
+            num_objectives,
+            num_constraints,
             population_size,
             num_offsprings,
             num_iterations,

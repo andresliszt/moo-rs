@@ -1,5 +1,5 @@
 use moors::{
-    algorithms::{MultiObjectiveAlgorithmError, Nsga2, Nsga2Builder},
+    algorithms::{InitializationError, MultiObjectiveAlgorithmError, Nsga2, Nsga2Builder},
     duplicates::{ExactDuplicatesCleaner, NoDuplicatesCleaner},
     evaluator::EvaluatorError,
     genetic::{NoConstraintsFn, PopulationConstraints, PopulationFitness, PopulationGenes},
@@ -18,7 +18,7 @@ fn fitness_binary_biobj(genes: &PopulationGenes) -> PopulationFitness {
     stack(Axis(1), &[f1.view(), f2.view()]).unwrap()
 }
 
-/// Infeasible constraint: n_vars - sum(x) + 1 > 0 for all individuals ⇒ always infeasible
+/// Infeasible constraint: num_vars - sum(x) + 1 > 0 for all individuals ⇒ always infeasible
 fn constraints_always_infeasible(genes: &PopulationGenes) -> PopulationConstraints {
     let n = genes.ncols() as f64;
     let sum = genes.sum_axis(Axis(1));
@@ -34,7 +34,9 @@ fn test_keep_infeasible() {
         .sampler(RandomSamplingBinary::new())
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
-        .n_vars(5)
+        .num_vars(5)
+        .num_objectives(2)
+        .num_constraints(1)
         .num_iterations(100)
         .population_size(100)
         .num_offsprings(32)
@@ -45,7 +47,10 @@ fn test_keep_infeasible() {
     algorithm
         .run()
         .expect("run should succeed when keep_infeasible = true");
-    assert_eq!(algorithm.population().len(), 100);
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_eq!(population.len(), 100);
 }
 #[test]
 fn test_keep_infeasible_out_of_bounds() {
@@ -55,7 +60,8 @@ fn test_keep_infeasible_out_of_bounds() {
             .sampler(RandomSamplingBinary::new())
             .crossover(SinglePointBinaryCrossover::new())
             .mutation(BitFlipMutation::new(0.5))
-            .n_vars(5)
+            .num_vars(5)
+            .num_objectives(2)
             .population_size(100)
             .num_offsprings(32)
             .num_iterations(20)
@@ -68,32 +74,41 @@ fn test_keep_infeasible_out_of_bounds() {
     algorithm
         .run()
         .expect("run should succeed even if genes are out of bounds");
-    assert_eq!(algorithm.population().len(), 100);
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_eq!(population.len(), 100);
 }
 
 #[test]
 fn test_keep_infeasible_false() {
-    let err = match Nsga2Builder::default()
+    let mut algorithm = Nsga2Builder::default()
         .fitness_fn(fitness_binary_biobj)
         .constraints_fn(constraints_always_infeasible)
         .sampler(RandomSamplingBinary::new())
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
         .duplicates_cleaner(ExactDuplicatesCleaner::new())
-        .n_vars(5)
+        .num_vars(5)
+        .num_objectives(2)
+        .num_constraints(1)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(20)
         .keep_infeasible(false)
         .seed(1729)
         .build()
-    {
+        .expect("Builder must not fail");
+
+    let err = match algorithm.run() {
         Ok(_) => panic!("expected no feasible individuals error"),
         Err(e) => e,
     };
 
     assert!(matches!(
         err,
-        MultiObjectiveAlgorithmError::Evaluator(EvaluatorError::NoFeasibleIndividuals)
+        MultiObjectiveAlgorithmError::Initialization(InitializationError::Evaluator(
+            EvaluatorError::NoFeasibleIndividuals
+        ))
     ));
 }

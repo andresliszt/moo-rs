@@ -12,20 +12,20 @@ pub use random::{RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt};
 
 pub trait SamplingOperator: GeneticOperator {
     /// Samples a single individual.
-    fn sample_individual(&self, n_vars: usize, rng: &mut dyn RandomGenerator) -> IndividualGenes;
+    fn sample_individual(&self, num_vars: usize, rng: &mut dyn RandomGenerator) -> IndividualGenes;
 
     /// Samples a population of individuals.
     fn operate(
         &self,
         population_size: usize,
-        n_vars: usize,
+        num_vars: usize,
         rng: &mut dyn RandomGenerator,
     ) -> PopulationGenes {
         let mut population = Vec::with_capacity(population_size);
 
         // Sample individuals and collect them
         for _ in 0..population_size {
-            let individual = self.sample_individual(n_vars, rng);
+            let individual = self.sample_individual(num_vars, rng);
             population.push(individual);
         }
 

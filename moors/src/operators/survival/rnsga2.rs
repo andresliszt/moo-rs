@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use ndarray::{Array1, Array2, ArrayView1, Axis};
 
-use crate::algorithms::AlgorithmContext;
+use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::{Fronts, PopulationFitness};
 use crate::helpers::extreme_points::{get_ideal, get_nadir};
 use crate::operators::survival::{GeneticOperator, SurvivalOperator, SurvivalScoringComparison};
@@ -45,8 +45,8 @@ impl SurvivalOperator for Rnsga2ReferencePointsSurvival {
         _algorithm_context: &AlgorithmContext,
     ) {
         let len_fronts = fronts.len();
-        let n_objectives = fronts[0].fitness.ncols();
-        let weights = Array1::from_elem(n_objectives, 1.0 / (n_objectives as f64));
+        let num_objectives = fronts[0].fitness.ncols();
+        let weights = Array1::from_elem(num_objectives, 1.0 / (num_objectives as f64));
 
         for front in fronts.iter_mut().take(len_fronts.saturating_sub(1)) {
             let nadir = get_nadir(&front.fitness);

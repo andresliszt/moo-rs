@@ -18,7 +18,7 @@ use moors::{
     },
 };
 
-/// DTLZ2 for 3 objectives (m = 3) with k = 0 (so n_vars = m−1 = 2):
+/// DTLZ2 for 3 objectives (m = 3) with k = 0 (so num_vars = m−1 = 2):
 /// f1 = cos(π/2 ⋅ x0) ⋅ cos(π/2 ⋅ x1)
 /// f2 = cos(π/2 ⋅ x0) ⋅ sin(π/2 ⋅ x1)
 /// f3 = sin(π/2 ⋅ x0)
@@ -54,7 +54,8 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .mutation(GaussianMutation::new(0.05, 0.1))
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
                 .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
-                .n_vars(2)
+                .num_vars(2)
+                .num_objectives(3)
                 .population_size(1000)
                 .num_offsprings(1000)
                 .num_iterations(10)
@@ -70,7 +71,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
 
             algorithm.run().expect("NSGA3 run failed");
             // prevent optimizer from eliding the result
-            black_box(algorithm.population());
+            black_box(algorithm.population().expect("Population getter failed"));
         })
     });
 }

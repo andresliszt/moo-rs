@@ -52,7 +52,9 @@ fn test_knapsack_nsga2_small_binary() {
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
         .duplicates_cleaner(ExactDuplicatesCleaner::new())
-        .n_vars(5)
+        .num_vars(5)
+        .num_constraints(1)
+        .num_objectives(2)
         .population_size(100)
         .num_offsprings(32)
         .num_iterations(2)
@@ -64,7 +66,10 @@ fn test_knapsack_nsga2_small_binary() {
         .unwrap();
 
     algorithm.run().expect("NSGA2 run failed");
-    let pareto = algorithm.population().best();
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    let pareto = population.best();
 
     // actual genes set
     let actual_genes: HashSet<Vec<OrderedFloat<f64>>> = pareto

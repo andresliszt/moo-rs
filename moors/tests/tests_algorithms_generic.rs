@@ -61,7 +61,8 @@ fn test_nsga2() {
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective as FitnessFn)
-        .n_vars(2)
+        .num_vars(2)
+        .num_objectives(2)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(100)
@@ -76,7 +77,10 @@ fn test_nsga2() {
         .expect("failed to build NSGA2");
 
     algorithm.run().expect("NSGA2 run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }
 
 #[test]
@@ -87,7 +91,8 @@ fn test_agemoea() {
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective as FitnessFn)
-        .n_vars(2)
+        .num_vars(2)
+        .num_objectives(2)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(100)
@@ -102,7 +107,10 @@ fn test_agemoea() {
         .expect("failed to build AgeMoea");
 
     algorithm.run().expect("AgeMoea run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }
 
 #[test]
@@ -116,7 +124,8 @@ fn test_nsga3() {
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective as FitnessFn)
-        .n_vars(2)
+        .num_vars(2)
+        .num_objectives(2)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(100)
@@ -131,7 +140,10 @@ fn test_nsga3() {
         .expect("failed to build NSGA3");
 
     algorithm.run().expect("NSGA3 run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }
 
 #[test]
@@ -145,7 +157,8 @@ fn test_rnsga2() {
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective as FitnessFn)
-        .n_vars(2)
+        .num_vars(2)
+        .num_objectives(2)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(100)
@@ -160,7 +173,10 @@ fn test_rnsga2() {
         .expect("failed to build RNSGA2");
 
     algorithm.run().expect("RNSGA2 run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }
 
 #[test]
@@ -175,12 +191,13 @@ fn test_revea() {
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective as FitnessFn)
-        .n_vars(2)
+        .num_vars(2)
+        .num_objectives(2)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(100)
         .mutation_rate(0.1)
-        .crossover_rate(0.9)
+        .crossover_rate(0.95)
         .keep_infeasible(false)
         .verbose(false)
         .lower_bound(0.0)
@@ -189,5 +206,8 @@ fn test_revea() {
         .expect("failed to build REVEA");
 
     algorithm.run().expect("Revea run failed");
-    assert_small_real_front(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
 }

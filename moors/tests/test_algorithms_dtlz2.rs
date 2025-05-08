@@ -15,7 +15,7 @@ use moors::{
     },
 };
 
-/// DTLZ2 for 3 objectives (m = 3) with k = 0 (so n_vars = m−1 = 2):
+/// DTLZ2 for 3 objectives (m = 3) with k = 0 (so num_vars = m−1 = 2):
 /// f1 = cos(π/2 ⋅ x0) ⋅ cos(π/2 ⋅ x1)
 /// f2 = cos(π/2 ⋅ x0) ⋅ sin(π/2 ⋅ x1)
 /// f3 = sin(π/2 ⋅ x0)
@@ -73,7 +73,8 @@ fn test_nsga3_dtlz2_three_objectives() {
         .mutation(GaussianMutation::new(0.05, 0.1))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
-        .n_vars(2)
+        .num_vars(2)
+        .num_objectives(3)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(200)
@@ -89,7 +90,10 @@ fn test_nsga3_dtlz2_three_objectives() {
 
     // 3) run & assert
     algorithm.run().expect("NSGA3 run failed");
-    assert_full_unit_sphere(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_full_unit_sphere(&population);
 }
 
 #[test]
@@ -107,7 +111,8 @@ fn test_revea_dtlz2_three_objectives() {
         .mutation(GaussianMutation::new(0.05, 0.1))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
-        .n_vars(2)
+        .num_vars(2)
+        .num_objectives(3)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(200)
@@ -122,5 +127,8 @@ fn test_revea_dtlz2_three_objectives() {
 
     // 3) run & assert
     algorithm.run().expect("REVEA run failed");
-    assert_full_unit_sphere(&algorithm.population());
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_full_unit_sphere(&population);
 }

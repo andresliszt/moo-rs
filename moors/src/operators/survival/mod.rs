@@ -1,5 +1,5 @@
 use crate::{
-    algorithms::AlgorithmContext,
+    algorithms::helpers::context::AlgorithmContext,
     genetic::{Fronts, FrontsExt, Population},
     non_dominated_sorting::build_fronts,
     operators::GeneticOperator,

@@ -44,22 +44,19 @@ moo-rs/
 
 ```toml
 [dependencies]
-moors = { git = "https://github.com/andresliszt/moo-rs", package = "moors" }
+moors = "0.1.0"
 ```
-
-> **Note**: publishing **moors** on crates.io is in progress.
 
 ### Quickstart
 
 ```rust
+
 use ndarray::{Array1, Axis, stack};
 
 use moors::{
-    algorithms::Nsga2Builder,
+    algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
     duplicates::ExactDuplicatesCleaner,
-    genetic::{
-        PopulationConstraints, PopulationFitness, PopulationGenes,
-    },
+    genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{
         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
         sampling::RandomSamplingBinary,
@@ -74,7 +71,6 @@ const CAPACITY: f64 = 15.0;
 /// Compute multi-objective fitness [–total_value, total_weight]
 /// Returns an Array2<f64> of shape (population_size, 2)
 fn fitness_knapsack(population_genes: &PopulationGenes) -> PopulationFitness {
-    // lift our fixed arrays into Array1 for dot products
     let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
     let values_arr = Array1::from_vec(VALUES.to_vec());
 
@@ -86,34 +82,35 @@ fn fitness_knapsack(population_genes: &PopulationGenes) -> PopulationFitness {
 }
 
 fn constraints_knapsack(population_genes: &PopulationGenes) -> PopulationConstraints {
-    // build a 1-D array of weights in one shot
     let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
-
-    // dot → Array1<f64>, subtract capacity → Array1<f64>,
-    // then promote to 2-D (n×1) with insert_axis
     (population_genes.dot(&weights_arr) - CAPACITY).insert_axis(Axis(1))
 }
 
-// build and run the NSGA-II algorithm
-let mut algorithm = Nsga2Builder::default()
-    .fitness_fn(fitness_knapsack)
-    .constraints_fn(constraints_knapsack)
-    .sampler(RandomSamplingBinary::new())
-    .crossover(SinglePointBinaryCrossover::new())
-    .mutation(BitFlipMutation::new(0.5))
-    .duplicates_cleaner(ExactDuplicatesCleaner::new())
-    .n_vars(5)
-    .population_size(100)
-    .crossover_rate(0.9)
-    .mutation_rate(0.1)
-    .num_offsprings(32)
-    .num_iterations(2)
-    .build()
-    .unwrap();
+fn main() -> Result<(), MultiObjectiveAlgorithmError> {
+    // build the NSGA-II algorithm
+    let mut algorithm = Nsga2Builder::default()
+        .fitness_fn(fitness_knapsack)
+        .constraints_fn(constraints_knapsack)
+        .sampler(RandomSamplingBinary::new())
+        .crossover(SinglePointBinaryCrossover::new())
+        .mutation(BitFlipMutation::new(0.5))
+        .duplicates_cleaner(ExactDuplicatesCleaner::new())
+        .num_vars(5)
+        .num_objectives(2)
+        .num_constraints(1)
+        .population_size(100)
+        .crossover_rate(0.9)
+        .mutation_rate(0.1)
+        .num_offsprings(32)
+        .num_iterations(2)
+        .build()?;
 
-algorithm.run().unwrap();
-println!("Done! Population size: {}", algorithm.population.len());
+    algorithm.run()?;
+    let population = algorithm.population()?;
+    println!("Done! Population size: {}", population.len());
 
+    Ok(())
+}
 ```
 
 ## pymoors (Python)

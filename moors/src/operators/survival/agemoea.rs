@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use ndarray::{Array1, Array2, ArrayView1, Axis, stack};
 use ndarray_stats::QuantileExt;
 
-use crate::algorithms::AlgorithmContext;
+use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::PopulationFitness;
 use crate::helpers::extreme_points::get_ideal;
 use crate::helpers::linalg::{cross_p_distances, lp_norm_arrayview};
@@ -479,7 +479,7 @@ mod tests {
         let mut operator = AgeMoeaSurvival::new();
         let mut rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(2, 5, 5, 2, 1, None, None, None);
+        let _context = AlgorithmContext::new(2, 5, 5, 2, 1, 0, None, None);
         let survivors = operator.operate(population, n_survive, &mut rng, &_context);
 
         assert_eq!(

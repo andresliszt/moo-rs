@@ -23,8 +23,8 @@ impl GeneticOperator for RandomSamplingBinary {
 }
 
 impl SamplingOperator for RandomSamplingBinary {
-    fn sample_individual(&self, n_vars: usize, rng: &mut dyn RandomGenerator) -> IndividualGenes {
-        (0..n_vars)
+    fn sample_individual(&self, num_vars: usize, rng: &mut dyn RandomGenerator) -> IndividualGenes {
+        (0..num_vars)
             .map(|_| if rng.gen_bool(0.5) { 1.0 } else { 0.0 })
             .collect()
     }
