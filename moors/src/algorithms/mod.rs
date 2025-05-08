@@ -1,11 +1,17 @@
 use rand::{SeedableRng, rngs::StdRng};
-use std::{error::Error, fmt, marker::PhantomData};
+use std::marker::PhantomData;
 
 use ndarray::{Axis, concatenate};
 
 use crate::{
+    algorithms::helpers::{
+        context::AlgorithmContext,
+        error::MultiObjectiveAlgorithmError,
+        initialization::Initialization,
+        validators::{validate_bounds, validate_positive, validate_probability},
+    },
     duplicates::PopulationCleaner,
-    evaluator::{Evaluator, EvaluatorError},
+    evaluator::Evaluator,
     genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes},
     helpers::printer::print_minimum_objectives,
     operators::{
@@ -23,13 +29,14 @@ macro_rules! delegate_algorithm_methods {
         }
 
         /// Delegate `population` to the inner algorithm
-        pub fn population(&self) -> &crate::genetic::Population {
+        pub fn population(&self) -> &Option<crate::genetic::Population> {
             &self.inner.population
         }
     };
 }
 
 mod agemoea;
+pub mod helpers;
 mod nsga2;
 mod nsga3;
 mod revea;
@@ -40,123 +47,6 @@ pub use nsga2::{Nsga2, Nsga2Builder};
 pub use nsga3::{Nsga3, Nsga3Builder};
 pub use revea::{Revea, ReveaBuilder};
 pub use rnsga2::{Rnsga2, Rnsga2Builder};
-
-#[derive(Debug)]
-pub enum MultiObjectiveAlgorithmError {
-    Evolve(EvolveError),
-    Evaluator(EvaluatorError),
-    InvalidParameter(String),
-}
-
-impl fmt::Display for MultiObjectiveAlgorithmError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MultiObjectiveAlgorithmError::Evolve(msg) => {
-                write!(f, "Error during evolution: {}", msg)
-            }
-            MultiObjectiveAlgorithmError::Evaluator(msg) => {
-                write!(f, "Error during evaluation: {}", msg)
-            }
-            MultiObjectiveAlgorithmError::InvalidParameter(msg) => {
-                write!(f, "Invalid parameter: {}", msg)
-            }
-        }
-    }
-}
-
-impl From<EvolveError> for MultiObjectiveAlgorithmError {
-    fn from(e: EvolveError) -> Self {
-        MultiObjectiveAlgorithmError::Evolve(e)
-    }
-}
-
-impl From<EvaluatorError> for MultiObjectiveAlgorithmError {
-    fn from(e: EvaluatorError) -> Self {
-        MultiObjectiveAlgorithmError::Evaluator(e)
-    }
-}
-
-impl Error for MultiObjectiveAlgorithmError {}
-
-// Helper function for probability validation
-fn validate_probability(value: f64, name: &str) -> Result<(), MultiObjectiveAlgorithmError> {
-    if !(0.0..=1.0).contains(&value) {
-        return Err(MultiObjectiveAlgorithmError::InvalidParameter(format!(
-            "{} must be between 0 and 1, got {}",
-            name, value
-        )));
-    }
-    Ok(())
-}
-
-// Helper function for positive integer validation
-fn validate_positive(value: usize, name: &str) -> Result<(), MultiObjectiveAlgorithmError> {
-    if value == 0 {
-        return Err(MultiObjectiveAlgorithmError::InvalidParameter(format!(
-            "{} must be greater than 0",
-            name
-        )));
-    }
-    Ok(())
-}
-
-fn validate_bounds(
-    lower_bound: Option<f64>,
-    upper_bound: Option<f64>,
-) -> Result<(), MultiObjectiveAlgorithmError> {
-    if let (Some(lower), Some(upper)) = (lower_bound, upper_bound) {
-        if lower >= upper {
-            return Err(MultiObjectiveAlgorithmError::InvalidParameter(format!(
-                "Lower bound ({}) must be less than upper bound ({})",
-                lower, upper
-            )));
-        }
-    }
-    Ok(())
-}
-
-#[derive(Debug, Clone)]
-pub struct AlgorithmContext {
-    pub n_vars: usize,
-    pub population_size: usize,
-    pub num_offsprings: usize,
-    pub n_objectives: usize,
-    pub num_iterations: usize,
-    pub current_iteration: usize,
-    pub n_constraints: Option<usize>,
-    pub upper_bound: Option<f64>,
-    pub lower_bound: Option<f64>,
-}
-
-impl AlgorithmContext {
-    pub fn new(
-        n_vars: usize,
-        population_size: usize,
-        num_offsprings: usize,
-        n_objectives: usize,
-        num_iterations: usize,
-        n_constraints: Option<usize>,
-        upper_bound: Option<f64>,
-        lower_bound: Option<f64>,
-    ) -> Self {
-        let current_iteration = 0;
-        Self {
-            n_vars,
-            population_size,
-            num_offsprings,
-            n_objectives,
-            num_iterations,
-            current_iteration,
-            n_constraints,
-            upper_bound,
-            lower_bound,
-        }
-    }
-
-    pub fn set_current_iteration(&mut self, current_iteration: usize) {
-        self.current_iteration = current_iteration
-    }
-}
 
 #[derive(Debug)]
 pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
@@ -170,7 +60,8 @@ where
     G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
-    pub population: Population,
+    pub population: Option<Population>,
+    sampler: S,
     survivor: Sur,
     evolve: Evolve<Sel, Cross, Mut, DC>,
     evaluator: Evaluator<F, G>,
@@ -200,7 +91,9 @@ where
         mutation: Mut,
         duplicates_cleaner: Option<DC>,
         fitness_fn: F,
-        n_vars: usize,
+        num_vars: usize,
+        num_objectives: usize,
+        num_constraints: usize,
         population_size: usize,
         num_offsprings: usize,
         num_iterations: usize,
@@ -219,7 +112,7 @@ where
         validate_probability(crossover_rate, "Crossover rate")?;
 
         // Validate positive values
-        validate_positive(n_vars, "Number of variables")?;
+        validate_positive(num_vars, "Number of variables")?;
         validate_positive(population_size, "Population size")?;
         validate_positive(num_offsprings, "Number of offsprings")?;
         validate_positive(num_iterations, "Number of iterations")?;
@@ -227,11 +120,28 @@ where
         // Validate bounds
         validate_bounds(lower_bound, upper_bound)?;
 
-        let mut rng = MOORandomGenerator::new(
+        let rng = MOORandomGenerator::new(
             seed.map_or_else(|| StdRng::from_rng(&mut rand::rng()), StdRng::seed_from_u64),
         );
-
-        let mut genes = sampler.operate(population_size, n_vars, &mut rng);
+        // Create the context
+        let context: AlgorithmContext = AlgorithmContext::new(
+            num_vars,
+            population_size,
+            num_offsprings,
+            num_objectives,
+            num_iterations,
+            num_constraints,
+            upper_bound,
+            lower_bound,
+        );
+        // Create the evaluator
+        let evaluator = Evaluator::new(
+            fitness_fn,
+            constraints_fn,
+            keep_infeasible,
+            lower_bound,
+            upper_bound,
+        );
 
         // Create the evolution operator.
         let evolve = Evolve::new(
@@ -244,34 +154,11 @@ where
             lower_bound,
             upper_bound,
         );
-
-        // Clean duplicates if the cleaner is enabled.
-        genes = evolve.clean_duplicates(genes, None);
-
-        let evaluator = Evaluator::new(
-            fitness_fn,
-            constraints_fn,
-            keep_infeasible,
-            lower_bound,
-            upper_bound,
-        );
-
-        let population = evaluator.evaluate(genes)?;
-
-        // Get the context
-        let context: AlgorithmContext = AlgorithmContext::new(
-            n_vars,
-            population_size,
-            num_offsprings,
-            population.fitness.ncols(),
-            num_iterations,
-            population.constraints.as_ref().map(|c| c.ncols()),
-            upper_bound,
-            lower_bound,
-        );
-
+        // Population is not set until we call initialization
+        let population = None;
         Ok(Self {
             population,
+            sampler,
             survivor,
             evolve,
             evaluator,
@@ -284,51 +171,63 @@ where
 
     fn next(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
         // Obtain offspring genes.
+
+        let ref_pop: &Population = self.population.as_ref().unwrap();
+
         let offspring_genes = self
             .evolve
-            .evolve(
-                &self.population,
-                self.context.num_offsprings,
-                200,
-                &mut self.rng,
-            )
+            .evolve(ref_pop, self.context.num_offsprings, 200, &mut self.rng)
             .map_err::<MultiObjectiveAlgorithmError, _>(Into::into)?;
 
-        // Validate that the number of columns in offspring_genes matches n_vars.
+        // Validate that the number of columns in offspring_genes matches num_vars.
         assert_eq!(
             offspring_genes.ncols(),
-            self.context.n_vars,
-            "Number of columns in offspring_genes ({}) does not match n_vars ({})",
+            self.context.num_vars,
+            "Number of columns in offspring_genes ({}) does not match num_vars ({})",
             offspring_genes.ncols(),
-            self.context.n_vars
+            self.context.num_vars
         );
 
         // Combine the current population with the offspring.
-        let combined_genes = concatenate(
-            Axis(0),
-            &[self.population.genes.view(), offspring_genes.view()],
-        )
-        .expect("Failed to concatenate current population genes with offspring genes");
-        // Build fronts from the combined genes.
+        let combined_genes = concatenate(Axis(0), &[ref_pop.genes.view(), offspring_genes.view()])
+            .expect("Failed to concatenate current population genes with offspring genes");
+        // Evaluate the fitness and constraints and create Population
+        let evaluated_population: Population = self.evaluator.evaluate(combined_genes)?;
 
-        let population = self.evaluator.evaluate(combined_genes)?;
-
-        // Select the new population
-        self.population = self.survivor.operate(
-            population,
+        // Select survivors to the next iteration population
+        let survivors = self.survivor.operate(
+            evaluated_population,
             self.context.population_size,
             &mut self.rng,
             &self.context,
         );
+        // Update the population attribute
+        self.population = Some(survivors);
+
         Ok(())
     }
 
     pub fn run(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
+        // Create the first Population
+        let initial_population = Initialization::initialize(
+            &self.sampler,
+            &self.survivor,
+            &self.evaluator,
+            &self.evolve.duplicates_cleaner,
+            &mut self.rng,
+            &self.context,
+        )?;
+        // Update population attribute
+        self.population = Some(initial_population);
+
         for current_iter in 0..self.context.num_iterations {
             match self.next() {
                 Ok(()) => {
                     if self.verbose {
-                        print_minimum_objectives(&self.population, current_iter + 1);
+                        print_minimum_objectives(
+                            &self.population.as_ref().unwrap(),
+                            current_iter + 1,
+                        );
                     }
                 }
                 Err(MultiObjectiveAlgorithmError::Evolve(EvolveError::EmptyMatingResult {

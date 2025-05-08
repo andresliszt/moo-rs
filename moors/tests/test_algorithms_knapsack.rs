@@ -52,7 +52,7 @@ fn test_knapsack_nsga2_small_binary() {
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
         .duplicates_cleaner(ExactDuplicatesCleaner::new())
-        .n_vars(5)
+        .num_vars(5)
         .population_size(100)
         .num_offsprings(32)
         .num_iterations(2)

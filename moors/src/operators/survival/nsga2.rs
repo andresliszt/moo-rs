@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use ndarray::Array1;
 
-use crate::algorithms::AlgorithmContext;
+use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::{Fronts, PopulationFitness};
 use crate::operators::{GeneticOperator, SurvivalOperator};
 use crate::random::RandomGenerator;
@@ -205,7 +205,7 @@ mod tests {
         let selector = RankCrowdingSurvival::new();
         let mut rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, None, None, None);
+        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
         selector.set_survival_score(&mut fronts, &mut rng, &_context);
 
         let expected: Array1<f64> = array![
@@ -229,7 +229,7 @@ mod tests {
         assert_eq!(selector.name(), "RankCrowdingSurvival");
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, None, None, None);
+        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
         let new_population = selector.operate(population, n_survive, &mut _rng, &_context);
 
         // The resulting population should remain unchanged.
@@ -274,7 +274,7 @@ mod tests {
         let mut selector = RankCrowdingSurvival;
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, None, None, None);
+        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
         let new_population = selector.operate(population, n_survive, &mut _rng, &_context);
 
         // The final population must have 4 individuals.

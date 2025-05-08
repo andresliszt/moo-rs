@@ -25,7 +25,7 @@ fn test_invalid_mutation_rate(#[case] invalid: f64) {
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
-        .n_vars(10)
+        .num_vars(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -59,7 +59,7 @@ fn test_invalid_crossover_rate(#[case] invalid: f64) {
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
-        .n_vars(10)
+        .num_vars(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -86,13 +86,13 @@ fn test_invalid_crossover_rate(#[case] invalid: f64) {
 
 #[test]
 fn test_invalid_n_vars_population_offsprings_iterations() {
-    // n_vars = 0
+    // num_vars = 0
     let err = match Nsga2Builder::<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner>::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
-        .n_vars(0) // ← invalid
+        .num_vars(0) // ← invalid
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -100,7 +100,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .crossover_rate(0.9)
         .build()
     {
-        Ok(_) => panic!("Expected error for n_vars = 0"),
+        Ok(_) => panic!("Expected error for num_vars = 0"),
         Err(e) => e,
     };
     assert!(
@@ -115,7 +115,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
-        .n_vars(10)
+        .num_vars(10)
         .population_size(0) // ← invalid
         .num_offsprings(50)
         .num_iterations(50)
@@ -138,7 +138,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
-        .n_vars(10)
+        .num_vars(10)
         .population_size(100)
         .num_offsprings(0) // ← invalid
         .num_iterations(50)
@@ -161,7 +161,7 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
-        .n_vars(10)
+        .num_vars(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(0) // ← invalid
@@ -188,7 +188,7 @@ fn test_invalid_bounds(#[case] lower: f64, #[case] upper: f64) {
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .fitness_fn(dummy_fitness)
-        .n_vars(10)
+        .num_vars(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)

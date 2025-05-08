@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use ndarray::{Array1, Array2, Axis, s};
 use ndarray_stats::QuantileExt;
 
-use crate::algorithms::AlgorithmContext;
+use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::{Fronts, Population, PopulationFitness};
 use crate::helpers::extreme_points::get_ideal;
 use crate::non_dominated_sorting::build_fronts;
@@ -43,15 +43,15 @@ impl HyperPlaneNormalization for Nsga3HyperPlaneNormalization {
     ///   w^j = [eps, ..., 1.0 (at position j), ..., eps],
     /// then selects the solution that minimizes ASF(s, w^j) using argmin from ndarray-stats.
     fn compute_extreme_points(&self, translated_population: &PopulationFitness) -> Array2<f64> {
-        let n_objectives = translated_population.ncols();
+        let num_objectives = translated_population.ncols();
         // Initialize an array to hold the extreme vectors; one per objective.
-        let mut extreme_points = Array2::<f64>::zeros((n_objectives, n_objectives));
+        let mut extreme_points = Array2::<f64>::zeros((num_objectives, num_objectives));
 
         // For each objective j, compute the corresponding extreme point.
-        for j in 0..n_objectives {
+        for j in 0..num_objectives {
             // Build the weight vector for objective j:
             // All elements are epsilon except for the j-th element which is 1.0.
-            let mut weight = Array1::<f64>::from_elem(n_objectives, 1e-6);
+            let mut weight = Array1::<f64>::from_elem(num_objectives, 1e-6);
             weight[j] = 1.0;
 
             // Compute the ASF value for each solution in the translated population.
@@ -502,7 +502,7 @@ mod tests {
         let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);
         let mut rng = FakeRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(2, 5, 5, 2, 1, None, None, None);
+        let _context = AlgorithmContext::new(2, 5, 5, 2, 1, 0, None, None);
         // Set n_survive to 3 so that splitting must occur on the single front.
         let survivors = survival_operator.operate(population, 3, &mut rng, &_context);
         assert_eq!(survivors.len(), 3, "Final survivors count should be 3");
@@ -546,7 +546,7 @@ mod tests {
         let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);
         let mut rng = FakeRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(2, 7, 5, 2, 1, None, None, None);
+        let _context = AlgorithmContext::new(2, 7, 5, 2, 1, 0, None, None);
         // Total individuals if merged completely would be 7.
         // Set n_survive to 5 so that the first front (3 individuals) is completely taken
         // and 2 individuals are selected from the second front.

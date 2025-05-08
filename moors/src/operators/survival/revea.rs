@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ndarray::{Array1, Array2};
 
-use crate::algorithms::AlgorithmContext;
+use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::Population;
 use crate::helpers::extreme_points::{get_ideal, get_nadir};
 use crate::helpers::linalg::{faer_dot_and_norms, faer_dot_from_array};
@@ -72,7 +72,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
             translated_fitness_norm,
             cosine_distances,
             gamma,
-            algorithm_context.n_objectives,
+            algorithm_context.num_objectives,
             algorithm_context.current_iteration,
             algorithm_context.num_iterations,
             self.alpha,
@@ -183,7 +183,7 @@ fn compute_angle_penalized_distances(
     fitness_norm: faer::Mat<f64>,
     cosine_matrix: faer::Mat<f64>,
     gamma: Vec<f64>,
-    n_objectives: usize,
+    num_objectives: usize,
     current_iteration: usize,
     max_iterations: usize,
     alpha: f64,
@@ -192,7 +192,7 @@ fn compute_angle_penalized_distances(
     let m = cosine_matrix.ncols();
     // Common Factor: M · (t/tmax)^α
     let factor =
-        (n_objectives as f64) * (current_iteration as f64 / max_iterations as f64).powf(alpha);
+        (num_objectives as f64) * (current_iteration as f64 / max_iterations as f64).powf(alpha);
     faer::Mat::from_fn(n, m, |i, j| {
         let gamma_val = if gamma[j] == 0.0 { 1e-64 } else { gamma[j] };
         (1.0 + factor * (cosine_matrix.get(i, j).acos() / gamma_val)) * fitness_norm.get(i, 0)
@@ -331,7 +331,7 @@ mod tests {
         // gamma vector: [1.0, 2.0]
         let gamma = vec![1.0, 2.0];
         // Define parameters:
-        let n_objectives = 2;
+        let num_objectives = 2;
         let current_iteration = 5;
         let max_iterations = 10;
         let alpha = 1.0;
@@ -341,7 +341,7 @@ mod tests {
             fitness_norm,
             cosine_matrix,
             gamma,
-            n_objectives,
+            num_objectives,
             current_iteration,
             max_iterations,
             alpha,

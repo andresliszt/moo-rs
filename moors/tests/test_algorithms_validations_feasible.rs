@@ -18,7 +18,7 @@ fn fitness_binary_biobj(genes: &PopulationGenes) -> PopulationFitness {
     stack(Axis(1), &[f1.view(), f2.view()]).unwrap()
 }
 
-/// Infeasible constraint: n_vars - sum(x) + 1 > 0 for all individuals ⇒ always infeasible
+/// Infeasible constraint: num_vars - sum(x) + 1 > 0 for all individuals ⇒ always infeasible
 fn constraints_always_infeasible(genes: &PopulationGenes) -> PopulationConstraints {
     let n = genes.ncols() as f64;
     let sum = genes.sum_axis(Axis(1));
@@ -34,7 +34,7 @@ fn test_keep_infeasible() {
         .sampler(RandomSamplingBinary::new())
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
-        .n_vars(5)
+        .num_vars(5)
         .num_iterations(100)
         .population_size(100)
         .num_offsprings(32)
@@ -55,7 +55,7 @@ fn test_keep_infeasible_out_of_bounds() {
             .sampler(RandomSamplingBinary::new())
             .crossover(SinglePointBinaryCrossover::new())
             .mutation(BitFlipMutation::new(0.5))
-            .n_vars(5)
+            .num_vars(5)
             .population_size(100)
             .num_offsprings(32)
             .num_iterations(20)
@@ -80,7 +80,7 @@ fn test_keep_infeasible_false() {
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
         .duplicates_cleaner(ExactDuplicatesCleaner::new())
-        .n_vars(5)
+        .num_vars(5)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(20)
