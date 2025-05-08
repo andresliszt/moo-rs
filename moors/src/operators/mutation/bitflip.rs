@@ -24,7 +24,7 @@ impl GeneticOperator for BitFlipMutation {
 }
 
 impl MutationOperator for BitFlipMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut dyn RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
         for gene in individual.iter_mut() {
             if rng.gen_bool(self.gene_mutation_rate) {
                 *gene = if *gene == 0.0 { 1.0 } else { 0.0 };
@@ -39,7 +39,6 @@ mod tests {
     use crate::genetic::PopulationGenes;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
-    use rand::RngCore;
 
     /// A fake RandomGenerator for testing that always returns `true` for `gen_bool`.
     struct FakeRandomGeneratorTrue {
@@ -55,7 +54,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandomGeneratorTrue {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn gen_bool(&mut self, _p: f64) -> bool {

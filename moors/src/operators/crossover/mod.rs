@@ -24,7 +24,7 @@ pub trait CrossoverOperator: GeneticOperator {
         &self,
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> (IndividualGenes, IndividualGenes);
 
     /// Applies the crossover operator to the population.
@@ -35,7 +35,7 @@ pub trait CrossoverOperator: GeneticOperator {
         parents_a: &PopulationGenes,
         parents_b: &PopulationGenes,
         crossover_rate: f64,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> PopulationGenes {
         let population_size = parents_a.nrows();
         assert_eq!(

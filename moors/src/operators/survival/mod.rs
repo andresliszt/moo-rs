@@ -42,7 +42,7 @@ pub trait SurvivalOperator: GeneticOperator {
     fn set_survival_score(
         &self,
         fronts: &mut Fronts,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
     );
 
@@ -52,7 +52,7 @@ pub trait SurvivalOperator: GeneticOperator {
         &mut self,
         population: Population,
         n_survive: usize,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
     ) -> Population {
         // Build fronts

@@ -24,7 +24,7 @@ impl GeneticOperator for DisplacementMutation {
 }
 
 impl MutationOperator for DisplacementMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut dyn RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
         let n = individual.len();
 
         // Select two random indices to define the segment boundaries.
@@ -88,7 +88,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandomGeneratorDisplacement {
-        fn rng(&mut self) -> &mut dyn rand::RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn gen_range_usize(&mut self, _min: usize, _max: usize) -> usize {

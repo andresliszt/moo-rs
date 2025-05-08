@@ -23,7 +23,7 @@ impl CrossoverOperator for UniformBinaryCrossover {
         &self,
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> (IndividualGenes, IndividualGenes) {
         assert_eq!(
             parent_a.len(),
@@ -56,7 +56,6 @@ mod tests {
     use super::*;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::{Array1, array};
-    use rand::RngCore;
 
     /// A controlled fake random generator that returns predetermined values for `gen_proability()`.
     struct ControlledFakeProbabilityGenerator {
@@ -79,7 +78,8 @@ mod tests {
     }
 
     impl RandomGenerator for ControlledFakeProbabilityGenerator {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         // Override the default `gen_proability()` to return controlled values.

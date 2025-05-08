@@ -34,7 +34,7 @@ impl GeneticOperator for NoMutation {
 }
 
 impl MutationOperator for NoMutation {
-    fn mutate<'a>(&self, _individual: IndividualGenesMut<'a>, _rng: &mut dyn RandomGenerator) {
+    fn mutate<'a>(&self, _individual: IndividualGenesMut<'a>, _rng: &mut impl RandomGenerator) {
         // do nothing
     }
 }
@@ -53,7 +53,7 @@ impl CrossoverOperator for NoCrossOver {
         &self,
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
-        _rng: &mut dyn RandomGenerator,
+        _rng: &mut impl RandomGenerator,
     ) -> (IndividualGenes, IndividualGenes) {
         // return parents as children
         (parent_a.clone(), parent_b.clone())

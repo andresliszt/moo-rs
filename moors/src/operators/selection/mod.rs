@@ -34,7 +34,7 @@ pub trait SelectionOperator: GeneticOperator {
         &self,
         population_size: usize,
         n_crossovers: usize,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> Vec<Vec<usize>> {
         // Note that we have fixed n_parents = 2 and pressure = 2
         let total_needed = n_crossovers * self.n_parents_per_crossover() * self.pressure();
@@ -64,14 +64,14 @@ pub trait SelectionOperator: GeneticOperator {
         &self,
         p1: &Individual,
         p2: &Individual,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> DuelResult;
 
     fn operate(
         &self,
         population: &Population,
         n_crossovers: usize,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> (Population, Population) {
         let population_size = population.len();
 

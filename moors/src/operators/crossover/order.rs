@@ -25,7 +25,7 @@ impl CrossoverOperator for OrderCrossover {
         &self,
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
     ) -> (IndividualGenes, IndividualGenes) {
         let len = parent_a.len();
         assert_eq!(len, parent_b.len());
@@ -85,7 +85,6 @@ mod tests {
     use crate::genetic::IndividualGenes;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::Array1;
-    use rand::RngCore;
 
     /// A controlled fake RandomGenerator that returns predetermined values for `gen_range_usize`.
     /// For this test, it will return 2 on the first call and 5 on the second call.
@@ -106,7 +105,8 @@ mod tests {
     }
 
     impl RandomGenerator for ControlledFakeRandomGenerator {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn gen_range_usize(&mut self, _min: usize, _max: usize) -> usize {

@@ -95,7 +95,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
     fn set_survival_score(
         &self,
         _fronts: &mut Fronts,
-        _rng: &mut dyn RandomGenerator,
+        _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) {
 
@@ -106,7 +106,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
         &mut self,
         population: Population,
         n_survive: usize,
-        rng: &mut dyn RandomGenerator,
+        rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) -> Population {
         // Build fronts
@@ -274,7 +274,7 @@ fn niching(
     assignments: &Vec<usize>,
     distances: &Vec<f64>,
     splitting_front: &mut Vec<usize>,
-    rng: &mut dyn RandomGenerator,
+    rng: &mut impl RandomGenerator,
 ) -> Vec<usize> {
     // Create available_refs inside the function based on the number of reference points.
     let mut available_refs: Vec<usize> = (0..niche_counts.len()).collect();
@@ -349,7 +349,6 @@ mod tests {
     use super::*;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
-    use rand::RngCore;
 
     #[test]
     fn test_asf_with_identity_weights() {
@@ -455,7 +454,8 @@ mod tests {
     }
 
     impl RandomGenerator for FakeRandomGenerator {
-        fn rng(&mut self) -> &mut dyn RngCore {
+        type R = TestDummyRng;
+        fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
         fn choose_usize<'a>(&mut self, vector: &'a [usize]) -> Option<&'a usize> {

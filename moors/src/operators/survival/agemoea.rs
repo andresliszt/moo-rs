@@ -61,7 +61,7 @@ impl SurvivalOperator for AgeMoeaSurvival {
     fn set_survival_score(
         &self,
         fronts: &mut crate::genetic::Fronts,
-        _rng: &mut dyn RandomGenerator,
+        _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) {
         // Split the fronts into the first one and the rest

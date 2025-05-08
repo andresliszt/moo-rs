@@ -8,6 +8,8 @@ use rand::{Rng, RngCore, SeedableRng};
 /// A trait defining a unified interface for generating random values,
 /// used across genetic operators and algorithms.
 pub trait RandomGenerator {
+    type R: RngCore + Rng;
+
     /// Generates a random `usize` in the range `[min, max)` using the underlying RNG.
     fn gen_range_usize(&mut self, min: usize, max: usize) -> usize {
         self.rng().random_range(min..max)
@@ -43,7 +45,7 @@ pub trait RandomGenerator {
         vector.choose(self.rng())
     }
     /// Returns a mutable reference to the underlying RNG implementing `RngCore`.
-    fn rng(&mut self) -> &mut dyn RngCore;
+    fn rng(&mut self) -> &mut Self::R;
 }
 
 /// The production implementation of `RandomGenerator` using `StdRng`.
@@ -64,13 +66,14 @@ impl MOORandomGenerator {
 }
 
 impl RandomGenerator for MOORandomGenerator {
+    type R = StdRng;
     /// Returns a mutable reference to the underlying `StdRng`.
-    fn rng(&mut self) -> &mut dyn RngCore {
+    fn rng(&mut self) -> &mut StdRng {
         &mut self.rng
     }
 }
 
-/// A dummy implementation of `RngCore` for testing purposes.
+/// A dummy implementation of `RandomGenerator` for testing purposes.
 /// This struct is used when methods are called via the `RandomGenerator` trait
 /// without directly interacting with self.rng. This is for testing only, see several
 /// examples in the operators module
@@ -113,7 +116,8 @@ impl NoopRandomGenerator {
 }
 
 impl RandomGenerator for NoopRandomGenerator {
-    fn rng(&mut self) -> &mut dyn RngCore {
+    type R = TestDummyRng;
+    fn rng(&mut self) -> &mut TestDummyRng {
         &mut self.dummy
     }
 }
