@@ -1,10 +1,11 @@
 [package]
 name = "moors"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Andrés Sandoval Abarca <andres.sndbrca@gmail.com>"]
 description = "Solving multi-objective optimization problems using genetic algorithms."
 license = "MIT"
+repository = "https://github.com/andresliszt/moo-rs"
 
 [lib]
 name = "moors"
