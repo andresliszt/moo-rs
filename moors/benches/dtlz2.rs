@@ -55,6 +55,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
                 .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
                 .num_vars(2)
+                .num_objectives(3)
                 .population_size(1000)
                 .num_offsprings(1000)
                 .num_iterations(10)
@@ -70,7 +71,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
 
             algorithm.run().expect("NSGA3 run failed");
             // prevent optimizer from eliding the result
-            black_box(algorithm.population());
+            black_box(algorithm.population().expect("Population getter failed"));
         })
     });
 }
