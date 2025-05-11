@@ -5,7 +5,7 @@ use ndarray::Array1;
 
 use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::{Fronts, PopulationFitness};
-use crate::operators::{GeneticOperator, SurvivalOperator};
+use crate::operators::{GeneticOperator, survival::FrontsAndRankingBasedSurvival};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -23,8 +23,8 @@ impl RankCrowdingSurvival {
     }
 }
 
-impl SurvivalOperator for RankCrowdingSurvival {
-    fn set_survival_score(
+impl FrontsAndRankingBasedSurvival for RankCrowdingSurvival {
+    fn set_front_survival_score(
         &self,
         fronts: &mut Fronts,
         _rng: &mut impl RandomGenerator,
@@ -206,7 +206,7 @@ mod tests {
         let mut rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
-        selector.set_survival_score(&mut fronts, &mut rng, &_context);
+        selector.set_front_survival_score(&mut fronts, &mut rng, &_context);
 
         let expected: Array1<f64> = array![
             std::f64::INFINITY,
@@ -220,17 +220,17 @@ mod tests {
 
     #[test]
     fn test_survival_selection_all_survive_single_front() {
-        // All individuals belong to a single front (rank 0) and n_survive equals the population size.
+        // All individuals belong to a single front (rank 0) and num_survive equals the population size.
         let genes: Array2<f64> = array![[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]];
         let fitness: Array2<f64> = array![[0.1, 0.9], [0.2, 0.8], [0.3, 0.7]];
         let population = Population::new(genes.clone(), fitness.clone(), None, None);
-        let n_survive = 3;
+        let num_survive = 3;
         let mut selector = RankCrowdingSurvival;
         assert_eq!(selector.name(), "RankCrowdingSurvival");
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
-        let new_population = selector.operate(population, n_survive, &mut _rng, &_context);
+        let new_population = selector.operate(population, num_survive, &mut _rng, &_context);
 
         // The resulting population should remain unchanged.
         assert_eq!(new_population.genes, genes);
@@ -248,7 +248,7 @@ mod tests {
 
         Scenario:
           - Front 1 (should be rank 0): 2 individuals.
-          - Front 2 (should be rank 1): 4 individuals, but only 2 are needed to reach n_survive = 4.
+          - Front 2 (should be rank 1): 4 individuals, but only 2 are needed to reach num_survive = 4.
 
         For Front 2 with fitness values:
              [0.3, 0.7], [0.4, 0.6], [0.5, 0.5], [0.6, 0.4]
@@ -269,16 +269,16 @@ mod tests {
         let fitness = concatenate![Axis(0), front1_fitness, front2_fitness];
         // Create the population using the new constructor (rank is computed internally).
         let population = Population::new(genes.clone(), fitness.clone(), None, None);
-        let n_survive = 4;
+        let num_survive = 4;
 
         let mut selector = RankCrowdingSurvival;
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
-        let new_population = selector.operate(population, n_survive, &mut _rng, &_context);
+        let new_population = selector.operate(population, num_survive, &mut _rng, &_context);
 
         // The final population must have 4 individuals.
-        assert_eq!(new_population.len(), n_survive);
+        assert_eq!(new_population.len(), num_survive);
 
         // The final population should have 4 individuals.
         // Expected outcome:

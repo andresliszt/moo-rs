@@ -10,27 +10,48 @@ use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
 pub struct RankAndScoringSelection {
-    diversity_comparison: SurvivalScoringComparison,
+    use_rank: bool,
+    use_survival_score: bool,
+    survival_comparison: SurvivalScoringComparison,
 }
 
 impl RankAndScoringSelection {
-    /// Creates a new RankAndScoringSelection with the default diversity comparison (Maximize).
-    pub fn new() -> Self {
+    /// Selection operator based on rank and or scoring survival.
+    ///
+    /// * `use_rank` – whether rank is considered.
+    /// * `use_survival_score` – whether survival score is considered.
+    /// * `survival_comparison` – `Maximize` or `Minimize` (ignored if
+    ///   `use_survival_score` is `false`).
+    ///
+    /// # Panics
+    /// Panics if both `use_rank == false` and `use_survival_score == false`.
+    pub fn new(
+        use_rank: bool,
+        use_survival_score: bool,
+        survival_comparison: SurvivalScoringComparison,
+    ) -> Self {
+        assert!(
+            use_rank || use_survival_score,
+            "RankAndScoringSelection: At least one criterion (rank or survival score) must be enabled"
+        );
         Self {
-            diversity_comparison: SurvivalScoringComparison::Maximize,
+            use_rank,
+            use_survival_score,
+            survival_comparison,
         }
     }
-    /// Creates a new RankAndScoringSelection with the specified diversity comparison.
-    pub fn new_with_comparison(comparison: SurvivalScoringComparison) -> Self {
-        Self {
-            diversity_comparison: comparison,
-        }
+}
+
+impl Default for RankAndScoringSelection {
+    /// Default = use both criteria; maximize survival score.
+    fn default() -> Self {
+        Self::new(true, true, SurvivalScoringComparison::Maximize)
     }
 }
 
 impl GeneticOperator for RankAndScoringSelection {
     fn name(&self) -> String {
-        "RankAndScoringSelection".to_string()
+        "RankAndScoringSelection".to_owned()
     }
 }
 
@@ -43,52 +64,39 @@ impl SelectionOperator for RankAndScoringSelection {
         p2: &Individual,
         _rng: &mut impl RandomGenerator,
     ) -> DuelResult {
-        // Check feasibility.
-        let p1_feasible = p1.is_feasible();
-        let p2_feasible = p2.is_feasible();
-        // Retrieve rank.
-        let p1_rank = p1.rank;
-        let p2_rank = p2.rank;
-        // Retrieve diversity (crowding) metric.
-        let p1_cd = p1.survival_score;
-        let p2_cd = p2.survival_score;
+        /* 1. Feasibility dominates everything */
+        match (p1.is_feasible(), p2.is_feasible()) {
+            (true, false) => return DuelResult::LeftWins,
+            (false, true) => return DuelResult::RightWins,
+            _ => {}
+        }
 
-        let winner = if p1_feasible && !p2_feasible {
-            DuelResult::LeftWins
-        } else if p2_feasible && !p1_feasible {
-            DuelResult::RightWins
-        } else {
-            // Both are either feasible or infeasible.
-            if p1_rank < p2_rank {
-                DuelResult::LeftWins
-            } else if p2_rank < p1_rank {
-                DuelResult::RightWins
-            } else {
-                // When ranks are equal, compare the diversity metric.
-                match self.diversity_comparison {
-                    SurvivalScoringComparison::Maximize => {
-                        if p1_cd > p2_cd {
-                            DuelResult::LeftWins
-                        } else if p1_cd < p2_cd {
-                            DuelResult::RightWins
-                        } else {
-                            DuelResult::Tie
-                        }
-                    }
-                    SurvivalScoringComparison::Minimize => {
-                        if p1_cd < p2_cd {
-                            DuelResult::LeftWins
-                        } else if p1_cd > p2_cd {
-                            DuelResult::RightWins
-                        } else {
-                            DuelResult::Tie
-                        }
-                    }
-                }
+        // Rank (if enabled)
+        if self.use_rank {
+            match p1.rank.cmp(&p2.rank) {
+                std::cmp::Ordering::Less => return DuelResult::LeftWins,
+                std::cmp::Ordering::Greater => return DuelResult::RightWins,
+                std::cmp::Ordering::Equal => {}
             }
-        };
+        }
 
-        winner
+        // Survival score (if enabled)
+        if self.use_survival_score {
+            use SurvivalScoringComparison::*;
+            return match self.survival_comparison {
+                Maximize => match p1.survival_score.partial_cmp(&p2.survival_score) {
+                    Some(std::cmp::Ordering::Greater) => DuelResult::LeftWins,
+                    Some(std::cmp::Ordering::Less) => DuelResult::RightWins,
+                    _ => DuelResult::Tie,
+                },
+                Minimize => match p1.survival_score.partial_cmp(&p2.survival_score) {
+                    Some(std::cmp::Ordering::Less) => DuelResult::LeftWins,
+                    Some(std::cmp::Ordering::Greater) => DuelResult::RightWins,
+                    _ => DuelResult::Tie,
+                },
+            };
+        }
+        DuelResult::Tie
     }
 }
 
@@ -128,15 +136,18 @@ mod tests {
 
     #[test]
     fn test_default_diversity_comparison_maximize() {
-        let selector = RankAndScoringSelection::new();
-        match selector.diversity_comparison {
+        let selector = RankAndScoringSelection::default();
+        match selector.survival_comparison {
             SurvivalScoringComparison::Maximize => assert!(true),
             SurvivalScoringComparison::Minimize => panic!("Default should be Maximize"),
         }
+        // default uses both
+        assert!(selector.use_rank);
+        assert!(selector.use_survival_score);
     }
 
     #[rstest(
-        left_feasible, right_feasible, left_rank, right_rank, left_survival, right_survival, diversity, expected,
+        left_feasible, right_feasible, left_rank, right_rank, left_survival, right_survival, survival_comparison, expected,
         // Feasibility check: if one is feasible and the other isn't, feasibility wins regardless of rank or survival.
         case(true, false, 0, 1, 10.0, 5.0, SurvivalScoringComparison::Maximize, DuelResult::LeftWins),
         case(false, true, 1, 0, 10.0, 5.0, SurvivalScoringComparison::Maximize, DuelResult::RightWins),
@@ -166,7 +177,7 @@ mod tests {
         right_rank: usize,
         left_survival: f64,
         right_survival: f64,
-        diversity: SurvivalScoringComparison,
+        survival_comparison: SurvivalScoringComparison,
         expected: DuelResult,
     ) {
         // For simplicity, we use the same genes and fitness values for both individuals.
@@ -201,7 +212,7 @@ mod tests {
             Some(right_survival),
         );
 
-        let selector = RankAndScoringSelection::new_with_comparison(diversity);
+        let selector = RankAndScoringSelection::new(true, true, survival_comparison);
         let mut rng = FakeRandomGenerator::new();
         let result = selector.tournament_duel(&p1, &p2, &mut rng);
         assert_eq!(result, expected);
@@ -223,7 +234,7 @@ mod tests {
         // n_crossovers = 2 → total_needed = 8 participants → 4 tournaments → 4 winners.
         // After splitting: pop_a = 2 winners, pop_b = 2 winners.
         let n_crossovers = 2;
-        let selector = RankAndScoringSelection::new();
+        let selector = RankAndScoringSelection::default();
         let (pop_a, pop_b) = selector.operate(&population, n_crossovers, &mut rng);
 
         assert_eq!(pop_a.len(), 2);
@@ -245,7 +256,7 @@ mod tests {
         // n_crossovers = 1 → total_needed = 4 participants → 2 tournaments → 2 winners total.
         // After splitting: pop_a = 1 winner, pop_b = 1 winner.
         let n_crossovers = 1;
-        let selector = RankAndScoringSelection::new();
+        let selector = RankAndScoringSelection::default();
         let (pop_a, pop_b) = selector.operate(&population, n_crossovers, &mut rng);
 
         // The feasible individual should be one of the winners.
@@ -268,7 +279,7 @@ mod tests {
         // n_crossovers = 1 → total_needed = 4 participants → 2 tournaments → 2 winners.
         // After splitting: pop_a = 1 winner, pop_b = 1 winner.
         let n_crossovers = 1;
-        let selector = RankAndScoringSelection::new();
+        let selector = RankAndScoringSelection::default();
         let (pop_a, pop_b) = selector.operate(&population, n_crossovers, &mut rng);
 
         // In a tie, the overall selection process must eventually choose winners.
@@ -294,7 +305,7 @@ mod tests {
         // n_crossovers = 50 → total_needed = 200 participants → 100 tournaments → 100 winners.
         // After splitting: pop_a = 50 winners, pop_b = 50 winners.
         let n_crossovers = 50;
-        let selector = RankAndScoringSelection::new();
+        let selector = RankAndScoringSelection::default();
         assert_eq!(selector.name(), "RankAndScoringSelection");
         let (pop_a, pop_b) = selector.operate(&population, n_crossovers, &mut rng);
 
@@ -316,7 +327,7 @@ mod tests {
         let population = Population::new(genes, fitness, constraints, rank);
 
         let n_crossovers = 1;
-        let selector = RankAndScoringSelection::new();
+        let selector = RankAndScoringSelection::default();
         let (pop_a, pop_b) = selector.operate(&population, n_crossovers, &mut rng);
 
         // The individual with the better rank should win one tournament.

@@ -131,8 +131,8 @@ pub fn fast_non_dominated_sorting(
 }
 
 /// Builds the fronts from the population.
-pub fn build_fronts(population: Population, n_survive: usize) -> Fronts {
-    let sorted_fronts = fast_non_dominated_sorting(&population.fitness, n_survive);
+pub fn build_fronts(population: Population, num_survive: usize) -> Fronts {
+    let sorted_fronts = fast_non_dominated_sorting(&population.fitness, num_survive);
     let mut results: Fronts = Vec::new();
 
     // For each front (with rank = front_index), extract the sub-population.
@@ -291,7 +291,7 @@ mod tests {
         // Build the Population (with rank set to None initially).
         let population = Population::new(genes, fitness, constraints, None);
 
-        // Call build_fronts with n_survive = 5.
+        // Call build_fronts with num_survive = 5.
         let fronts = build_fronts(population, 5);
 
         // We expect three fronts:

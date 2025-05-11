@@ -1,5 +1,3 @@
-use ndarray::Array2;
-
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
@@ -7,15 +5,14 @@ use crate::{
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
         selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
-        survival::{SurvivalScoringComparison, rnsga2::Rnsga2ReferencePointsSurvival},
+        survival::{SurvivalScoringComparison, spea2::Spea2KnnSurvival},
     },
 };
 
 use moors_macros::algorithm_builder;
 
-// Define the RNSGA2
 #[derive(Debug)]
-pub struct Rnsga2<S, Cross, Mut, F, G, DC>
+pub struct Spea2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
@@ -24,20 +21,12 @@ where
     G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
-    pub inner: MultiObjectiveAlgorithm<
-        S,
-        RankAndScoringSelection,
-        Rnsga2ReferencePointsSurvival,
-        Cross,
-        Mut,
-        F,
-        G,
-        DC,
-    >,
+    pub inner:
+        MultiObjectiveAlgorithm<S, RankAndScoringSelection, Spea2KnnSurvival, Cross, Mut, F, G, DC>,
 }
 
 #[algorithm_builder]
-impl<S, Cross, Mut, F, G, DC> Rnsga2<S, Cross, Mut, F, G, DC>
+impl<S, Cross, Mut, F, G, DC> Spea2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
@@ -48,8 +37,6 @@ where
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        reference_points: Array2<f64>,
-        epsilon: f64,
         sampler: S,
         crossover: Cross,
         mutation: Mut,
@@ -71,11 +58,11 @@ where
         upper_bound: Option<f64>,
         seed: Option<u64>,
     ) -> Result<Self, MultiObjectiveAlgorithmError> {
-        // Define RNSGA2 selector and survivor
-        let survivor = Rnsga2ReferencePointsSurvival::new(reference_points, epsilon);
-        // RNSGA2 minimizes its scoring survival
+        // Define SPEA2 selector and survivor
+        let survivor = Spea2KnnSurvival::new();
+        // Selector operator uses scoring survival given by the raw fitness but it doesn't use rank
         let selector =
-            RankAndScoringSelection::new(true, true, SurvivalScoringComparison::Minimize);
+            RankAndScoringSelection::new(false, true, SurvivalScoringComparison::Maximize);
         // Define inner algorithm
         let algorithm = MultiObjectiveAlgorithm::new(
             sampler,

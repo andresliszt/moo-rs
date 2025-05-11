@@ -1,5 +1,5 @@
 use faer::{Mat, MatRef};
-use faer_ext::IntoFaer;
+use faer_ext::*;
 
 use ndarray::{Array2, ArrayView1, Axis};
 
@@ -56,6 +56,14 @@ pub fn cross_euclidean_distances(data: &Array2<f64>, reference: &Array2<f64>) ->
         data_norm.get(i, 0) + reference_norm.get(j, 0) - 2.0 * faer_dot.get(i, j)
     });
     faer_dist
+}
+
+pub fn cross_euclidean_distances_as_array(
+    data: &Array2<f64>,
+    reference: &Array2<f64>,
+) -> Array2<f64> {
+    let faer_dist = cross_euclidean_distances(data, reference);
+    faer_dist.as_ref().into_ndarray().to_owned()
 }
 
 pub fn cross_p_distances(data: &Array2<f64>, reference: &Array2<f64>, p: f64) -> Array2<f64> {

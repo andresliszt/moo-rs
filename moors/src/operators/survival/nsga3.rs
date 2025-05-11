@@ -4,11 +4,11 @@ use ndarray::{Array1, Array2, Axis, s};
 use ndarray_stats::QuantileExt;
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{Fronts, Population, PopulationFitness};
+use crate::genetic::{Population, PopulationFitness};
 use crate::helpers::extreme_points::get_ideal;
 use crate::non_dominated_sorting::build_fronts;
 use crate::operators::survival::helpers::HyperPlaneNormalization;
-use crate::operators::{GeneticOperator, SurvivalOperator};
+use crate::operators::{GeneticOperator, survival::SurvivalOperator};
 use crate::random::RandomGenerator;
 
 /// Implementation of the survival operator for the NSGA3 algorithm presented in the paper
@@ -92,25 +92,15 @@ impl Nsga3ReferencePointsSurvival {
 }
 
 impl SurvivalOperator for Nsga3ReferencePointsSurvival {
-    fn set_survival_score(
-        &self,
-        _fronts: &mut Fronts,
-        _rng: &mut impl RandomGenerator,
-        _algorithm_context: &AlgorithmContext,
-    ) {
-
-        // NSGA3 doesn't use survival score. It uses random tournament which doesn't depend on the score"
-    }
-
     fn operate(
         &mut self,
         population: Population,
-        n_survive: usize,
+        num_survive: usize,
         rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
     ) -> Population {
         // Build fronts
-        let mut fronts = build_fronts(population, n_survive);
+        let mut fronts = build_fronts(population, num_survive);
         // Accumulator for the merged population.
         let mut survivors: Option<Population> = None;
         let mut n_survivors = 0;
@@ -121,7 +111,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
             // Save the length of the current front.
             let front_len = front.len();
 
-            if n_survivors + front_len <= n_survive {
+            if n_survivors + front_len <= num_survive {
                 // If the whole front fits, merge it with the accumulator.
                 survivors = Some(match survivors {
                     Some(acc) => Population::merge(&acc, &front),
@@ -130,7 +120,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
                 n_survivors += front_len;
             } else {
                 // Only part of this front is needed.
-                let remaining = n_survive - n_survivors;
+                let remaining = num_survive - n_survivors;
                 if remaining > 0 {
                     // this is the S_t variable defined in the Algorithm 1 in the presented paper
                     // Determine the base population for the splitting front.
@@ -487,7 +477,7 @@ mod tests {
         assert_eq!(chosen, vec![0, 1]);
     }
 
-    /// Test the operate method when the first (and only) front is larger than n_survive.
+    /// Test the operate method when the first (and only) front is larger than num_survive.
     /// In this case splitting occurs with no previously accumulated survivors.
     #[test]
     fn test_operate_split_first_front_content() {
@@ -502,7 +492,7 @@ mod tests {
         let mut rng = FakeRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(2, 5, 5, 2, 1, 0, None, None);
-        // Set n_survive to 3 so that splitting must occur on the single front.
+        // Set num_survive to 3 so that splitting must occur on the single front.
         let survivors = survival_operator.operate(population, 3, &mut rng, &_context);
         assert_eq!(survivors.len(), 3, "Final survivors count should be 3");
 
@@ -547,7 +537,7 @@ mod tests {
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(2, 7, 5, 2, 1, 0, None, None);
         // Total individuals if merged completely would be 7.
-        // Set n_survive to 5 so that the first front (3 individuals) is completely taken
+        // Set num_survive to 5 so that the first front (3 individuals) is completely taken
         // and 2 individuals are selected from the second front.
         let survivors = survival_operator.operate(population, 5, &mut rng, &_context);
         assert_eq!(survivors.len(), 5, "Final survivors count should be 5");

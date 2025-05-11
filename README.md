@@ -35,7 +35,7 @@ moo-rs/
 
 ### Features
 
-- NSGA-II, NSGA-III, R-NSGA-II, Age-MOEA, REVEA (many more coming soon!)
+- NSGA-II, NSGA-III, R-NSGA-II, Age-MOEA, REVEA, SPEA-II (many more coming soon!)
 - Pluggable operators: sampling, crossover, mutation, duplicates removal
 - Flexible fitness & constraints via user-provided closures
 - Built on [ndarray](https://github.com/rust-ndarray/ndarray) and [faer](https://github.com/sarah-quinones/faer-rs)

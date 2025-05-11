@@ -68,7 +68,7 @@ where
     ) -> Result<Self, MultiObjectiveAlgorithmError> {
         // Define NSGA2 selector and survivor
         let survivor = RankCrowdingSurvival::new();
-        let selector = RankAndScoringSelection::new();
+        let selector = RankAndScoringSelection::default();
         // Define inner algorithm
         let algorithm = MultiObjectiveAlgorithm::new(
             sampler,

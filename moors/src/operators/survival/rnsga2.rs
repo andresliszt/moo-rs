@@ -6,7 +6,9 @@ use ndarray::{Array1, Array2, ArrayView1, Axis};
 use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::{Fronts, PopulationFitness};
 use crate::helpers::extreme_points::{get_ideal, get_nadir};
-use crate::operators::survival::{GeneticOperator, SurvivalOperator, SurvivalScoringComparison};
+use crate::operators::survival::{
+    FrontsAndRankingBasedSurvival, GeneticOperator, SurvivalScoringComparison,
+};
 use crate::random::RandomGenerator;
 
 /// Implementation of the survival operator for the R-NSGA2 algorithm presented in the paper
@@ -33,12 +35,12 @@ impl Rnsga2ReferencePointsSurvival {
     }
 }
 
-impl SurvivalOperator for Rnsga2ReferencePointsSurvival {
+impl FrontsAndRankingBasedSurvival for Rnsga2ReferencePointsSurvival {
     fn scoring_comparison(&self) -> SurvivalScoringComparison {
         SurvivalScoringComparison::Minimize
     }
 
-    fn set_survival_score(
+    fn set_front_survival_score(
         &self,
         fronts: &mut Fronts,
         rng: &mut impl RandomGenerator,

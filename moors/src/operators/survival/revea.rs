@@ -6,7 +6,7 @@ use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::Population;
 use crate::helpers::extreme_points::{get_ideal, get_nadir};
 use crate::helpers::linalg::{faer_dot_and_norms, faer_dot_from_array};
-use crate::operators::{GeneticOperator, SurvivalOperator};
+use crate::operators::{GeneticOperator, survival::SurvivalOperator};
 use crate::random::RandomGenerator;
 
 /// Implementation of the survival operator for the REVEA algorithm presented in the paper
@@ -39,15 +39,6 @@ impl ReveaReferencePointsSurvival {
 }
 
 impl SurvivalOperator for ReveaReferencePointsSurvival {
-    fn set_survival_score(
-        &self,
-        _fronts: &mut crate::genetic::Fronts,
-        _rng: &mut impl RandomGenerator,
-        _algorithm_context: &AlgorithmContext,
-    ) {
-        // REVEA doesn't use fronts. It uses random tournament which doesn't depend on the score"
-    }
-
     fn operate(
         &mut self,
         population: Population,

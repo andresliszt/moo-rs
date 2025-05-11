@@ -109,6 +109,12 @@ impl Population {
         )
     }
 
+    /// Returns an iterator over all Individuals in this Population.
+    pub fn iter(&self) -> impl Iterator<Item = Individual> + '_ {
+        let n = self.len();
+        (0..n).map(move |i| self.get(i))
+    }
+
     /// Returns a new `Population` containing only the individuals at the specified indices.
     pub fn selected(&self, indices: &[usize]) -> Population {
         let genes = self.genes.select(Axis(0), indices);

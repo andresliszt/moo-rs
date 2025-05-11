@@ -2,11 +2,7 @@ use crate::{
     algorithms::helpers::{context::AlgorithmContext, error::InitializationError},
     duplicates::PopulationCleaner,
     evaluator::Evaluator,
-    genetic::{
-        FrontsExt, Individual, Population, PopulationConstraints, PopulationFitness,
-        PopulationGenes,
-    },
-    non_dominated_sorting::build_fronts,
+    genetic::{Individual, Population, PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{SamplingOperator, SurvivalOperator},
     random::RandomGenerator,
 };
@@ -17,7 +13,7 @@ impl Initialization {
     /// Sample, clean duplicates, evaluate, and rank the initial population.
     pub fn initialize<S, Sur, DC, F, G>(
         sampler: &S,
-        survivor: &Sur,
+        survivor: &mut Sur,
         evaluator: &Evaluator<F, G>,
         duplicates_cleaner: &Option<DC>,
         rng: &mut impl RandomGenerator,
@@ -37,7 +33,7 @@ impl Initialization {
             genes = cleaner.remove(&genes, None);
         }
         // Do the first evaluation
-        let population = evaluator
+        let mut population = evaluator
             .evaluate(genes)
             .map_err(InitializationError::from)?;
 
@@ -45,13 +41,12 @@ impl Initialization {
         let individual = population.get(0);
         Self::check_fitness(&individual, context)?;
         Self::check_constraints(&individual, context)?;
-
-        // Build the fronts to assign the ranking
-        let mut fronts = build_fronts(population, context.population_size);
-        // Assign the survivor scorer to the fronts
-        survivor.set_survival_score(&mut fronts, rng, &context);
-        // Return the initial population with ranking and survivor scorer if provided
-        Ok(fronts.to_population())
+        // this step is very important. All members of the population survive, because
+        // we use num_survive = context.population_size, but this step is adding the ranking
+        // and the survival scorer (if the algorithm needs them), so in the selection step
+        // we have all we need. See: https://github.com/andresliszt/moo-rs/issues/145
+        population = survivor.operate(population, context.population_size, rng, &context);
+        Ok(population)
     }
 
     /// Validates that the fitness array length matches expected objectives.
@@ -126,7 +121,7 @@ mod tests {
     #[test]
     fn initialize_succeeds_with_matching_shapes() {
         let sampler = RandomSamplingBinary::new();
-        let survivor = RankCrowdingSurvival::new();
+        let mut survivor = RankCrowdingSurvival::new();
         let seed = 123;
         let mut rng = MOORandomGenerator::new_from_seed(Some(seed));
 
@@ -151,7 +146,7 @@ mod tests {
 
         let pop = Initialization::initialize(
             &sampler,
-            &survivor,
+            &mut survivor,
             &evaluator,
             &duplicates_cleaner,
             &mut rng,
@@ -172,7 +167,7 @@ mod tests {
     #[test]
     fn initialize_fails_on_fitness_length_mismatch() {
         let sampler = RandomSamplingBinary::new();
-        let survivor = RankCrowdingSurvival::new();
+        let mut survivor = RankCrowdingSurvival::new();
         let duplicates_cleaner = ExactDuplicatesCleaner::new();
         let mut rng = MOORandomGenerator::new_from_seed(Some(123));
 
@@ -192,7 +187,7 @@ mod tests {
 
         let err = Initialization::initialize(
             &sampler,
-            &survivor,
+            &mut survivor,
             &evaluator,
             &Some(duplicates_cleaner),
             &mut rng,
@@ -206,7 +201,7 @@ mod tests {
     #[test]
     fn initialize_fails_on_constraints_length_mismatch() {
         let sampler = RandomSamplingBinary::new();
-        let survivor = RankCrowdingSurvival::new();
+        let mut survivor = RankCrowdingSurvival::new();
         let duplicates_cleaner = ExactDuplicatesCleaner::new();
         let mut rng = MOORandomGenerator::new_from_seed(Some(123));
 
@@ -228,7 +223,7 @@ mod tests {
 
         let err = Initialization::initialize(
             &sampler,
-            &survivor,
+            &mut survivor,
             &evaluator,
             &Some(duplicates_cleaner),
             &mut rng,
@@ -242,7 +237,7 @@ mod tests {
     #[test]
     fn initialize_fails_when_constraints_fn_is_none_but_expected_non_zero() {
         let sampler = RandomSamplingBinary::new();
-        let survivor = RankCrowdingSurvival::new();
+        let mut survivor = RankCrowdingSurvival::new();
         let duplicates_cleaner = Some(ExactDuplicatesCleaner::new());
         let mut rng = MOORandomGenerator::new_from_seed(Some(42));
 
@@ -264,7 +259,7 @@ mod tests {
 
         let err = Initialization::initialize(
             &sampler,
-            &survivor,
+            &mut survivor,
             &evaluator,
             &duplicates_cleaner,
             &mut rng,

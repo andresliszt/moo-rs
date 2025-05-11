@@ -13,6 +13,7 @@ pub mod nsga3;
 pub mod reference_points;
 pub mod revea;
 pub mod rnsga2;
+pub mod spea2;
 
 pub use agemoea::AgeMoeaSurvival;
 pub use nsga2::RankCrowdingSurvival;
@@ -29,9 +30,34 @@ pub enum SurvivalScoringComparison {
     Minimize,
 }
 
-/// The SurvivalOperator trait extends GeneticOperator and requires that concrete operators
-/// provide a method for computing the survival score from a front's fitness.
+/// The base trait for **all** survival operators.
+///
+/// A survival operator takes a full `Population` and
+/// returns the `num_survive` individuals that will move on to the next generation.
+/// Algorithms that need custom survival logic (e.g. NSGA3’s reference-point logic)
+/// implement this trait directly.
 pub trait SurvivalOperator: GeneticOperator {
+    /// Selects the individuals that will survive to the next generation.
+    fn operate(
+        &mut self,
+        population: Population,
+        num_survive: usize,
+        rng: &mut impl RandomGenerator,
+        algorithm_context: &AlgorithmContext,
+    ) -> Population;
+}
+
+/// A more specific survival trait for **front-and-ranking** algorithms
+/// (e.g. NSGA-II, AgeMoea, R-NSGA-II) that:
+/// 1. Partition into non-dominated fronts,
+/// 2. Assign a per-front diversity score (e.g. crowding distance),
+/// 3. Fill full fronts until the next would overflow,
+/// 4. Split that “overflowing” front by highest diversity.
+///
+/// For these algorithms, you only need to implement
+/// `set_front_survival_score` to compute each front’s scores;
+/// the default `operate` covers the rest.
+pub trait FrontsAndRankingBasedSurvival: SurvivalOperator {
     /// Returns whether the survival scoring should be maximized or minimized.
     fn scoring_comparison(&self) -> SurvivalScoringComparison {
         SurvivalScoringComparison::Maximize
@@ -39,7 +65,7 @@ pub trait SurvivalOperator: GeneticOperator {
 
     /// Computes the survival score for a given front's fitness.
     /// This is the only method that needs to be overridden by each survival operator.
-    fn set_survival_score(
+    fn set_front_survival_score(
         &self,
         fronts: &mut Fronts,
         rng: &mut impl RandomGenerator,
@@ -47,18 +73,18 @@ pub trait SurvivalOperator: GeneticOperator {
     );
 
     /// Selects the individuals that will survive to the next generation.
-    /// The default implementation uses the survival score to select individuals.
+    /// Default `operate` that builds fronts, scores, and splits any "overflowing" front.
     fn operate(
         &mut self,
         population: Population,
-        n_survive: usize,
+        num_survive: usize,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
     ) -> Population {
         // Build fronts
-        let mut fronts = build_fronts(population, n_survive);
+        let mut fronts = build_fronts(population, num_survive);
         // Set survival score
-        self.set_survival_score(&mut fronts, rng, algorithm_context);
+        self.set_front_survival_score(&mut fronts, rng, algorithm_context);
         // Drain all fronts.
         let drained = fronts.drain(..);
         let mut survivors_parts: Vec<Population> = Vec::new();
@@ -66,15 +92,14 @@ pub trait SurvivalOperator: GeneticOperator {
 
         for front in drained {
             let front_len = front.len();
-            if n_survivors + front_len <= n_survive {
+            if n_survivors + front_len <= num_survive {
                 // The entire front fits.
                 survivors_parts.push(front);
                 n_survivors += front_len;
             } else {
                 // Splitting front: only part of the front is needed.
-                let remaining = n_survive - n_survivors;
+                let remaining = num_survive - n_survivors;
                 if remaining > 0 {
-                    // Use Splitting context regardless of i.
                     // Clone survival_score vector for sorting.
                     let scores = front
                         .survival_score
@@ -100,5 +125,25 @@ pub trait SurvivalOperator: GeneticOperator {
             }
         }
         survivors_parts.to_population()
+    }
+}
+
+// For any T that implements FrontsAndRankingBasedSurvival, also implement SurvivalOperator
+impl<T: FrontsAndRankingBasedSurvival> SurvivalOperator for T {
+    fn operate(
+        &mut self,
+        population: Population,
+        num_survive: usize,
+        rng: &mut impl RandomGenerator,
+        algorithm_context: &AlgorithmContext,
+    ) -> Population {
+        // Delegate to the FrontsAndRankingBasedSurvival default implementation
+        <T as FrontsAndRankingBasedSurvival>::operate(
+            self,
+            population,
+            num_survive,
+            rng,
+            algorithm_context,
+        )
     }
 }
