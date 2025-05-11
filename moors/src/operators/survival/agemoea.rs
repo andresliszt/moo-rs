@@ -8,10 +8,10 @@ use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::PopulationFitness;
 use crate::helpers::extreme_points::get_ideal;
 use crate::helpers::linalg::{cross_p_distances, lp_norm_arrayview};
-use crate::operators::{
-    GeneticOperator, SurvivalOperator, survival::helpers::HyperPlaneNormalization,
-};
+use crate::operators::{GeneticOperator, survival::helpers::HyperPlaneNormalization};
 use crate::random::RandomGenerator;
+
+use super::FrontsAndRankingBasedSurvival;
 
 struct AgeMoeaHyperPlaneNormalization;
 
@@ -57,8 +57,8 @@ impl AgeMoeaSurvival {
     }
 }
 
-impl SurvivalOperator for AgeMoeaSurvival {
-    fn set_survival_score(
+impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
+    fn set_front_survival_score(
         &self,
         fronts: &mut crate::genetic::Fronts,
         _rng: &mut impl RandomGenerator,
@@ -474,19 +474,19 @@ mod tests {
         let genes = fitness.clone();
         let population = Population::new(genes, fitness, None, None);
         // Set the desired number of survivors (e.g., 4).
-        let n_survive = 4;
+        let num_survive = 4;
 
         let mut operator = AgeMoeaSurvival::new();
         let mut rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(2, 5, 5, 2, 1, 0, None, None);
-        let survivors = operator.operate(population, n_survive, &mut rng, &_context);
+        let survivors = operator.operate(population, num_survive, &mut rng, &_context);
 
         assert_eq!(
             survivors.len(),
-            n_survive,
+            num_survive,
             "Expected {} survivors, got {}",
-            n_survive,
+            num_survive,
             survivors.len()
         )
     }

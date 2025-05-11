@@ -58,7 +58,7 @@ where
         seed: Option<u64>,
     ) -> Result<Self, MultiObjectiveAlgorithmError> {
         // Define AGEMOEA selector and survivor
-        let selector = RankAndScoringSelection::new();
+        let selector = RankAndScoringSelection::default();
         let survivor = AgeMoeaSurvival::new();
 
         // Build the algorithm.

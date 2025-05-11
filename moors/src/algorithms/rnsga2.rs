@@ -5,9 +5,9 @@ use crate::{
     duplicates::PopulationCleaner,
     genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator,
+        CrossoverOperator, FrontsAndRankingBasedSurvival, MutationOperator, SamplingOperator,
         selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
-        survival::rnsga2::Rnsga2ReferencePointsSurvival,
+        survival::{SurvivalScoringComparison, rnsga2::Rnsga2ReferencePointsSurvival},
     },
 };
 
@@ -73,7 +73,9 @@ where
     ) -> Result<Self, MultiObjectiveAlgorithmError> {
         // Define RNSGA2 selector and survivor
         let survivor = Rnsga2ReferencePointsSurvival::new(reference_points, epsilon);
-        let selector = RankAndScoringSelection::new();
+        // RNSGA2 minimizes its scoring survival
+        let selector =
+            RankAndScoringSelection::new(true, true, SurvivalScoringComparison::Minimize);
         // Define inner algorithm
         let algorithm = MultiObjectiveAlgorithm::new(
             sampler,

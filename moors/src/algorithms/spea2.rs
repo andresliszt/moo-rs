@@ -3,16 +3,16 @@ use crate::{
     duplicates::PopulationCleaner,
     genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{
-        CrossoverOperator, FrontsAndRankingBasedSurvival, MutationOperator, SamplingOperator,
+        CrossoverOperator, MutationOperator, SamplingOperator,
         selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
-        survival::nsga2::RankCrowdingSurvival,
+        survival::{SurvivalScoringComparison, spea2::Spea2KnnSurvival},
     },
 };
 
 use moors_macros::algorithm_builder;
 
 #[derive(Debug)]
-pub struct Nsga2<S, Cross, Mut, F, G, DC>
+pub struct Spea2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
@@ -21,20 +21,12 @@ where
     G: Fn(&PopulationGenes) -> PopulationConstraints,
     DC: PopulationCleaner,
 {
-    pub inner: MultiObjectiveAlgorithm<
-        S,
-        RankAndScoringSelection,
-        RankCrowdingSurvival,
-        Cross,
-        Mut,
-        F,
-        G,
-        DC,
-    >,
+    pub inner:
+        MultiObjectiveAlgorithm<S, RankAndScoringSelection, Spea2KnnSurvival, Cross, Mut, F, G, DC>,
 }
 
 #[algorithm_builder]
-impl<S, Cross, Mut, F, G, DC> Nsga2<S, Cross, Mut, F, G, DC>
+impl<S, Cross, Mut, F, G, DC> Spea2<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
@@ -66,9 +58,11 @@ where
         upper_bound: Option<f64>,
         seed: Option<u64>,
     ) -> Result<Self, MultiObjectiveAlgorithmError> {
-        // Define NSGA2 selector and survivor
-        let survivor = RankCrowdingSurvival::new();
-        let selector = RankAndScoringSelection::default();
+        // Define SPEA2 selector and survivor
+        let survivor = Spea2KnnSurvival::new();
+        // Selector operator uses scoring survival given by the raw fitness but it doesn't use rank
+        let selector =
+            RankAndScoringSelection::new(false, true, SurvivalScoringComparison::Maximize);
         // Define inner algorithm
         let algorithm = MultiObjectiveAlgorithm::new(
             sampler,

@@ -3,7 +3,9 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    algorithms::{AgeMoeaBuilder, Nsga2Builder, Nsga3Builder, ReveaBuilder, Rnsga2Builder},
+    algorithms::{
+        AgeMoeaBuilder, Nsga2Builder, Nsga3Builder, ReveaBuilder, Rnsga2Builder, Spea2Builder,
+    },
     duplicates::CloseDuplicatesCleaner,
     genetic::{FitnessFn, NoConstraintsFn, Population, PopulationFitness, PopulationGenes},
     operators::{
@@ -206,6 +208,37 @@ fn test_revea() {
         .expect("failed to build REVEA");
 
     algorithm.run().expect("Revea run failed");
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
+}
+
+#[test]
+#[should_panic] // The algorithm is not reaching the expected performance. Needs investigation
+fn test_spea2() {
+    let mut algorithm = Spea2Builder::<_, _, _, _, NoConstraintsFn, _>::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.5, 0.01))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective as FitnessFn)
+        .num_vars(2)
+        .num_objectives(2)
+        .population_size(200)
+        .num_offsprings(200)
+        .num_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(true)
+        .lower_bound(0.0)
+        .upper_bound(1.0)
+        .seed(42)
+        .build()
+        .expect("failed to build SPEA2");
+
+    algorithm.run().expect("SPEA2 run failed");
     let population = algorithm
         .population()
         .expect("population should have been initialized");

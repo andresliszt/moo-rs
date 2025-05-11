@@ -53,6 +53,7 @@ mod nsga2;
 mod nsga3;
 mod revea;
 mod rnsga2;
+mod spea2;
 
 pub use agemoea::{AgeMoea, AgeMoeaBuilder};
 pub use helpers::error::{InitializationError, MultiObjectiveAlgorithmError};
@@ -60,6 +61,7 @@ pub use nsga2::{Nsga2, Nsga2Builder};
 pub use nsga3::{Nsga3, Nsga3Builder};
 pub use revea::{Revea, ReveaBuilder};
 pub use rnsga2::{Rnsga2, Rnsga2Builder};
+pub use spea2::{Spea2, Spea2Builder};
 
 #[derive(Debug)]
 pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
@@ -181,10 +183,8 @@ where
     }
 
     fn next(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
-        // Obtain offspring genes.
-
         let ref_pop: &Population = self.population.as_ref().unwrap();
-
+        // Obtain offspring genes.
         let offspring_genes = self
             .evolve
             .evolve(ref_pop, self.context.num_offsprings, 200, &mut self.rng)
@@ -222,7 +222,7 @@ where
         // Create the first Population
         let initial_population = Initialization::initialize(
             &self.sampler,
-            &self.survivor,
+            &mut self.survivor,
             &self.evaluator,
             &self.evolve.duplicates_cleaner,
             &mut self.rng,
