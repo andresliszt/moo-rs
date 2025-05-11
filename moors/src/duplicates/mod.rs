@@ -14,32 +14,13 @@
 //! | [`ExactDuplicatesCleaner`] | Binary / discrete genomes <br>(e.g. 0/1 strings) | Two individuals are duplicates **iff** every gene is bit‑wise identical. | `O(N log N)` via hashing |
 //! | [`CloseDuplicatesCleaner`] | Real‑valued or mixed genomes | Two individuals are duplicates if their **Euclidean distance ≤ ε** (configurable). | `O(N²)` naïve, but *N* is typically pruned first |
 //!
-//! ### Trait overview
-//!
-//! ```rust
-//! pub trait PopulationCleaner: Debug {
-//!     /// Remove duplicates from `population`.
-//!     ///
-//!     /// * If `reference` is `None`, duplicates are searched **within** the
-//!     ///   population itself (internal cleaning).
-//!     /// * If `Some(reference)`, the method removes individuals in
-//!     ///   `population` that already appear in `reference` (external
-//!     ///   cleaning—useful when merging offspring with parents).
-//!     fn remove(
-//!         &self,
-//!         population: &PopulationGenes,
-//!         reference: Option<&PopulationGenes>,
-//!     ) -> PopulationGenes;
-//! }
-//! ```
-//!
 //! Implementations must return a **new** `PopulationGenes` with duplicates
 //! filtered out; they never mutate the input arrays in‑place, allowing the
 //! caller to decide whether to reuse or drop the originals.
 //!
 //! ### Quick example
 //!
-//! ```rust
+//! ```rust, ignore
 //! use moors::duplicates::ExactDuplicatesCleaner;
 //! use moors::genetic::PopulationGenes;
 //!

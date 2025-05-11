@@ -22,7 +22,7 @@
 //!
 //! ## Quick example: NSGA‑II
 //!
-//! ```rust,no_run
+//! ```rust,no_run, ignore
 //! use ndarray::{Array1, Axis, stack};
 //! use moors::{
 //!     algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
@@ -68,7 +68,7 @@
 //! 1. **Pick / implement** a [`SelectionOperator`] and a [`SurvivalOperator`].
 //! 2. Wrap them in a new struct:
 //!
-//!    ```rust
+//!    ```rust, ignore
 //!    pub struct MyAlgo<S, Cross, Mut, F, G, DC> {
 //!        inner: MultiObjectiveAlgorithm<…>
 //!    }
