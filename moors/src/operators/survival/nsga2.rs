@@ -9,21 +9,21 @@ use crate::operators::{GeneticOperator, survival::FrontsAndRankingBasedSurvival}
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
-pub struct RankCrowdingSurvival;
+pub struct Nsga2RankCrowdingSurvival;
 
-impl GeneticOperator for RankCrowdingSurvival {
+impl GeneticOperator for Nsga2RankCrowdingSurvival {
     fn name(&self) -> String {
-        "RankCrowdingSurvival".to_string()
+        "Nsga2RankCrowdingSurvival".to_string()
     }
 }
 
-impl RankCrowdingSurvival {
+impl Nsga2RankCrowdingSurvival {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl FrontsAndRankingBasedSurvival for RankCrowdingSurvival {
+impl FrontsAndRankingBasedSurvival for Nsga2RankCrowdingSurvival {
     fn set_front_survival_score(
         &self,
         fronts: &mut Fronts,
@@ -202,7 +202,7 @@ mod tests {
         };
         let mut fronts: Vec<Population> = vec![population];
 
-        let selector = RankCrowdingSurvival::new();
+        let selector = Nsga2RankCrowdingSurvival::new();
         let mut rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
@@ -225,8 +225,8 @@ mod tests {
         let fitness: Array2<f64> = array![[0.1, 0.9], [0.2, 0.8], [0.3, 0.7]];
         let population = Population::new(genes.clone(), fitness.clone(), None, None);
         let num_survive = 3;
-        let mut selector = RankCrowdingSurvival;
-        assert_eq!(selector.name(), "RankCrowdingSurvival");
+        let mut selector = Nsga2RankCrowdingSurvival;
+        assert_eq!(selector.name(), "Nsga2RankCrowdingSurvival");
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
@@ -271,7 +271,7 @@ mod tests {
         let population = Population::new(genes.clone(), fitness.clone(), None, None);
         let num_survive = 4;
 
-        let mut selector = RankCrowdingSurvival;
+        let mut selector = Nsga2RankCrowdingSurvival;
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);

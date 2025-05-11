@@ -94,7 +94,9 @@ mod tests {
     use crate::algorithms::helpers::context::AlgorithmContext;
     use crate::duplicates::ExactDuplicatesCleaner;
     use crate::genetic::{NoConstraintsFn, PopulationGenes};
-    use crate::operators::{sampling::RandomSamplingBinary, survival::nsga2::RankCrowdingSurvival};
+    use crate::operators::{
+        sampling::RandomSamplingBinary, survival::nsga2::Nsga2RankCrowdingSurvival,
+    };
     use crate::random::MOORandomGenerator;
     use ndarray::Array2;
 
@@ -121,7 +123,7 @@ mod tests {
     #[test]
     fn initialize_succeeds_with_matching_shapes() {
         let sampler = RandomSamplingBinary::new();
-        let mut survivor = RankCrowdingSurvival::new();
+        let mut survivor = Nsga2RankCrowdingSurvival::new();
         let seed = 123;
         let mut rng = MOORandomGenerator::new_from_seed(Some(seed));
 
@@ -167,7 +169,7 @@ mod tests {
     #[test]
     fn initialize_fails_on_fitness_length_mismatch() {
         let sampler = RandomSamplingBinary::new();
-        let mut survivor = RankCrowdingSurvival::new();
+        let mut survivor = Nsga2RankCrowdingSurvival::new();
         let duplicates_cleaner = ExactDuplicatesCleaner::new();
         let mut rng = MOORandomGenerator::new_from_seed(Some(123));
 
@@ -201,7 +203,7 @@ mod tests {
     #[test]
     fn initialize_fails_on_constraints_length_mismatch() {
         let sampler = RandomSamplingBinary::new();
-        let mut survivor = RankCrowdingSurvival::new();
+        let mut survivor = Nsga2RankCrowdingSurvival::new();
         let duplicates_cleaner = ExactDuplicatesCleaner::new();
         let mut rng = MOORandomGenerator::new_from_seed(Some(123));
 
@@ -237,7 +239,7 @@ mod tests {
     #[test]
     fn initialize_fails_when_constraints_fn_is_none_but_expected_non_zero() {
         let sampler = RandomSamplingBinary::new();
-        let mut survivor = RankCrowdingSurvival::new();
+        let mut survivor = Nsga2RankCrowdingSurvival::new();
         let duplicates_cleaner = Some(ExactDuplicatesCleaner::new());
         let mut rng = MOORandomGenerator::new_from_seed(Some(42));
 

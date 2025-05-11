@@ -1,3 +1,24 @@
+//! # NSGA‑II – Fast Elitist Multi‑Objective GA
+//!
+//! This implementation follows the seminal paper
+//! **K. Deb, A. Pratap, S. Agarwal & T. Meyarivan,
+//! “A Fast and Elitist Multi‑objective Genetic Algorithm: NSGA‑II”,**
+//! *IEEE Transactions on Evolutionary Computation*, 6 (2): 182‑197 (2002).
+//!
+//! Key ideas implemented here:
+//! 1. **Fast non‑dominated sorting** → assigns a Pareto rank *O(N log N + N²)*.
+//! 2. **Crowding‑distance preservation** → density estimator used as a
+//!    secondary key to maintain diversity without extra parameters.
+
+//! In *moors*, NSGA‑II is wired from reusable operator bricks:
+//!
+//! * **Selection:** [`RankAndScoringSelection`]
+//! * **Survival:**  [`Nsga2RankCrowdingSurvival`] (rank + crowding distance)
+//! * **Crossover / Mutation / Sampling:** user‑provided via the builder.
+//!
+//! The public API exposes only high‑level controls (population size,
+//! iteration budget, etc.); internal operator choices can be overridden if
+//! you need custom behaviour.
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
@@ -5,12 +26,28 @@ use crate::{
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
         selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
-        survival::nsga2::RankCrowdingSurvival,
+        survival::nsga2::Nsga2RankCrowdingSurvival,
     },
 };
 
 use moors_macros::algorithm_builder;
 
+/// NSGA‑II algorithm wrapper.
+///
+/// This struct is a thin façade over [`MultiObjectiveAlgorithm`] preset with
+/// the NSGA‑II survival and selection strategy.
+///
+/// * **Selection:** [`RankAndScoringSelection`]
+/// * **Survival:**  [`Nsga2RankCrowdingSurvival`] (elitist, crowding‑distance)
+///
+/// Construct it with [`Nsga2Builder`](crate::algorithms::Nsga2Builder) or
+/// directly via [`Nsga2::new`].  After building, call [`run`](MultiObjectiveAlgorithm::run)
+/// and then [`population`](MultiObjectiveAlgorithm::population) to retrieve the
+/// final non‑dominated set.
+///
+/// For algorithmic details, see:
+/// K. Deb *et al.* (2002), *IEEE TEC 6 (2)*, 182‑197.
+///
 #[derive(Debug)]
 pub struct Nsga2<S, Cross, Mut, F, G, DC>
 where
@@ -24,7 +61,7 @@ where
     pub inner: MultiObjectiveAlgorithm<
         S,
         RankAndScoringSelection,
-        RankCrowdingSurvival,
+        Nsga2RankCrowdingSurvival,
         Cross,
         Mut,
         F,
@@ -67,7 +104,7 @@ where
         seed: Option<u64>,
     ) -> Result<Self, MultiObjectiveAlgorithmError> {
         // Define NSGA2 selector and survivor
-        let survivor = RankCrowdingSurvival::new();
+        let survivor = Nsga2RankCrowdingSurvival::new();
         let selector = RankAndScoringSelection::default();
         // Define inner algorithm
         let algorithm = MultiObjectiveAlgorithm::new(

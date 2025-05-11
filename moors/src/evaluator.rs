@@ -1,3 +1,10 @@
+//! # `evaluator` – From Genes to Population
+//!
+//! The **`Evaluator`** is the point where user‑supplied domain logic (fitness
+//! and constraints functions) meets the core data structures of *moors*.  It
+//! takes a 2‑D array of genomes (`PopulationGenes` = `Array2<f64>`) and returns
+//! a fully populated [`Population`] with fitness values and optional constraints
+
 use crate::genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes};
 use ndarray::Axis;
 use std::fmt;

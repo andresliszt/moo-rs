@@ -1,3 +1,22 @@
+//! # `genetic` – Core Data Structures
+//!
+//! This module defines the **fundamental types** that flow through every
+//! evolutionary algorithm in *moors*—from initial sampling to final Pareto
+//! archive.  They are intentionally *minimal* (pure `ndarray` wrappers) so they
+//! can be inspected, cloned, or serialised without pulling extra dependencies.
+//!
+//! ## Type overview
+//!
+//! | Alias / Struct | Shape | Purpose |
+//! |----------------|-------|---------|
+//! | `IndividualGenes`           | `Array1<f64>` | One genome (decision‑variable vector). |
+//! | `Individual`               | – | Genome + fitness + constraints + rank + optional survival score. |
+//! | `PopulationGenes`          | `Array2<f64>` | Matrix of *N* genomes (row‑wise). |
+//! | `PopulationFitness`        | `Array2<f64>` | Matrix of *N × k* objective values. |
+//! | `PopulationConstraints`    | `Array2<f64>` | Matrix of *N × c* constraint values (≤ 0 ⇒ feasible). |
+//! | `Population`               | – | Bundle of the three matrices plus optional rank / survival score vectors. |
+//! | `Fronts` & `FrontsExt`     | `Vec<Population>` | Convenience for non‑dominated sorting (`fronts.to_population()`). |
+//!
 use ndarray::{Array1, Array2, ArrayViewMut1, Axis, concatenate};
 
 /// Represents an individual in the population.

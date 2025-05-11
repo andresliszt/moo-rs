@@ -1,3 +1,58 @@
+//! # `random` – Unified RNG Abstraction
+//!
+//! All stochastic operators in *moors* (sampling, crossover, mutation,
+//! selection, …) depend on an RNG, but you shouldn’t have to juggle the `rand`
+//! crate’s API at every call site.  The **`RandomGenerator`** trait offers a
+//! *single, ergonomic façade* while still giving power users access to the
+//! underlying RNG when needed.
+//!
+//! ## Trait highlights
+//!
+//! | Method | Purpose |
+//! |--------|---------|
+//! | `gen_range_usize(min, max)` | `usize` in `[min, max)` |
+//! | `gen_range_f64(min, max)`   | `f64`  in `[min, max)` |
+//! | `gen_usize()`               | full‑range `usize` |
+//! | `gen_bool(p)`               | Bernoulli(`p`) |
+//! | `gen_proability()`          | uniform `[0, 1)` *(NB: typo kept for back‑compat)* |
+//! | `shuffle_vec`, `shuffle_vec_usize` | in‑place Fisher–Yates |
+//! | `choose_usize(slice)`       | random element or `None` |
+//! | `rng()`                     | mutable handle to the raw `RngCore` object |
+//!
+//! The blanket implementations inside algorithms call these helpers—so you can
+//! swap RNG engines, seed values, or mock objects *without modifying operator
+//! code*.
+//!
+//! ## Ready‑to‑use generators
+//!
+//! | Type | Backed by | Intended for |
+//! |------|-----------|--------------|
+//! | [`MOORandomGenerator`] | `rand::rngs::StdRng` (ChaCha 12) | **Production**—fast, reproducible with a seed. |
+//! | [`NoopRandomGenerator`] + `TestDummyRng` | stub → panics on direct RNG calls | **Unit tests** where randomness isn’t exercised but the trait is required. |
+//!
+//! ```rust
+//! use moors::random::{MOORandomGenerator, RandomGenerator};
+//! use rand::SeedableRng;
+//!
+//! // Deterministic RNG for reproducible experiments
+//! let seed = 42_u64;
+//! let mut rng = MOORandomGenerator::new_from_seed(Some(seed));
+//!
+//! // Flip a biased coin
+//! if rng.gen_bool(0.1) {
+//!     println!("Lucky mutation!");
+//! }
+//! ```
+//!
+//! ## Why not use `rand` directly everywhere?
+//!
+//! 1. **Centralised helpers** keep operator code concise and consistent.
+//! 2. **Testing** – the `NoopRandomGenerator` lets you compile operator logic
+//!    that never dereferences the RNG (e.g. deterministically seeded crossovers)
+//!    while catching unintended randomness via a panic.
+//!
+//! ---
+//!
 use std::usize;
 
 use rand::prelude::IndexedRandom;
@@ -94,11 +149,6 @@ impl RngCore for TestDummyRng {
     fn fill_bytes(&mut self, _dest: &mut [u8]) {
         unimplemented!("Not used in this test")
     }
-
-    // Not used in tests. This method is unimplemented.
-    //fn try_fill_bytes(&mut self, _dest: &mut [u8]) -> Result<(), rand::Error> {
-    //    unimplemented!("Not used in this test")
-    //}
 }
 
 pub struct NoopRandomGenerator {
