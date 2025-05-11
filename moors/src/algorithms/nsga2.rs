@@ -3,7 +3,7 @@ use crate::{
     duplicates::PopulationCleaner,
     genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
     operators::{
-        CrossoverOperator, FrontsAndRankingBasedSurvival, MutationOperator, SamplingOperator,
+        CrossoverOperator, MutationOperator, SamplingOperator,
         selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
         survival::nsga2::RankCrowdingSurvival,
     },
