@@ -47,7 +47,7 @@ pub struct AgeMoeaSurvival;
 
 impl GeneticOperator for AgeMoeaSurvival {
     fn name(&self) -> String {
-        "RankCrowdingSurvival".to_string()
+        "AgeoMoeaSurvival".to_string()
     }
 }
 

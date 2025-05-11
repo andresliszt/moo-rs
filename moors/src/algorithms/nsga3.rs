@@ -1,3 +1,26 @@
+//! # NSGA‑III – Reference‑Point‑Based Many‑Objective GA
+//!
+//! Implementation of
+//! **K. Deb & H. Jain,
+//! “An Evolutionary Many‑Objective Optimization Algorithm Using
+//! Reference‑Point‑Based Nondominated Sorting Approach, Part I:
+//! Solving Problems with Box Constraints”,
+//! IEEE Transactions on Evolutionary Computation 18 (4): 577‑601 (2014).**
+//!
+//! NSGA‑III extends NSGA‑II to many‑objective problems (≥ 3 objectives) by
+//! replacing crowding‑distance with a *reference‑point association* that drives
+//! the population towards a well‑spread Pareto front.
+//!
+//! In *moors*, NSGA‑III is wired from reusable operator bricks:
+//!
+//! * **Selection:** [`RandomSelection`] (uniform binary tournament)
+//! * **Survival:**  [`Nsga3ReferencePointsSurvival`] (rank + reference‑point niching)
+//! * **Crossover / Mutation / Sampling:** user‑provided via the builder.
+//!
+//! You supply the *reference points*—typically generated with
+//! [`Nsga3ReferencePoints::from_simplex_lattice`] or a custom constructor—and
+//! the algorithm handles association and niche preservation automatically.
+
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
@@ -11,7 +34,18 @@ use crate::{
 
 use moors_macros::algorithm_builder;
 
-// Define the NSGA-III algorithm
+/// NSGA‑III algorithm wrapper.
+///
+/// Thin façade around [`MultiObjectiveAlgorithm`] pre‑configured with
+/// *reference‑point* survival and random parent selection.
+///
+/// * **Selection:** [`RandomSelection`]
+/// * **Survival:**  [`Nsga3ReferencePointsSurvival`]
+/// * **Paper:** Deb & Jain 2014 (*IEEE TEC* 18 (4): 577‑601)
+///
+/// Construct with [`Nsga3Builder`](crate::algorithms::Nsga3Builder) or
+/// directly via [`Nsga3::new`]; then call `run()` and `population()` to
+/// retrieve the final Pareto‑optimal set.
 #[derive(Debug)]
 pub struct Nsga3<S, Cross, Mut, F, G, DC>
 where

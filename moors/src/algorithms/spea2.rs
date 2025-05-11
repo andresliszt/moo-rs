@@ -1,3 +1,25 @@
+//! # SPEA‑2 – Strength‑Pareto Evolutionary Algorithm II
+//!
+//! Implementation of
+//! **Eckart Zitzler, Marco Laumanns & Lothar Thiele,
+//! “SPEA2: Improving the Strength Pareto Evolutionary Algorithm”,
+//! Technical Report 103, Computer Engineering and Networks Laboratory (TIK),
+//! ETH Zürich, 2001.**
+//!
+//! SPEA‑2 maintains two populations (archive + current) and assigns each
+//! individual a raw‑fitness value derived from *how many* solutions it dominates
+//! (*strength*) and *by how many* it is dominated.  Diversity is preserved with
+//! a *k‑nearest‑neighbour* density estimator.
+//!
+//! In *moors*, SPEA‑2 is wired from reusable operator bricks:
+//!
+//! * **Selection:** [`RankAndScoringSelection`] (only survival‑score is used)
+//! * **Survival:**  [`Spea2KnnSurvival`] (strength + k‑NN density)
+//! * **Crossover / Mutation / Sampling:** user‑provided via the builder.
+//!
+//! The default configuration keeps a secondary **archive** whose size equals
+//! the main population; truncation is handled by the k‑NN density measure.
+//!
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
