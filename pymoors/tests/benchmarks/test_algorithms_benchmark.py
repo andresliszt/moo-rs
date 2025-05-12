@@ -40,6 +40,8 @@ def test_small_real_biobjective_nsag2(benchmark):
         mutation=GaussianMutation(gene_mutation_rate=0.1, sigma=0.05),
         fitness_fn=fitness_biobjective,
         num_vars=N_VARS,
+        num_objectives=2,
+        num_constraints=0,
         population_size=1000,
         num_offsprings=1000,
         num_iterations=100,
