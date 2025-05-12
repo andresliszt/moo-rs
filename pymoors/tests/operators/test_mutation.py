@@ -28,17 +28,17 @@ from pymoors import (
 )
 def test_mutation_exposed_methods(operator_class, kwargs, pop_type):
     population_size = 5
-    n_vars = 10
+    num_vars = 10
 
     # Create population based on the operator type.
     if pop_type == "binary":
         # For binary operators, use an array of 0.0 and 1.0.
-        population = np.random.randint(0, 2, size=(population_size, n_vars)).astype(
+        population = np.random.randint(0, 2, size=(population_size, num_vars)).astype(
             np.float64
         )
     else:
         # For operators that expect real numbers, use random floats.
-        population = np.random.rand(population_size, n_vars)
+        population = np.random.rand(population_size, num_vars)
 
     # Instantiate the mutation operator.
     op = operator_class(**kwargs)
@@ -55,7 +55,7 @@ def test_mutation_exposed_methods(operator_class, kwargs, pop_type):
     np.testing.assert_array_equal(mutated, mutated_same_seed)
 
     # Check that the output has the same shape as the input.
-    assert mutated.shape == mutated_no_seed.shape == (population_size, n_vars)
+    assert mutated.shape == mutated_no_seed.shape == (population_size, num_vars)
 
     with pytest.raises(ValueError, match="Population numpy array must be 2D."):
         op.mutate(population[0], seed=42)

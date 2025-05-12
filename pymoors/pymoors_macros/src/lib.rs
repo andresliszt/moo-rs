@@ -144,16 +144,16 @@ fn generate_py_operator_sampling(inner: Ident) -> proc_macro2::TokenStream {
     let (wrapper_ident, inner_name_lit) = generate_wrapper(&inner);
     // Define the sampling-specific method.
     let operator_method = quote! {
-        #[pyo3(signature = (population_size, n_vars, seed=None))]
+        #[pyo3(signature = (population_size, num_vars, seed=None))]
         pub fn sample<'py>(
             &self,
             py: pyo3::prelude::Python<'py>,
             population_size: usize,
-            n_vars: usize,
+            num_vars: usize,
             seed: Option<u64>,
         ) -> pyo3::prelude::PyResult<pyo3::prelude::Bound<'py, numpy::PyArray2<f64>>> {
             let mut rng = moors::random::MOORandomGenerator::new_from_seed(seed);
-            let sampled_population = self.inner.operate(population_size, n_vars, &mut rng);
+            let sampled_population = self.inner.operate(population_size, num_vars, &mut rng);
             Ok(numpy::ToPyArray::to_pyarray(&sampled_population, py))
         }
     };
@@ -301,7 +301,7 @@ pub fn register_py_operators_mutation(input: TokenStream) -> TokenStream {
             fn mutate<'a>(
                 &self,
                 individual: moors::genetic::IndividualGenesMut<'a>,
-                rng: &mut dyn moors::random::RandomGenerator,
+                rng: &mut impl moors::random::RandomGenerator,
             ) {
                 match self {
                     #(#mutate_arms)*
@@ -413,7 +413,7 @@ pub fn register_py_operators_crossover(input: TokenStream) -> TokenStream {
                 &self,
                 parent_a: &moors::genetic::IndividualGenes,
                 parent_b: &moors::genetic::IndividualGenes,
-                rng: &mut dyn moors::random::RandomGenerator,
+                rng: &mut impl moors::random::RandomGenerator,
             ) -> (moors::genetic::IndividualGenes, moors::genetic::IndividualGenes) {
                 match self {
                     #(#crossover_arms)*
@@ -514,12 +514,12 @@ pub fn register_py_operators_sampling(input: TokenStream) -> TokenStream {
     // Implement SamplingOperator trait.
     let sample_arms = ops.iter().map(|op| {
         quote! {
-            SamplingOperatorDispatcher::#op(inner) => inner.sample_individual(n_vars, rng),
+            SamplingOperatorDispatcher::#op(inner) => inner.sample_individual(num_vars, rng),
         }
     });
     let sampling_impl = quote! {
         impl moors::operators::SamplingOperator for SamplingOperatorDispatcher {
-            fn sample_individual(&self, n_vars: usize, rng: &mut dyn moors::random::RandomGenerator) -> moors::genetic::IndividualGenes {
+            fn sample_individual(&self, num_vars: usize, rng: &mut impl moors::random::RandomGenerator) -> moors::genetic::IndividualGenes {
                 match self {
                     #(#sample_arms)*
                 }
@@ -715,7 +715,8 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
             pub fn run(&mut self) -> pyo3::PyResult<()> {
                 self.algorithm
                     .run()
-                    .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))
+                    .map_err(|e| MultiObjectiveAlgorithmErrorWrapper(e.into()))?;
+                Ok(())
             }
 
             /// Getter for the algorithm's population.
@@ -725,8 +726,10 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
             pub fn population(&self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
                 let schemas_module = py.import("pymoors.schemas")?;
                 let population_class = schemas_module.getattr("Population")?;
-                let population = &self.algorithm.inner.population;
-
+                let population = self
+                    .algorithm
+                    .population()
+                    .map_err(|e| MultiObjectiveAlgorithmErrorWrapper(e.into()))?;
                 let py_genes = population.genes.to_pyarray(py);
                 let py_fitness = population.fitness.to_pyarray(py);
 

@@ -15,8 +15,7 @@ pub use algorithms::nsga2::PyNsga2;
 pub use algorithms::nsga3::PyNsga3;
 pub use algorithms::revea::PyRevea;
 pub use algorithms::rnsga2::PyRnsga2;
-pub use py_error::InvalidParameterError;
-pub use py_error::NoFeasibleIndividualsError;
+pub use py_error::{InitializationError, InvalidParameterError, NoFeasibleIndividualsError};
 pub use py_operators::{
     PyBitFlipMutation, PyCloseDuplicatesCleaner, PyDisplacementMutation, PyExactDuplicatesCleaner,
     PyExponentialCrossover, PyGaussianMutation, PyOrderCrossover, PyPermutationSampling,
@@ -77,11 +76,12 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         "NoFeasibleIndividualsError",
         _py.get_type::<NoFeasibleIndividualsError>(),
     )?;
-    // Py Errors
     m.add(
         "InvalidParameterError",
         _py.get_type::<InvalidParameterError>(),
     )?;
+    m.add("InitializationError", _py.get_type::<InitializationError>())?;
+
     // Functions
     let _ = m.add_function(wrap_pyfunction!(cross_euclidean_distances_py, m)?);
 

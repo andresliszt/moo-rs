@@ -30,12 +30,12 @@ from pymoors import (
 )
 def test_crossover_exposed_methods(operator_class, kwargs):
     population_size = 5
-    n_vars = 10
+    num_vars = 10
     # Create two parent populations as binary arrays (values 0.0 and 1.0)
-    parents_a = np.random.randint(0, 2, size=(population_size, n_vars)).astype(
+    parents_a = np.random.randint(0, 2, size=(population_size, num_vars)).astype(
         np.float64
     )
-    parents_b = np.random.randint(0, 2, size=(population_size, n_vars)).astype(
+    parents_b = np.random.randint(0, 2, size=(population_size, num_vars)).astype(
         np.float64
     )
 
@@ -52,8 +52,8 @@ def test_crossover_exposed_methods(operator_class, kwargs):
 
     np.testing.assert_array_equal(offspring, offspring_same_seed)
 
-    # Offspring should have shape (2*population_size, n_vars)
-    assert offspring.shape == (2 * population_size, n_vars)
+    # Offspring should have shape (2*population_size, num_vars)
+    assert offspring.shape == (2 * population_size, num_vars)
 
     with pytest.raises(ValueError, match="parent_a numpy array must be 2D."):
         op.crossover(parents_a[0], parents_b[0], seed=42)

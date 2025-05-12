@@ -41,8 +41,9 @@ impl PyRnsga2 {
         crossover,
         mutation,
         fitness_fn,
-        n_vars,
+        num_vars,
         population_size,
+        num_objectives,
         num_offsprings,
         num_iterations,
         epsilon = 0.001,
@@ -52,6 +53,7 @@ impl PyRnsga2 {
         verbose=true,
         duplicates_cleaner=None,
         constraints_fn=None,
+        num_constraints=0,
         lower_bound=None,
         upper_bound=None,
         seed=None,
@@ -62,8 +64,9 @@ impl PyRnsga2 {
         crossover: PyObject,
         mutation: PyObject,
         fitness_fn: PyObject,
-        n_vars: usize,
+        num_vars: usize,
         population_size: usize,
+        num_objectives: usize,
         num_offsprings: usize,
         num_iterations: usize,
         epsilon: f64,
@@ -73,6 +76,7 @@ impl PyRnsga2 {
         verbose: bool,
         duplicates_cleaner: Option<PyObject>,
         constraints_fn: Option<PyObject>,
+        num_constraints: usize,
         // Optional lower bound for each gene.
         lower_bound: Option<f64>,
         // Optional upper bound for each gene.
@@ -102,7 +106,6 @@ impl PyRnsga2 {
         // Convert PyArray2 to Array2
         let rp = reference_points.to_owned_array();
 
-        // Build the RSGA2 algorithm instance.
         let algorithm = Rnsga2::new(
             rp,
             epsilon,
@@ -111,7 +114,9 @@ impl PyRnsga2 {
             mutation,
             duplicates,
             fitness_closure,
-            n_vars,
+            num_vars,
+            num_objectives,
+            num_constraints,
             population_size,
             num_offsprings,
             num_iterations,

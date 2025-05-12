@@ -28,7 +28,7 @@ class SamplingOperator:
         """
 
     def sample(
-        self, population_size: int, n_vars: int, seed: Optional[int]
+        self, population_size: int, num_vars: int, seed: Optional[int]
     ) -> TwoDArray: ...
 
 class MutationOperator:
@@ -300,7 +300,9 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
         crossover (CrossoverOperator): Operator to perform crossover.
         mutation (MutationOperator): Operator to perform mutation.
         fitness_fn (FitnessPopuAgeMoealationCallable): Function to evaluate the fitness of the population.
-        n_vars (int): Number of variables in the optimization problem.
+        num_vars (int): Number of variables in the optimization problem.
+        num_objectives (int): Number of objectives in the optimization problem.
+        num_constraints (int): Number of constraints in the optimization problem.
         population_size (int): Population size.
         num_offsprings (int): Number of offsprings generated in each generation.
         num_iterations (int): Number of generations to run the algorithm.
@@ -319,7 +321,9 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
     crossover: CrossoverOperator
     mutation: MutationOperator
     fitness_fn: FitnessPopulationCallable
-    n_vars: int
+    num_vars: int
+    num_objectives: int
+    num_constraints: int
     population_size: int
     num_offsprings: int
     num_iterations: int
@@ -471,3 +475,6 @@ class NoFeasibleIndividualsError(BaseException):
 
 class InvalidParameterError(BaseException):
     """Raise this error when an invalid parameter is provided"""
+
+class InitializationError(BaseException):
+    """Raise this error when an error happens in the initialization step"""

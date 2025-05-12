@@ -16,7 +16,9 @@ def valid_algorithm_params():
         "crossover": SimulatedBinaryCrossover(distribution_index=2),
         "mutation": GaussianMutation(gene_mutation_rate=0.1, sigma=0.05),
         "fitness_fn": lambda genes: genes,  # Mock function for fitness evaluation
-        "n_vars": 10,
+        "num_vars": 10,
+        "num_objectives": 10,
+        "num_constraints": 0,
         "population_size": 100,
         "num_offsprings": 50,
         "num_iterations": 50,
@@ -61,10 +63,10 @@ def test_invalid_crossover_rate(valid_algorithm_params, invalid_crossover_rate):
         Nsga2(**valid_algorithm_params)
 
 
-# ❌ **Test that n_vars cannot be zero**
+# ❌ **Test that num_vars cannot be zero**
 def test_invalid_n_vars(valid_algorithm_params):
     """Number of variables must be greater than 0."""
-    valid_algorithm_params["n_vars"] = 0
+    valid_algorithm_params["num_vars"] = 0
     with pytest.raises(
         InvalidParameterError, match="Number of variables must be greater than 0"
     ):
