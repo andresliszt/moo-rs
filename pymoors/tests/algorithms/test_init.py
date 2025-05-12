@@ -10,6 +10,7 @@ from pymoors import (
     Nsga3,
     Rnsga2,
     Revea,
+    Spea2,
     DanAndDenisReferencePoints,
     ExactDuplicatesCleaner,
 )
@@ -49,6 +50,7 @@ def common_kwargs():
     "algorithm_class, algorithm_specific_kwargs",
     [
         (Nsga2, {}),
+        (Spea2, {}),
         (AgeMoea, {}),
         (
             Nsga3,
@@ -90,6 +92,7 @@ def test_init_minimal_args(algorithm_class, algorithm_specific_kwargs, common_kw
     "algorithm_class, algorithm_specific_kwargs",
     [
         (Nsga2, {}),
+        (Spea2, {}),
         (AgeMoea, {}),
         (
             Nsga3,
