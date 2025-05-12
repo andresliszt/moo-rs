@@ -361,6 +361,30 @@ class Nsga2:
 
     def run(self) -> None: ...
 
+class Spea2:
+    """
+    Implementation of the SPEA2-II.
+
+    SPEA-II is an enhanced Strength Pareto Evolutionary Algorithm that employs an external archive
+    and a density estimation technique based on the k-th nearest neighbor distance to maintain diversity in the Pareto front.
+
+    Reference:
+        Zitzler, E., Laumanns, M., & Thiele, L. (2001). SPEA2: Improving the Strength Pareto Evolutionary Algorithm for
+        Multiobjective Optimization. In Proceedings of the IEEE Congress on Evolutionary Computation (CEC01).
+    """
+
+    def __init__(self, **kwargs: Unpack[_MooAlgorithmKwargs]): ...
+    @property
+    def population(self) -> Population:
+        """
+        Get the current population.
+
+        Returns:
+            Population: The current population of individuals.
+        """
+
+    def run(self) -> None: ...
+
 class _Nsga3Kwargs(_MooAlgorithmKwargs, total=False):
     reference_points: TwoDArray | StructuredReferencePoints
 
