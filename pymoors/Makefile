@@ -89,6 +89,12 @@ fmt-rust:  ## cargo fmt
 	@echo "[pymoors] format src"
 	cargo fmt
 
+# Format
+fmt-python:  ## Fmt Python code
+	@echo "[pymoors] fmt python" \
+	  && uv sync --group linting \
+	  && uv run ruff format $(SOURCES)
+
 #-------------------------------------------------
 # Misc
 #-------------------------------------------------

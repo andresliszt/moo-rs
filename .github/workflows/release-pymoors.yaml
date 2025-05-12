@@ -9,7 +9,7 @@ defaults:
     working-directory: pymoors
 
 jobs:
-  build:
+  build-pymoors:
     # only proceed if this is a "pymoors-…” release
     if: startsWith(github.event.release.tag_name, 'pymoors-')
     name: Build on ${{ matrix.os }} (${{ matrix.target }} - ${{ matrix.interpreter || 'all' }}${{ matrix.os == 'linux' && format(' - {0}', matrix.manylinux == 'auto' && 'manylinux' || matrix.manylinux) || '' }})
@@ -80,3 +80,21 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: twine upload dist/*
+
+  publish-macros:
+    if: startsWith(github.event.release.tag_name, 'pymoors_macros-')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pymoors/pymoors_macros
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build macros crate
+        run: cargo build --release
+      - name: Publish pymoors_macros
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish

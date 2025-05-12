@@ -25,6 +25,7 @@ from ._pymoors import (
     CloseDuplicatesCleaner,
     NoFeasibleIndividualsError,
     InvalidParameterError,
+    InitializationError,
     DanAndDenisReferencePoints,
 )
 
@@ -139,6 +140,7 @@ __all__ = (
     "CloseDuplicatesCleaner",
     "NoFeasibleIndividualsError",
     "InvalidParameterError",
+    "InitializationError",
     "available_operators",
     "DanAndDenisReferencePoints",
 )

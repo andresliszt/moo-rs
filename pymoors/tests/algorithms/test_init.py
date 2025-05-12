@@ -32,7 +32,9 @@ def common_kwargs():
         "crossover": SimulatedBinaryCrossover(distribution_index=15),
         "mutation": GaussianMutation(gene_mutation_rate=0.1, sigma=0.05),
         "fitness_fn": fitness,
-        "n_vars": 3,  # We have 2 variables: x,y
+        "num_vars": 3,  # We have 2 variables: x,y
+        "num_objectives": 2,
+        "num_constraints": 0,
         "population_size": 100,
         "num_offsprings": 10,
         "num_iterations": 10,
@@ -115,7 +117,7 @@ def test_init_full_args(algorithm_class, algorithm_specific_kwargs, common_kwarg
         "keep_infeasible": True,
         "seed": 1,
     }
-
+    common_kwargs["num_constraints"] = 1
     _ = algorithm_class(**common_kwargs, **algorithm_specific_kwargs, **extra_args)
     # TODO: Enable once the attribute is created
     # assert algorithm.initialized = False

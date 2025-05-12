@@ -1,6 +1,5 @@
 use moors::algorithms::MultiObjectiveAlgorithmError;
 use moors::evaluator::EvaluatorError;
-use moors::operators::evolve::EvolveError;
 use pyo3::PyErr;
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyRuntimeError};
@@ -29,6 +28,13 @@ create_exception!(
     "Raised when in some itearion no offsprings were generated"
 );
 
+create_exception!(
+    pymoors,
+    InitializationError,
+    PyException,
+    "Raised when accessing an algorithm that has not been initialized"
+);
+
 /// A local wrapper for MultiObjectiveAlgorithmError,
 /// allowing us to implement conversion traits.
 #[derive(Debug)]
@@ -46,23 +52,12 @@ impl From<MultiObjectiveAlgorithmErrorWrapper> for PyErr {
     fn from(err: MultiObjectiveAlgorithmErrorWrapper) -> PyErr {
         let msg = err.0.to_string();
         match err.0 {
+            MultiObjectiveAlgorithmError::Initialization(_) => InitializationError::new_err(msg),
             MultiObjectiveAlgorithmError::Evaluator(EvaluatorError::NoFeasibleIndividuals) => {
                 NoFeasibleIndividualsError::new_err(msg)
             }
             MultiObjectiveAlgorithmError::InvalidParameter(_) => {
                 InvalidParameterError::new_err(msg)
-            }
-            MultiObjectiveAlgorithmError::Evolve(EvolveError::EmptyMatingResult {
-                message,
-                current_offspring_count,
-                required_offsprings,
-            }) => {
-                // Formateamos el mensaje para incluir la información requerida.
-                let full_msg = format!(
-                    "Empty mating result: {}. Current offspring count: {}. Required offsprings: {}",
-                    message, current_offspring_count, required_offsprings
-                );
-                EmptyMatingError::new_err(full_msg)
             }
             _ => PyRuntimeError::new_err(msg),
         }

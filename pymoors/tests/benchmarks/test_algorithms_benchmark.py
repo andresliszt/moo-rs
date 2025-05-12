@@ -39,7 +39,7 @@ def test_small_real_biobjective_nsag2(benchmark):
         crossover=SimulatedBinaryCrossover(distribution_index=2),
         mutation=GaussianMutation(gene_mutation_rate=0.1, sigma=0.05),
         fitness_fn=fitness_biobjective,
-        n_vars=N_VARS,
+        num_vars=N_VARS,
         population_size=1000,
         num_offsprings=1000,
         num_iterations=100,

@@ -4,6 +4,7 @@ edition = "2024"
 authors = ["Andrés Sandoval Abarca <andres.sndbrca@gmail.com>"]
 description = "Procedural macros for pymoors project"
 license = "MIT"
+version = "0.1.3"
 
 [lib]
 proc-macro = true

@@ -7,7 +7,7 @@ from pymoors import (
     BitFlipMutation,
     SinglePointBinaryCrossover,
     RandomSamplingBinary,
-    NoFeasibleIndividualsError,
+    InitializationError,
 )
 from pymoors.typing import TwoDArray
 
@@ -55,7 +55,9 @@ def test_keep_infeasible():
         crossover=SinglePointBinaryCrossover(),
         fitness_fn=binary_biobjective_infeasible,
         constraints_fn=infeasible_constraints,
-        n_vars=5,
+        num_vars=5,
+        num_objectives=2,
+        num_constraints=1,
         population_size=100,
         num_offsprings=32,
         num_iterations=20,
@@ -76,7 +78,9 @@ def test_keep_infeasible_out_of_bounds():
         mutation=BitFlipMutation(gene_mutation_rate=0.5),
         crossover=SinglePointBinaryCrossover(),
         fitness_fn=binary_biobjective_infeasible,
-        n_vars=5,
+        num_vars=5,
+        num_objectives=2,
+        num_constraints=0,
         population_size=100,
         num_offsprings=32,
         num_iterations=20,
@@ -94,8 +98,8 @@ def test_keep_infeasible_out_of_bounds():
 
 def test_remove_infeasible():
     with pytest.raises(
-        NoFeasibleIndividualsError,
-        match="Error during evaluation: No feasible individuals found in the population",
+        InitializationError,
+        match="Error during initialization: Error during evaluation in initialization: No feasible individuals found in the population",
     ):
         algorithm = Nsga2(
             sampler=RandomSamplingBinary(),
@@ -103,7 +107,9 @@ def test_remove_infeasible():
             crossover=SinglePointBinaryCrossover(),
             fitness_fn=binary_biobjective_infeasible,
             constraints_fn=infeasible_constraints,
-            n_vars=5,
+            num_vars=5,
+            num_objectives=2,
+            num_constraints=1,
             population_size=100,
             num_offsprings=100,
             num_iterations=20,
