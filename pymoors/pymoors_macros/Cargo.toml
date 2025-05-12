@@ -3,6 +3,7 @@ name = "pymoors_macros"
 edition = "2024"
 authors = ["Andrés Sandoval Abarca <andres.sndbrca@gmail.com>"]
 description = "Procedural macros for pymoors project"
+repository = "https://github.com/andresliszt/moo-rs"
 license = "MIT"
 version = "0.1.3"
 
