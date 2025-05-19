@@ -27,7 +27,7 @@ class SamplingOperator:
             **kwargs: Arbitrary keyword arguments.
         """
 
-    def sample(
+    def operate(
         self, population_size: int, num_vars: int, seed: Optional[int]
     ) -> TwoDArray: ...
 
@@ -47,7 +47,7 @@ class MutationOperator:
             **kwargs: Arbitrary keyword arguments.
         """
 
-    def muatation(self, population: TwoDArray, seed: Optional[int]) -> TwoDArray: ...
+    def operate(self, population: TwoDArray, seed: Optional[int]) -> TwoDArray: ...
 
 class CrossoverOperator:
     """
@@ -65,7 +65,7 @@ class CrossoverOperator:
             **kwargs: Arbitrary keyword arguments.
         """
 
-    def crossover(
+    def operate(
         self, parents_a: TwoDArray, parents_b: TwoDArray, seed: Optional[int]
     ) -> TwoDArray: ...
 

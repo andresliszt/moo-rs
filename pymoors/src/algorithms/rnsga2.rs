@@ -10,8 +10,7 @@ use crate::py_fitness_and_constraints::{
 };
 use crate::py_operators::{
     CrossoverOperatorDispatcher, DuplicatesCleanerDispatcher, MutationOperatorDispatcher,
-    SamplingOperatorDispatcher, unwrap_crossover_operator, unwrap_duplicates_operator,
-    unwrap_mutation_operator, unwrap_sampling_operator,
+    SamplingOperatorDispatcher,
 };
 
 use numpy::{PyArray2, PyArrayMethods};
@@ -84,11 +83,11 @@ impl PyRnsga2 {
         seed: Option<u64>,
     ) -> PyResult<Self> {
         // Unwrap the genetic operators
-        let sampler = unwrap_sampling_operator(sampler)?;
-        let crossover = unwrap_crossover_operator(crossover)?;
-        let mutation = unwrap_mutation_operator(mutation)?;
+        let sampler = SamplingOperatorDispatcher::from_python_operator(sampler)?;
+        let crossover = CrossoverOperatorDispatcher::from_python_operator(crossover)?;
+        let mutation = MutationOperatorDispatcher::from_python_operator(mutation)?;
         let duplicates = if let Some(py_obj) = duplicates_cleaner {
-            Some(unwrap_duplicates_operator(py_obj)?)
+            Some(DuplicatesCleanerDispatcher::from_python_operator(py_obj)?)
         } else {
             None
         };

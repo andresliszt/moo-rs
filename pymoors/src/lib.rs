@@ -3,6 +3,7 @@
 extern crate core;
 
 pub mod algorithms;
+pub mod custom_py_operators;
 pub mod py_error;
 pub mod py_fitness_and_constraints;
 pub mod py_operators;

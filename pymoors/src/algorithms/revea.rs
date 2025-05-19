@@ -13,8 +13,7 @@ use crate::py_fitness_and_constraints::{
 };
 use crate::py_operators::{
     CrossoverOperatorDispatcher, DuplicatesCleanerDispatcher, MutationOperatorDispatcher,
-    SamplingOperatorDispatcher, unwrap_crossover_operator, unwrap_duplicates_operator,
-    unwrap_mutation_operator, unwrap_sampling_operator,
+    SamplingOperatorDispatcher,
 };
 use crate::py_reference_points::PyStructuredReferencePointsDispatcher;
 
@@ -45,7 +44,6 @@ impl PyRevea {
         fitness_fn,
         num_vars,
         num_objectives,
-        num_constraints,
         population_size,
         num_offsprings,
         num_iterations,
@@ -57,6 +55,7 @@ impl PyRevea {
         verbose=true,
         duplicates_cleaner=None,
         constraints_fn=None,
+        num_constraints=0,
         lower_bound=None,
         upper_bound=None,
         seed=None,
@@ -69,7 +68,6 @@ impl PyRevea {
         fitness_fn: PyObject,
         num_vars: usize,
         num_objectives: usize,
-        num_constraints: usize,
         population_size: usize,
         num_offsprings: usize,
         num_iterations: usize,
@@ -81,9 +79,8 @@ impl PyRevea {
         verbose: bool,
         duplicates_cleaner: Option<PyObject>,
         constraints_fn: Option<PyObject>,
-        // Optional lower bound for each gene.
+        num_constraints: usize,
         lower_bound: Option<f64>,
-        // Optional upper bound for each gene.
         upper_bound: Option<f64>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
@@ -103,11 +100,11 @@ impl PyRevea {
             };
 
             // Unwrap the genetic operators.
-            let sampler = unwrap_sampling_operator(sampler)?;
-            let crossover = unwrap_crossover_operator(crossover)?;
-            let mutation = unwrap_mutation_operator(mutation)?;
+            let sampler = SamplingOperatorDispatcher::from_python_operator(sampler)?;
+            let crossover = CrossoverOperatorDispatcher::from_python_operator(crossover)?;
+            let mutation = MutationOperatorDispatcher::from_python_operator(mutation)?;
             let duplicates_cleaner = if let Some(py_obj) = duplicates_cleaner {
-                Some(unwrap_duplicates_operator(py_obj)?)
+                Some(DuplicatesCleanerDispatcher::from_python_operator(py_obj)?)
             } else {
                 None
             };
