@@ -1,10 +1,6 @@
 import numpy as np
 
-
-from pymoors import (
-    Nsga2,
-    RandomSamplingBinary,
-)
+from pymoors import Nsga2
 from pymoors.typing import TwoDArray
 
 
@@ -12,7 +8,7 @@ def dummy_fitness(genes: TwoDArray) -> TwoDArray:
     return genes
 
 
-class CustomBitFlipMutation:
+class CustomBinaryMutation:
     def __init__(self, gene_mutation_rate: float = 0.5):
         self.gene_mutation_rate = gene_mutation_rate
 
@@ -44,10 +40,23 @@ class CustomBinaryCrossover:
         return offsprings
 
 
+class CustomBinarySampling:
+    def operate(self):
+        return np.array(
+            [
+                [1, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0],
+                [0, 0, 1, 0, 0],
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
+            ]
+        ).astype(float)
+
+
 def test_algorithm_with_custom_operators():
     algorithm = Nsga2(
-        sampler=RandomSamplingBinary(),
-        mutation=CustomBitFlipMutation(),
+        sampler=CustomBinarySampling(),
+        mutation=CustomBinaryMutation(),
         crossover=CustomBinaryCrossover(),
         fitness_fn=dummy_fitness,
         num_vars=5,

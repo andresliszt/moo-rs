@@ -30,9 +30,16 @@ class MutationProtocolNoSeed(Protocol):
     def operate(self, population: TwoDArray) -> TwoDArray: ...
 
 
-CrossoverFn: TypeAlias = Callable[[TwoDArray, TwoDArray], TwoDArray]
-MutationFn: TypeAlias = Callable[[TwoDArray], TwoDArray]
+class SamplingProtocol(Protocol):
+    def operate(
+        self, population_size: int, num_vars: int, seed: int | None
+    ) -> TwoDArray: ...
 
 
-CrossoverLike = CrossoverProtocol | CrossoverProtocolNoSeed | CrossoverFn
-MutationLike = MutationProtocol | MutationProtocolNoSeed | MutationFn
+class SamplingProtocolNoArgs(Protocol):
+    def operate(self) -> TwoDArray: ...
+
+
+CrossoverLike = CrossoverProtocol | CrossoverProtocolNoSeed
+MutationLike = MutationProtocol | MutationProtocolNoSeed
+SamplingLike = SamplingProtocol | SamplingProtocolNoArgs

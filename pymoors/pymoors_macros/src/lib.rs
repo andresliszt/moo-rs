@@ -528,11 +528,11 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
 ///   which extracts the correct variant from a `PyObject`.
 #[proc_macro_attribute]
 pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    // 1) Parse the enum the user wrote.
+    // Parse the enum the user wrote.
     let input_enum: ItemEnum = parse_macro_input!(item as ItemEnum);
     let enum_ident = &input_enum.ident;
 
-    // 2) Collect (VariantIdent, FieldType) for each tuple-variant `Variant(Type)`
+    // Collect (VariantIdent, FieldType) for each tuple-variant `Variant(Type)`
     let ops: Vec<(proc_macro2::Ident, Type)> = input_enum
         .variants
         .iter()
@@ -544,7 +544,7 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
         })
         .collect();
 
-    // 3) impl From<Type> for the enum
+    // impl From<Type> for the enum
     let from_impls = ops.iter().map(|(var, ty)| {
         quote! {
             impl From<#ty> for #enum_ident {
@@ -555,12 +555,18 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
         }
     });
 
-    // 4) impl SamplingOperator by delegating sample_individual(...)
+    // impl SamplingOperator by delegating sample_individual(...)
     let sample_match = ops.iter().map(|(var, _)| {
         quote! {
             #enum_ident::#var(inner) => inner.sample_individual(num_vars, rng),
         }
     });
+    let operate_match = ops.iter().map(|(var, _)| {
+        quote! {
+            #enum_ident::#var(inner) => inner.operate(population_size, num_vars, rng),
+        }
+    });
+
     let sampling_impl = quote! {
         impl moors::operators::SamplingOperator for #enum_ident {
             fn sample_individual(
@@ -570,10 +576,18 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
             ) -> moors::genetic::IndividualGenes {
                 match self { #(#sample_match)* }
             }
+            fn operate(
+                &self,
+                population_size: usize,
+                num_vars: usize,
+                rng: &mut impl moors::random::RandomGenerator
+            ) -> moors::genetic::PopulationGenes {
+                match self { #(#operate_match)* }
+            }
         }
     };
 
-    // 5) impl GeneticOperator by delegating name()
+    // impl GeneticOperator by delegating name()
     let name_match = ops.iter().map(|(var, _)| {
         quote! {
             #enum_ident::#var(inner) => inner.name(),
@@ -587,18 +601,30 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
         }
     };
 
-    // 6) Emit py_operator_sampling!(Type) for each operator type
-    let macro_calls = ops.iter().map(|(_, ty)| {
-        quote! { pymoors_macros::py_operator_sampling!(#ty) }
+    // invoke py_operator_sampling!(Type) for each Rust operator type
+    let macro_calls = ops.iter().filter_map(|(var, ty)| {
+        if var == "CustomPySamplingOperatorWrapper" {
+            None
+        } else {
+            Some(quote! { pymoors_macros::py_operator_sampling!(#ty); })
+        }
     });
-
-    // 7) from_python_operator constructor (PyObject → enum)
-    let extract_arms = ops.iter().map(|(var, _)| {
-        let wrapper = format_ident!("Py{}", var); // e.g. PyUniformBinaryCrossover
-        quote! {
-            if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
-                return Ok(#enum_ident::from(extracted.inner));
-            }
+    // from_python_operator constructor: try the PySampling wrappers first…
+    let mut extract_arms = Vec::new();
+    for (var, _ty) in &ops {
+        if var != "CustomPySamplingOperatorWrapper" {
+            let wrapper = format_ident!("Py{}", var);
+            extract_arms.push(quote! {
+                if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
+                    return Ok(#enum_ident::from(extracted.inner));
+                }
+            });
+        }
+    }
+    // …and only if none of those matched, try the custom wrapper itself
+    extract_arms.push(quote! {
+        if let Ok(extracted) = py_obj.extract::<CustomPySamplingOperatorWrapper>(py) {
+            return Ok(#enum_ident::from(extracted));
         }
     });
     let ctor_impl = quote! {
@@ -623,7 +649,7 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
         #(#from_impls)*
         #sampling_impl
         #genetic_impl
-        #(#macro_calls;)*
+        #(#macro_calls)*
         #ctor_impl
     })
 }

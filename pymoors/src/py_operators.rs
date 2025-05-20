@@ -28,6 +28,7 @@ use pymoors_macros::{
 
 use crate::custom_py_operators::{
     CustomPyCrossoverOperatorWrapper, CustomPyMutationOperatorWrapper,
+    CustomPySamplingOperatorWrapper,
 };
 
 #[derive(Debug)]
@@ -59,6 +60,7 @@ pub enum SamplingOperatorDispatcher {
     RandomSamplingBinary(RandomSamplingBinary),
     RandomSamplingFloat(RandomSamplingFloat),
     RandomSamplingInt(RandomSamplingInt),
+    CustomPySamplingOperatorWrapper(CustomPySamplingOperatorWrapper),
 }
 
 #[derive(Debug)]

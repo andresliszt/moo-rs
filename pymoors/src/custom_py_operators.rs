@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 
 use moors::{
     genetic::{IndividualGenes, IndividualGenesMut, PopulationGenes},
-    operators::{CrossoverOperator, GeneticOperator, MutationOperator},
+    operators::{CrossoverOperator, GeneticOperator, MutationOperator, SamplingOperator},
     random::RandomGenerator,
 };
 
@@ -22,6 +22,15 @@ fn select_individuals_idx(
     sel
 }
 
+/// Wrapper for a custom Python mutation operator.
+///
+/// This wrapper delegates population-level mutation to a Python-side class by
+/// overriding the `operate` method. By operating on the entire population at
+/// once, it acquires the GIL only once per call, improving performance compared
+/// to invoking Python for each individual. The inner `PyObject` is expected to
+/// be a Python class instance defining an `operate` method that takes a NumPy
+/// array of shape (n_individuals, n_genes) and returns a mutated NumPy array of
+/// the same shape.
 #[derive(Debug)]
 pub struct CustomPyMutationOperatorWrapper {
     pub inner: PyObject,
@@ -59,7 +68,7 @@ impl MutationOperator for CustomPyMutationOperatorWrapper {
 
             let mutated_pyarray = mutated_population
                 .bind(py)
-                .downcast::<PyArray2<f64>>() // ➜ Bound<'py, PyArray2<f64>>
+                .downcast::<PyArray2<f64>>()
                 .expect("Expected a 2D float64 array, output of the operate method");
 
             let readonly: numpy::PyReadonlyArray2<'_, f64> = mutated_pyarray.readonly();
@@ -84,6 +93,13 @@ impl<'py> FromPyObject<'py> for CustomPyMutationOperatorWrapper {
     }
 }
 
+/// Wrapper for a custom Python crossover operator.
+///
+/// Delegates population-level crossover to a Python-side class by overriding
+/// the `operate` method. Only one GIL acquisition per mating process,
+/// avoiding per-individual overhead. The inner `PyObject` is expected to be a
+/// Python class instance defining `operate` that takes two NumPy arrays for
+/// parents_a and parents_b and returns a NumPy array of offsprings.
 #[derive(Debug)]
 pub struct CustomPyCrossoverOperatorWrapper {
     pub inner: PyObject,
@@ -115,7 +131,6 @@ impl CrossoverOperator for CustomPyCrossoverOperatorWrapper {
         cossover_rate: f64,
         rng: &mut impl RandomGenerator,
     ) -> PopulationGenes {
-        // Acquire the GIL and convert our Rust view into a NumPy array...
         Python::with_gil(|py| {
             let population_size = parents_a.nrows();
             // Build the mask with the mutation rate
@@ -136,7 +151,7 @@ impl CrossoverOperator for CustomPyCrossoverOperatorWrapper {
 
             let offsprings_pyarray = offsprings
                 .bind(py)
-                .downcast::<PyArray2<f64>>() // ➜ Bound<'py, PyArray2<f64>>
+                .downcast::<PyArray2<f64>>()
                 .expect("Expected a 2D float64 array, output of the operate method");
 
             let offsprings_rust = offsprings_pyarray.to_owned_array();
@@ -153,6 +168,69 @@ impl<'py> FromPyObject<'py> for CustomPyCrossoverOperatorWrapper {
             ));
         }
         Ok(CustomPyCrossoverOperatorWrapper {
+            inner: ob.clone().unbind(),
+        })
+    }
+}
+
+/// Wrapper for a custom Python sampling operator.
+///
+/// Delegates population-level sampling to a Python-side class by overriding
+/// the `operate` method. Acquires the GIL once to invoke Python, expecting inner
+/// Python class instance with `operate` method returning a NumPy array of
+/// samples of shape (population_size, num_vars).
+#[derive(Debug)]
+pub struct CustomPySamplingOperatorWrapper {
+    pub inner: PyObject,
+}
+
+impl GeneticOperator for CustomPySamplingOperatorWrapper {
+    fn name(&self) -> String {
+        "CustomPySamplingOperatorWrapper".into()
+    }
+}
+
+impl SamplingOperator for CustomPySamplingOperatorWrapper {
+    fn sample_individual(
+        &self,
+        _num_vars: usize,
+        _rng: &mut impl RandomGenerator,
+    ) -> IndividualGenes {
+        unimplemented!("Custom sampling operator overwrites operate method only")
+    }
+
+    fn operate(
+        &self,
+        _population_size: usize,
+        _num_vars: usize,
+        _rng: &mut impl RandomGenerator,
+    ) -> PopulationGenes {
+        Python::with_gil(|py| {
+            // Call the Python-side operate method
+            let sample = self
+                .inner
+                .call_method0(py, "operate")
+                .expect("Error calling custom sampling operate");
+
+            let sample_pyarray = sample
+                .bind(py)
+                .downcast::<PyArray2<f64>>()
+                .expect("Expected a 2D float64 array, output of the operate method");
+
+            let sample_rust = sample_pyarray.to_owned_array();
+            return sample_rust;
+        })
+    }
+}
+
+impl<'py> FromPyObject<'py> for CustomPySamplingOperatorWrapper {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        if !ob.hasattr("operate")? {
+            return Err(pyo3::exceptions::PyTypeError::new_err(
+                "Custom sampling operator class must define an 'operate' method",
+            ));
+        }
+        Ok(CustomPySamplingOperatorWrapper {
             inner: ob.clone().unbind(),
         })
     }

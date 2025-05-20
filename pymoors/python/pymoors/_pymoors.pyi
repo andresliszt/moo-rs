@@ -9,6 +9,7 @@ from pymoors.typing import (
     TwoDArray,
     CrossoverLike,
     MutationLike,
+    SamplingLike,
 )
 
 # pylint: disable=W0622, W0231
@@ -319,7 +320,7 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
         seed (Optional[seed], optional): Optional seed to control experiments. Defaults to None.
     """
 
-    sampler: SamplingOperator
+    sampler: SamplingLike
     crossover: CrossoverLike
     mutation: MutationLike
     fitness_fn: FitnessPopulationCallable
