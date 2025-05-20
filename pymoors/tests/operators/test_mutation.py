@@ -56,4 +56,4 @@ def test_mutation_exposed_methods(operator_class, kwargs, pop_type):
     assert mutated.shape == mutated_no_seed.shape == (population_size, num_vars)
 
     with pytest.raises(ValueError, match="Population numpy array must be 2D."):
-        op.mutate(population[0], seed=42)
+        op.operate(population[0], seed=42)
