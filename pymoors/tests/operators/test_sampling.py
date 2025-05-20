@@ -37,9 +37,9 @@ def test_sampling_exposed_methods(operator_class, kwargs):
         assert getattr(op, k) == v
 
     # Call the crossover method with a fixed seed.
-    sampled_population = op.sample(population_size, num_vars, seed=42)
-    sampled_population_seed = op.sample(population_size, num_vars, seed=42)
-    sampled_population_no_seed = op.sample(population_size, num_vars)
+    sampled_population = op.operate(population_size, num_vars, seed=42)
+    sampled_population_seed = op.operate(population_size, num_vars, seed=42)
+    sampled_population_no_seed = op.operate(population_size, num_vars)
 
     np.testing.assert_array_equal(sampled_population, sampled_population_seed)
 
