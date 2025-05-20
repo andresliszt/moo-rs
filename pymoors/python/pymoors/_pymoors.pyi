@@ -7,6 +7,8 @@ from pymoors.typing import (
     FitnessPopulationCallable,
     ConstraintsPopulationCallable,
     TwoDArray,
+    CrossoverLike,
+    MutationLike,
 )
 
 # pylint: disable=W0622, W0231
@@ -318,8 +320,8 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
     """
 
     sampler: SamplingOperator
-    crossover: CrossoverOperator
-    mutation: MutationOperator
+    crossover: CrossoverLike
+    mutation: MutationLike
     fitness_fn: FitnessPopulationCallable
     num_vars: int
     num_objectives: int

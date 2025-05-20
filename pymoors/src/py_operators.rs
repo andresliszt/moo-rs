@@ -26,7 +26,9 @@ use pymoors_macros::{
     register_py_operators_mutation, register_py_operators_sampling,
 };
 
-use crate::custom_py_operators::CustomPyMutationOperatorWrapper;
+use crate::custom_py_operators::{
+    CustomPyCrossoverOperatorWrapper, CustomPyMutationOperatorWrapper,
+};
 
 #[derive(Debug)]
 #[register_py_operators_mutation]
@@ -36,7 +38,7 @@ pub enum MutationOperatorDispatcher {
     GaussianMutation(GaussianMutation),
     ScrambleMutation(ScrambleMutation),
     SwapMutation(SwapMutation),
-    CustomPyMutationOperatorWrapper(CustomPyMutationOperatorWrapper)
+    CustomPyMutationOperatorWrapper(CustomPyMutationOperatorWrapper),
 }
 
 #[derive(Debug)]
@@ -47,6 +49,7 @@ pub enum CrossoverOperatorDispatcher {
     SimulatedBinaryCrossover(SimulatedBinaryCrossover),
     SinglePointBinaryCrossover(SinglePointBinaryCrossover),
     UniformBinaryCrossover(UniformBinaryCrossover),
+    CustomPyCrossoverOperatorWrapper(CustomPyCrossoverOperatorWrapper),
 }
 
 #[derive(Debug)]

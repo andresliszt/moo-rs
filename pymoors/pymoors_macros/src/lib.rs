@@ -419,6 +419,11 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
             #enum_ident::#var(inner) => inner.crossover(parent_a, parent_b, rng),
         }
     });
+    let operate_match = ops.iter().map(|(var, _)| {
+        quote! {
+            #enum_ident::#var(inner) => inner.operate(parents_a, parents_b, crossover_rate, rng),
+        }
+    });
     let crossover_impl = quote! {
         impl moors::operators::CrossoverOperator for #enum_ident {
             fn crossover(
@@ -429,9 +434,17 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
             ) -> (moors::genetic::IndividualGenes, moors::genetic::IndividualGenes) {
                 match self { #(#crossover_match)* }
             }
+            fn operate(
+                &self,
+                parents_a: &moors::genetic::PopulationGenes,
+                parents_b: &moors::genetic::PopulationGenes,
+                crossover_rate: f64,
+                rng: &mut impl moors::random::RandomGenerator,
+            ) -> moors::genetic::PopulationGenes {
+                match self { #(#operate_match)* }
+            }
         }
     };
-
     // impl GeneticOperator by forwarding .name()
     let name_match = ops.iter().map(|(var, _)| {
         quote! {
@@ -447,17 +460,29 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
     };
 
     // invoke py_operator_crossover!(Type) for each Rust operator type
-    let macro_calls = ops.iter().map(|(_, ty)| {
-        quote! { pymoors_macros::py_operator_crossover!(#ty) }
+    let macro_calls = ops.iter().filter_map(|(var, ty)| {
+        if var == "CustomPyCrossoverOperatorWrapper" {
+            None
+        } else {
+            Some(quote! { pymoors_macros::py_operator_crossover!(#ty); })
+        }
     });
-
-    // generate from_python_operator constructor (PyObject → enum)
-    let extract_arms = ops.iter().map(|(var, _)| {
-        let wrapper = format_ident!("Py{}", var); // e.g. PyExponentialCrossover
-        quote! {
-            if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
-                return Ok(#enum_ident::from(extracted.inner));
-            }
+    // from_python_operator constructor: try the PyCrossover wrappers first…
+    let mut extract_arms = Vec::new();
+    for (var, _ty) in &ops {
+        if var != "CustomPyCrossoverOperatorWrapper" {
+            let wrapper = format_ident!("Py{}", var);
+            extract_arms.push(quote! {
+                if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
+                    return Ok(#enum_ident::from(extracted.inner));
+                }
+            });
+        }
+    }
+    // …and only if none of those matched, try the custom wrapper itself
+    extract_arms.push(quote! {
+        if let Ok(extracted) = py_obj.extract::<CustomPyCrossoverOperatorWrapper>(py) {
+            return Ok(#enum_ident::from(extracted));
         }
     });
     let ctor_impl = quote! {
@@ -482,7 +507,7 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
         #(#from_impls)*
         #crossover_impl
         #genetic_impl
-        #(#macro_calls;)*
+        #(#macro_calls)*
         #ctor_impl
     })
 }
