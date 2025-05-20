@@ -1,65 +1,74 @@
-use pyo3::prelude::*;
-// Bring into scope PyArrayMethods because it is used by the macros.
 use numpy::PyArrayMethods;
+use pyo3::prelude::*;
 
-// Import mutation operator traits and concrete types from moors.
-use moors::operators::MutationOperator;
-use moors::operators::mutation::bitflip::BitFlipMutation;
-use moors::operators::mutation::displacement::DisplacementMutation;
-use moors::operators::mutation::gaussian::GaussianMutation;
-use moors::operators::mutation::scramble::ScrambleMutation;
-use moors::operators::mutation::swap::SwapMutation;
-
-// Import crossover operator traits and concrete types.
-use moors::operators::CrossoverOperator;
-use moors::operators::crossover::exponential::ExponentialCrossover;
-use moors::operators::crossover::order::OrderCrossover;
-use moors::operators::crossover::sbx::SimulatedBinaryCrossover;
-use moors::operators::crossover::single_point::SinglePointBinaryCrossover;
-use moors::operators::crossover::uniform_binary::UniformBinaryCrossover;
-
-// Import sampling operator traits and concrete types.
-use moors::operators::sampling::{
-    PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
-    SamplingOperator,
+use moors::{
+    duplicates::{CloseDuplicatesCleaner, ExactDuplicatesCleaner, PopulationCleaner},
+    operators::{
+        CrossoverOperator, MutationOperator,
+        crossover::{
+            exponential::ExponentialCrossover, order::OrderCrossover,
+            sbx::SimulatedBinaryCrossover, single_point::SinglePointBinaryCrossover,
+            uniform_binary::UniformBinaryCrossover,
+        },
+        mutation::{
+            bitflip::BitFlipMutation, displacement::DisplacementMutation,
+            gaussian::GaussianMutation, scramble::ScrambleMutation, swap::SwapMutation,
+        },
+        sampling::{
+            PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
+            SamplingOperator,
+        },
+    },
 };
 
-// Import duplicates cleaner traits and concrete types.
-use moors::duplicates::{CloseDuplicatesCleaner, ExactDuplicatesCleaner, PopulationCleaner};
+use pymoors_macros::{
+    register_py_operators_crossover, register_py_operators_duplicates,
+    register_py_operators_mutation, register_py_operators_sampling,
+};
 
-// The following macros will create all the Python operator wrappers from moors,
-// each providing a corresponding unwrap function with specific names:
-// - unwrap_mutation_operator
-// - unwrap_crossover_operator
-// - unwrap_sampling_operator
-// - unwrap_duplicates_operator
-//
-// These functions will be imported in the algorithms module.
+use crate::custom_py_operators::{
+    CustomPyCrossoverOperatorWrapper, CustomPyMutationOperatorWrapper,
+    CustomPySamplingOperatorWrapper,
+};
 
-pymoors_macros::register_py_operators_mutation!(
-    BitFlipMutation,
-    DisplacementMutation,
-    GaussianMutation,
-    ScrambleMutation,
-    SwapMutation,
-);
+#[derive(Debug)]
+#[register_py_operators_mutation]
+pub enum MutationOperatorDispatcher {
+    BitFlipMutation(BitFlipMutation),
+    DisplacementMutation(DisplacementMutation),
+    GaussianMutation(GaussianMutation),
+    ScrambleMutation(ScrambleMutation),
+    SwapMutation(SwapMutation),
+    CustomPyMutationOperatorWrapper(CustomPyMutationOperatorWrapper),
+}
 
-pymoors_macros::register_py_operators_crossover!(
-    ExponentialCrossover,
-    OrderCrossover,
-    SimulatedBinaryCrossover,
-    SinglePointBinaryCrossover,
-    UniformBinaryCrossover,
-);
+#[derive(Debug)]
+#[register_py_operators_crossover]
+pub enum CrossoverOperatorDispatcher {
+    ExponentialCrossover(ExponentialCrossover),
+    OrderCrossover(OrderCrossover),
+    SimulatedBinaryCrossover(SimulatedBinaryCrossover),
+    SinglePointBinaryCrossover(SinglePointBinaryCrossover),
+    UniformBinaryCrossover(UniformBinaryCrossover),
+    CustomPyCrossoverOperatorWrapper(CustomPyCrossoverOperatorWrapper),
+}
 
-pymoors_macros::register_py_operators_sampling!(
-    PermutationSampling,
-    RandomSamplingBinary,
-    RandomSamplingFloat,
-    RandomSamplingInt,
-);
+#[derive(Debug)]
+#[register_py_operators_sampling]
+pub enum SamplingOperatorDispatcher {
+    PermutationSampling(PermutationSampling),
+    RandomSamplingBinary(RandomSamplingBinary),
+    RandomSamplingFloat(RandomSamplingFloat),
+    RandomSamplingInt(RandomSamplingInt),
+    CustomPySamplingOperatorWrapper(CustomPySamplingOperatorWrapper),
+}
 
-pymoors_macros::register_py_operators_duplicates!(ExactDuplicatesCleaner, CloseDuplicatesCleaner);
+#[derive(Debug)]
+#[register_py_operators_duplicates]
+pub enum DuplicatesCleanerDispatcher {
+    ExactDuplicatesCleaner(ExactDuplicatesCleaner),
+    CloseDuplicatesCleaner(CloseDuplicatesCleaner),
+}
 
 // --------------------------------------------------------------------------------
 // NOTE: Because `moors` is completely independent from `pymoors`, we do NOT use

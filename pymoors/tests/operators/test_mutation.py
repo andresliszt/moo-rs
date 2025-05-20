@@ -46,16 +46,14 @@ def test_mutation_exposed_methods(operator_class, kwargs, pop_type):
     # Check that the operator's properties are correctly set.
     for k, v in kwargs.items():
         assert getattr(op, k) == v
-
     # Call the mutation method.
-    mutated = op.mutate(population, seed=42)
-    mutated_same_seed = op.mutate(population, seed=42)
-    mutated_no_seed = op.mutate(population)
+    mutated = op.operate(population, seed=42)
+    mutated_same_seed = op.operate(population, seed=42)
+    mutated_no_seed = op.operate(population)
 
     np.testing.assert_array_equal(mutated, mutated_same_seed)
-
     # Check that the output has the same shape as the input.
     assert mutated.shape == mutated_no_seed.shape == (population_size, num_vars)
 
     with pytest.raises(ValueError, match="Population numpy array must be 2D."):
-        op.mutate(population[0], seed=42)
+        op.operate(population[0], seed=42)

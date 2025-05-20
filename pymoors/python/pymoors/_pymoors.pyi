@@ -7,6 +7,9 @@ from pymoors.typing import (
     FitnessPopulationCallable,
     ConstraintsPopulationCallable,
     TwoDArray,
+    CrossoverLike,
+    MutationLike,
+    SamplingLike,
 )
 
 # pylint: disable=W0622, W0231
@@ -27,7 +30,7 @@ class SamplingOperator:
             **kwargs: Arbitrary keyword arguments.
         """
 
-    def sample(
+    def operate(
         self, population_size: int, num_vars: int, seed: Optional[int]
     ) -> TwoDArray: ...
 
@@ -47,7 +50,7 @@ class MutationOperator:
             **kwargs: Arbitrary keyword arguments.
         """
 
-    def muatation(self, population: TwoDArray, seed: Optional[int]) -> TwoDArray: ...
+    def operate(self, population: TwoDArray, seed: Optional[int]) -> TwoDArray: ...
 
 class CrossoverOperator:
     """
@@ -65,7 +68,7 @@ class CrossoverOperator:
             **kwargs: Arbitrary keyword arguments.
         """
 
-    def crossover(
+    def operate(
         self, parents_a: TwoDArray, parents_b: TwoDArray, seed: Optional[int]
     ) -> TwoDArray: ...
 
@@ -317,9 +320,9 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
         seed (Optional[seed], optional): Optional seed to control experiments. Defaults to None.
     """
 
-    sampler: SamplingOperator
-    crossover: CrossoverOperator
-    mutation: MutationOperator
+    sampler: SamplingLike
+    crossover: CrossoverLike
+    mutation: MutationLike
     fitness_fn: FitnessPopulationCallable
     num_vars: int
     num_objectives: int

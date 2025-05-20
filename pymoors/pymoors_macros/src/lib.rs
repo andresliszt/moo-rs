@@ -1,9 +1,7 @@
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::parse::{Parse, ParseStream, Result};
-use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, LitStr, Ident, Token};
-
+use syn::{Fields, Ident, ItemEnum, LitStr, Type, parse_macro_input};
 
 /// ----------------------------------------------------------------------
 ///                       Input Parsing and Helper Functions
@@ -51,7 +49,7 @@ fn generate_py_operator_mutation(inner: Ident) -> proc_macro2::TokenStream {
     // Define the mutation-specific method.
     let operator_method = quote! {
         #[pyo3(signature = (population, seed=None))]
-        pub fn mutate<'py>(
+        pub fn operate<'py>(
             &self,
             py: pyo3::prelude::Python<'py>,
             population: numpy::PyReadonlyArrayDyn<'py, f64>,
@@ -96,7 +94,7 @@ fn generate_py_operator_crossover(inner: Ident) -> proc_macro2::TokenStream {
     // Define the crossover-specific method.
     let operator_method = quote! {
         #[pyo3(signature = (parents_a, parents_b, seed=None))]
-        pub fn crossover<'py>(
+        pub fn operate<'py>(
             &self,
             py: pyo3::prelude::Python<'py>,
             parents_a: numpy::PyReadonlyArrayDyn<'py, f64>,
@@ -145,7 +143,7 @@ fn generate_py_operator_sampling(inner: Ident) -> proc_macro2::TokenStream {
     // Define the sampling-specific method.
     let operator_method = quote! {
         #[pyo3(signature = (population_size, num_vars, seed=None))]
-        pub fn sample<'py>(
+        pub fn operate<'py>(
             &self,
             py: pyo3::prelude::Python<'py>,
             population_size: usize,
@@ -229,450 +227,526 @@ pub fn py_operator_duplicates(input: TokenStream) -> TokenStream {
 }
 
 /// ----------------------------------------------------------------------
-///           Parser for a Comma-Separated List of Operators
-/// ----------------------------------------------------------------------
-///
-/// This parser is used to parse a comma-separated list of operator identifiers.
-struct OpsList {
-    ops: Punctuated<Ident, Token![,]>,
-}
-
-impl Parse for OpsList {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let ops = Punctuated::<Ident, Token![,]>::parse_terminated(input)?;
-        Ok(OpsList { ops })
-    }
-}
-
-/// ----------------------------------------------------------------------
 ///         Registration Macro for Mutation Operators (Enum Dispatch)
 /// ----------------------------------------------------------------------
 ///
-/// This macro registers a list of mutation operators and does the following:
-/// 1. Invokes the individual `py_operator_mutation!` macro for each operator.
-/// 2. Generates an enum named `MutationOperatorDispatcher` with variants for each operator.
-/// 3. Generates `From<T>` implementations so that each concrete operator converts automatically.
-/// 4. Implements the trait `MutationOperator` for the enum by delegating method calls,
-///    as well as `GeneticOperator` by returning the name.
-/// 5. Generates the `unwrap_mutation_operator` function that extracts the operator from a PyObject
-///    and converts it to the enum.
+/// Applies to an enum whose variants are all tuple‐variants `Variant(Type)`.
+/// For each variant this attribute will:
+/// - Generate `impl From<Type> for MutationOperatorDispatcher`
+/// - Implement `moors::operators::MutationOperator` by delegating `mutate(...)`
+/// - Implement `moors::operators::GeneticOperator` by delegating `name()`
+/// - Emit `py_operator_mutation!(Type)` for each Rust‐native operator
+/// - Add a constructor
+///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
+///   that extracts the correct variant from a Python object.
 ///
-/// # Example
-///
-/// ```rust
-/// register_py_operators_mutation!(BitFlipMutation, ScrambleMutation);
-/// ```
-#[proc_macro]
-pub fn register_py_operators_mutation(input: TokenStream) -> TokenStream {
-    let OpsList { ops } = parse_macro_input!(input as OpsList);
+/// Note: this macro will also honor a variant named
+/// `CustomPyMutationOperatorWrapper(CustomPyMutationOperatorWrapper)`,
+/// but will skip emitting `py_operator_mutation!` for it.
+#[proc_macro_attribute]
+pub fn register_py_operators_mutation(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the enum the user wrote
+    let input_enum: ItemEnum = parse_macro_input!(item as ItemEnum);
+    let enum_ident = &input_enum.ident;
 
-    // Generate enum variants for each operator.
-    let enum_variants = ops.iter().map(|op| {
-        quote! {
-            #op(#op)
-        }
-    });
-    let enum_def = quote! {
-        #[derive(Debug, Clone)]
-        pub enum MutationOperatorDispatcher {
-            #(#enum_variants),*
-        }
-    };
+    // Collect every variant, assuming each is `Variant(Type)`
+    let ops: Vec<(proc_macro2::Ident, Type)> = input_enum
+        .variants
+        .iter()
+        .map(|v| {
+            let ty = match &v.fields {
+                Fields::Unnamed(f) if f.unnamed.len() == 1 => f.unnamed[0].ty.clone(),
+                other => panic!("Expected tuple‐variant with one field, got {:?}", other),
+            };
+            (v.ident.clone(), ty)
+        })
+        .collect();
 
-    // Generate From implementations for each concrete type.
-    let from_impls = ops.iter().map(|op| {
+    // impl From<Type> for each variant
+    let from_impls = ops.iter().map(|(var, ty)| {
         quote! {
-            impl From<#op> for MutationOperatorDispatcher {
-                fn from(operator: #op) -> Self {
-                    MutationOperatorDispatcher::#op(operator)
-                }
+            impl From<#ty> for #enum_ident {
+                fn from(op: #ty) -> Self { #enum_ident::#var(op) }
             }
         }
     });
 
-    // Generate implementation for MutationOperator trait.
-    let mutate_arms = ops.iter().map(|op| {
+    // MutationOperator impl
+    let mutate_match = ops.iter().map(|(var, _)| {
         quote! {
-            MutationOperatorDispatcher::#op(inner) => inner.mutate(individual, rng),
+            #enum_ident::#var(inner) => inner.mutate(individual, rng),
         }
     });
+    let operate_match = ops.iter().map(|(var, _)| {
+        quote! {
+            #enum_ident::#var(inner) => inner.operate(population, mutation_rate, rng),
+        }
+    });
+
     let mutation_impl = quote! {
-        impl moors::operators::MutationOperator for MutationOperatorDispatcher {
+        impl moors::operators::MutationOperator for #enum_ident {
             fn mutate<'a>(
                 &self,
                 individual: moors::genetic::IndividualGenesMut<'a>,
                 rng: &mut impl moors::random::RandomGenerator,
             ) {
-                match self {
-                    #(#mutate_arms)*
-                }
+                match self { #(#mutate_match)* }
+            }
+            fn operate(
+                &self,
+                population: &mut moors::genetic::PopulationGenes,
+                mutation_rate: f64,
+                rng: &mut impl moors::random::RandomGenerator,
+            ) {
+                match self { #(#operate_match)* }
             }
         }
     };
 
-    // Generate implementation for GeneticOperator trait.
-    let name_arms = ops.iter().map(|op| {
+    // GeneticOperator impl
+    let name_match = ops.iter().map(|(var, _)| {
         quote! {
-            MutationOperatorDispatcher::#op(inner) => inner.name(),
+            #enum_ident::#var(inner) => inner.name(),
         }
     });
     let genetic_impl = quote! {
-        impl moors::operators::GeneticOperator for MutationOperatorDispatcher {
+        impl moors::operators::GeneticOperator for #enum_ident {
             fn name(&self) -> String {
-                match self {
-                    #(#name_arms)*
-                }
+                match self { #(#name_match)* }
             }
         }
     };
 
-    // Generate calls to each individual mutation operator macro.
-    let macro_calls = {
-        let calls = ops.iter().map(|op| {
-            quote! {
-                pymoors_macros::py_operator_mutation!(#op);
-            }
-        });
-        quote! { #(#calls)* }
-    };
-
-    // Generate extraction arms for each operator.
-    let extract_arms = ops.iter().map(|op| {
-        let op_str = op.to_string();
-        let wrapper = Ident::new(&format!("Py{}", op_str), op.span());
-        quote! {
-            if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
-                return Ok(MutationOperatorDispatcher::from(extracted.inner));
-            }
+    // Emit py_operator_mutation!(Type) for each operator except the custom wrapper
+    let macro_calls = ops.iter().filter_map(|(var, ty)| {
+        if var == "CustomPyMutationOperatorWrapper" {
+            None
+        } else {
+            Some(quote! { pymoors_macros::py_operator_mutation!(#ty); })
+        }
+    });
+    // from_python_operator constructor: try the PyMutation wrappers first…
+    let mut extract_arms = Vec::new();
+    for (var, _ty) in &ops {
+        if var != "CustomPyMutationOperatorWrapper" {
+            let wrapper = format_ident!("Py{}", var);
+            extract_arms.push(quote! {
+                if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
+                    return Ok(#enum_ident::from(extracted.inner));
+                }
+            });
+        }
+    }
+    // …and only if none of those matched, try the custom wrapper itself
+    extract_arms.push(quote! {
+        if let Ok(extracted) = py_obj.extract::<CustomPyMutationOperatorWrapper>(py) {
+            return Ok(#enum_ident::from(extracted));
         }
     });
 
-    let unwrap_fn = quote! {
-        pub fn unwrap_mutation_operator(py_obj: pyo3::PyObject) -> pyo3::PyResult<MutationOperatorDispatcher> {
-            pyo3::Python::with_gil(|py| {
-                #(#extract_arms)*
-                Err(pyo3::exceptions::PyValueError::new_err("Could not extract a valid mutation operator"))
-            })
+    let ctor_impl = quote! {
+        impl #enum_ident {
+            /// Convert a Python‐side operator into this dispatcher.
+            pub fn from_python_operator(
+                py_obj: pyo3::PyObject
+            ) -> pyo3::PyResult<Self> {
+                pyo3::Python::with_gil(|py| {
+                    #(#extract_arms)*
+                    Err(pyo3::exceptions::PyValueError::new_err(
+                        "Could not extract a valid mutation operator",
+                    ))
+                })
+            }
         }
     };
 
-    let expanded = quote! {
-        #enum_def
+    // Emit the enum plus all generated code
+    TokenStream::from(quote! {
+        #input_enum
         #(#from_impls)*
         #mutation_impl
         #genetic_impl
-        #macro_calls
-        #unwrap_fn
-    };
-
-    TokenStream::from(expanded)
+        #(#macro_calls)*
+        #ctor_impl
+    })
 }
 
 /// ----------------------------------------------------------------------
 ///         Registration Macro for Crossover Operators (Enum Dispatch)
 /// ----------------------------------------------------------------------
 ///
-/// Generates an enum named `CrossoverOperatorDispatcher` with From implementations,
-/// implements the traits `CrossoverOperator` and `GeneticOperator`, invokes the
-/// corresponding PyO3 wrappers, and creates an unwrap function.
-#[proc_macro]
-pub fn register_py_operators_crossover(input: TokenStream) -> TokenStream {
-    let OpsList { ops } = parse_macro_input!(input as OpsList);
+/// Applies to an enum whose variants are of the form `Variant(Type)`. For each
+/// variant this attribute will:
+/// - Generate `impl From<Type> for CrossoverEnumDispatcher`
+/// - Implement `moors::operators::CrossoverOperator` by delegating `crossover(...)`
+/// - Implement `moors::operators::GeneticOperator` by delegating `name()`
+/// - Emit a call to `py_operator_crossover!(Type)` so the Python wrapper is registered
+/// - Add an associated constructor:
+///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
+///   which extracts the correct variant from a `PyObject`.
+#[proc_macro_attribute]
+pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the enum the user provided
+    let input_enum: ItemEnum = parse_macro_input!(item as ItemEnum);
+    let enum_ident = &input_enum.ident;
 
-    let enum_variants = ops.iter().map(|op| {
-        quote! {
-            #op(#op)
-        }
-    });
-    let enum_def = quote! {
-        #[derive(Debug, Clone)]
-        pub enum CrossoverOperatorDispatcher {
-            #(#enum_variants),*
-        }
-    };
+    // Collect (VariantIdent, FieldType) for each tuple‐variant `Variant(Type)`
+    let ops: Vec<(proc_macro2::Ident, Type)> = input_enum
+        .variants
+        .iter()
+        .filter_map(|v| match &v.fields {
+            Fields::Unnamed(f) if f.unnamed.len() == 1 => {
+                Some((v.ident.clone(), f.unnamed[0].ty.clone()))
+            }
+            _ => None, // ignore unit or struct‐like variants
+        })
+        .collect();
 
-    let from_impls = ops.iter().map(|op| {
+    // impl From<T> for enum
+    let from_impls = ops.iter().map(|(var, ty)| {
         quote! {
-            impl From<#op> for CrossoverOperatorDispatcher {
-                fn from(operator: #op) -> Self {
-                    CrossoverOperatorDispatcher::#op(operator)
+            impl From<#ty> for #enum_ident {
+                fn from(op: #ty) -> Self {
+                    #enum_ident::#var(op)
                 }
             }
         }
     });
 
-    // Implement CrossoverOperator trait.
-    let crossover_arms = ops.iter().map(|op| {
+    // impl CrossoverOperator by delegating to each variant
+    let crossover_match = ops.iter().map(|(var, _)| {
         quote! {
-            CrossoverOperatorDispatcher::#op(inner) => inner.crossover(parent_a, parent_b, rng),
+            #enum_ident::#var(inner) => inner.crossover(parent_a, parent_b, rng),
+        }
+    });
+    let operate_match = ops.iter().map(|(var, _)| {
+        quote! {
+            #enum_ident::#var(inner) => inner.operate(parents_a, parents_b, crossover_rate, rng),
         }
     });
     let crossover_impl = quote! {
-        impl moors::operators::CrossoverOperator for CrossoverOperatorDispatcher {
+        impl moors::operators::CrossoverOperator for #enum_ident {
             fn crossover(
                 &self,
                 parent_a: &moors::genetic::IndividualGenes,
                 parent_b: &moors::genetic::IndividualGenes,
                 rng: &mut impl moors::random::RandomGenerator,
             ) -> (moors::genetic::IndividualGenes, moors::genetic::IndividualGenes) {
-                match self {
-                    #(#crossover_arms)*
-                }
+                match self { #(#crossover_match)* }
+            }
+            fn operate(
+                &self,
+                parents_a: &moors::genetic::PopulationGenes,
+                parents_b: &moors::genetic::PopulationGenes,
+                crossover_rate: f64,
+                rng: &mut impl moors::random::RandomGenerator,
+            ) -> moors::genetic::PopulationGenes {
+                match self { #(#operate_match)* }
             }
         }
     };
-
-    // Implement GeneticOperator trait.
-    let name_arms = ops.iter().map(|op| {
+    // impl GeneticOperator by forwarding .name()
+    let name_match = ops.iter().map(|(var, _)| {
         quote! {
-            CrossoverOperatorDispatcher::#op(inner) => inner.name(),
+            #enum_ident::#var(inner) => inner.name(),
         }
     });
     let genetic_impl = quote! {
-        impl moors::operators::GeneticOperator for CrossoverOperatorDispatcher {
+        impl moors::operators::GeneticOperator for #enum_ident {
             fn name(&self) -> String {
-                match self {
-                    #(#name_arms)*
-                }
+                match self { #(#name_match)* }
             }
         }
     };
 
-    let macro_calls = {
-        let calls = ops.iter().map(|op| {
-            quote! {
-                pymoors_macros::py_operator_crossover!(#op);
-            }
-        });
-        quote! { #(#calls)* }
-    };
-
-    let extract_arms = ops.iter().map(|op| {
-        let op_str = op.to_string();
-        let wrapper = Ident::new(&format!("Py{}", op_str), op.span());
-        quote! {
-            if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
-                return Ok(CrossoverOperatorDispatcher::from(extracted.inner));
-            }
+    // invoke py_operator_crossover!(Type) for each Rust operator type
+    let macro_calls = ops.iter().filter_map(|(var, ty)| {
+        if var == "CustomPyCrossoverOperatorWrapper" {
+            None
+        } else {
+            Some(quote! { pymoors_macros::py_operator_crossover!(#ty); })
         }
     });
-
-    let unwrap_fn = quote! {
-        pub fn unwrap_crossover_operator(py_obj: pyo3::PyObject) -> pyo3::PyResult<CrossoverOperatorDispatcher> {
-            pyo3::Python::with_gil(|py| {
-                #(#extract_arms)*
-                Err(pyo3::exceptions::PyValueError::new_err("Could not extract a valid crossover operator"))
-            })
+    // from_python_operator constructor: try the PyCrossover wrappers first…
+    let mut extract_arms = Vec::new();
+    for (var, _ty) in &ops {
+        if var != "CustomPyCrossoverOperatorWrapper" {
+            let wrapper = format_ident!("Py{}", var);
+            extract_arms.push(quote! {
+                if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
+                    return Ok(#enum_ident::from(extracted.inner));
+                }
+            });
+        }
+    }
+    // …and only if none of those matched, try the custom wrapper itself
+    extract_arms.push(quote! {
+        if let Ok(extracted) = py_obj.extract::<CustomPyCrossoverOperatorWrapper>(py) {
+            return Ok(#enum_ident::from(extracted));
+        }
+    });
+    let ctor_impl = quote! {
+        impl #enum_ident {
+            /// Convert a Python-side operator instance into this dispatcher.
+            pub fn from_python_operator(
+                py_obj: pyo3::PyObject
+            ) -> pyo3::PyResult<Self> {
+                pyo3::Python::with_gil(|py| {
+                    #(#extract_arms)*
+                    Err(pyo3::exceptions::PyValueError::new_err(
+                        "Could not extract a valid crossover operator",
+                    ))
+                })
+            }
         }
     };
 
-    let expanded = quote! {
-        #enum_def
+    // Emit: original enum + all generated glue
+    TokenStream::from(quote! {
+        #input_enum               // keep user enum unchanged
         #(#from_impls)*
         #crossover_impl
         #genetic_impl
-        #macro_calls
-        #unwrap_fn
-    };
-
-    TokenStream::from(expanded)
+        #(#macro_calls)*
+        #ctor_impl
+    })
 }
 
 /// ----------------------------------------------------------------------
 ///         Registration Macro for Sampling Operators (Enum Dispatch)
 /// ----------------------------------------------------------------------
 ///
-/// Generates an enum named `SamplingOperatorDispatcher` with From implementations,
-/// implements the traits `SamplingOperator` and `GeneticOperator`, invokes the
-/// corresponding PyO3 wrappers, and creates an unwrap function.
-#[proc_macro]
-pub fn register_py_operators_sampling(input: TokenStream) -> TokenStream {
-    let OpsList { ops } = parse_macro_input!(input as OpsList);
+/// Applies to an enum whose variants are of the form `Variant(Type)`. For each
+/// variant this attribute will:
+/// - Generate `impl From<Type> for SamplingOperatorDispatcher`
+/// - Implement `moors::operators::SamplingOperator` by delegating
+///   `sample_individual(num_vars, rng)`
+/// - Implement `moors::operators::GeneticOperator` by delegating `name()`
+/// - Emit a call to `py_operator_sampling!(Type)` so that the Python wrapper is registered
+/// - Add an associated constructor:
+///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
+///   which extracts the correct variant from a `PyObject`.
+#[proc_macro_attribute]
+pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the enum the user wrote.
+    let input_enum: ItemEnum = parse_macro_input!(item as ItemEnum);
+    let enum_ident = &input_enum.ident;
 
-    let enum_variants = ops.iter().map(|op| {
-        quote! {
-            #op(#op)
-        }
-    });
-    let enum_def = quote! {
-        #[derive(Debug, Clone)]
-        pub enum SamplingOperatorDispatcher {
-            #(#enum_variants),*
-        }
-    };
+    // Collect (VariantIdent, FieldType) for each tuple-variant `Variant(Type)`
+    let ops: Vec<(proc_macro2::Ident, Type)> = input_enum
+        .variants
+        .iter()
+        .filter_map(|v| match &v.fields {
+            Fields::Unnamed(f) if f.unnamed.len() == 1 => {
+                Some((v.ident.clone(), f.unnamed[0].ty.clone()))
+            }
+            _ => None, // skip unit or struct-like variants
+        })
+        .collect();
 
-    let from_impls = ops.iter().map(|op| {
+    // impl From<Type> for the enum
+    let from_impls = ops.iter().map(|(var, ty)| {
         quote! {
-            impl From<#op> for SamplingOperatorDispatcher {
-                fn from(operator: #op) -> Self {
-                    SamplingOperatorDispatcher::#op(operator)
+            impl From<#ty> for #enum_ident {
+                fn from(op: #ty) -> Self {
+                    #enum_ident::#var(op)
                 }
             }
         }
     });
 
-    // Implement SamplingOperator trait.
-    let sample_arms = ops.iter().map(|op| {
+    // impl SamplingOperator by delegating sample_individual(...)
+    let sample_match = ops.iter().map(|(var, _)| {
         quote! {
-            SamplingOperatorDispatcher::#op(inner) => inner.sample_individual(num_vars, rng),
+            #enum_ident::#var(inner) => inner.sample_individual(num_vars, rng),
         }
     });
+    let operate_match = ops.iter().map(|(var, _)| {
+        quote! {
+            #enum_ident::#var(inner) => inner.operate(population_size, num_vars, rng),
+        }
+    });
+
     let sampling_impl = quote! {
-        impl moors::operators::SamplingOperator for SamplingOperatorDispatcher {
-            fn sample_individual(&self, num_vars: usize, rng: &mut impl moors::random::RandomGenerator) -> moors::genetic::IndividualGenes {
-                match self {
-                    #(#sample_arms)*
-                }
+        impl moors::operators::SamplingOperator for #enum_ident {
+            fn sample_individual(
+                &self,
+                num_vars: usize,
+                rng: &mut impl moors::random::RandomGenerator
+            ) -> moors::genetic::IndividualGenes {
+                match self { #(#sample_match)* }
+            }
+            fn operate(
+                &self,
+                population_size: usize,
+                num_vars: usize,
+                rng: &mut impl moors::random::RandomGenerator
+            ) -> moors::genetic::PopulationGenes {
+                match self { #(#operate_match)* }
             }
         }
     };
 
-    // Implement GeneticOperator trait.
-    let name_arms = ops.iter().map(|op| {
+    // impl GeneticOperator by delegating name()
+    let name_match = ops.iter().map(|(var, _)| {
         quote! {
-            SamplingOperatorDispatcher::#op(inner) => inner.name(),
+            #enum_ident::#var(inner) => inner.name(),
         }
     });
     let genetic_impl = quote! {
-        impl moors::operators::GeneticOperator for SamplingOperatorDispatcher {
+        impl moors::operators::GeneticOperator for #enum_ident {
             fn name(&self) -> String {
-                match self {
-                    #(#name_arms)*
-                }
+                match self { #(#name_match)* }
             }
         }
     };
 
-    let macro_calls = {
-        let calls = ops.iter().map(|op| {
-            quote! {
-                pymoors_macros::py_operator_sampling!(#op);
-            }
-        });
-        quote! { #(#calls)* }
-    };
-
-    let extract_arms = ops.iter().map(|op| {
-        let op_str = op.to_string();
-        let wrapper = Ident::new(&format!("Py{}", op_str), op.span());
-        quote! {
-            if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
-                return Ok(SamplingOperatorDispatcher::from(extracted.inner));
-            }
+    // invoke py_operator_sampling!(Type) for each Rust operator type
+    let macro_calls = ops.iter().filter_map(|(var, ty)| {
+        if var == "CustomPySamplingOperatorWrapper" {
+            None
+        } else {
+            Some(quote! { pymoors_macros::py_operator_sampling!(#ty); })
         }
     });
-
-    let unwrap_fn = quote! {
-        pub fn unwrap_sampling_operator(py_obj: pyo3::PyObject) -> pyo3::PyResult<SamplingOperatorDispatcher> {
-            pyo3::Python::with_gil(|py| {
-                #(#extract_arms)*
-                Err(pyo3::exceptions::PyValueError::new_err("Could not extract a valid sampling operator"))
-            })
+    // from_python_operator constructor: try the PySampling wrappers first…
+    let mut extract_arms = Vec::new();
+    for (var, _ty) in &ops {
+        if var != "CustomPySamplingOperatorWrapper" {
+            let wrapper = format_ident!("Py{}", var);
+            extract_arms.push(quote! {
+                if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
+                    return Ok(#enum_ident::from(extracted.inner));
+                }
+            });
+        }
+    }
+    // …and only if none of those matched, try the custom wrapper itself
+    extract_arms.push(quote! {
+        if let Ok(extracted) = py_obj.extract::<CustomPySamplingOperatorWrapper>(py) {
+            return Ok(#enum_ident::from(extracted));
+        }
+    });
+    let ctor_impl = quote! {
+        impl #enum_ident {
+            /// Convert a Python-side sampling operator into this dispatcher.
+            pub fn from_python_operator(
+                py_obj: pyo3::PyObject
+            ) -> pyo3::PyResult<Self> {
+                pyo3::Python::with_gil(|py| {
+                    #(#extract_arms)*
+                    Err(pyo3::exceptions::PyValueError::new_err(
+                        "Could not extract a valid sampling operator",
+                    ))
+                })
+            }
         }
     };
 
-    let expanded = quote! {
-        #enum_def
+    // Emit: original enum plus all generated glue
+    TokenStream::from(quote! {
+        #input_enum
         #(#from_impls)*
         #sampling_impl
         #genetic_impl
-        #macro_calls
-        #unwrap_fn
-    };
-
-    TokenStream::from(expanded)
+        #(#macro_calls)*
+        #ctor_impl
+    })
 }
 
 /// ----------------------------------------------------------------------
 ///         Registration Macro for Duplicates Operators (Enum Dispatch)
 /// ----------------------------------------------------------------------
 ///
-/// Generates an enum named `DuplicatesCleanerDispatcher` with From implementations,
-/// implements the trait `PopulationCleaner`, invokes the corresponding PyO3 wrappers,
-/// and creates an unwrap function.
-#[proc_macro]
-pub fn register_py_operators_duplicates(input: TokenStream) -> TokenStream {
-    let OpsList { ops } = parse_macro_input!(input as OpsList);
+/// Applies to an enum named `DuplicatesCleanerDispatcher` whose variants
+/// are tuple-style `Variant(Type)`. This attribute will generate
+/// `impl From<Type>` conversions, implement `moors::duplicates::PopulationCleaner`
+/// by delegating `remove(...)`, invoke `py_operator_duplicates!(Type)` for each
+/// operator type, and add a `from_python_operator(py_obj)` constructor that
+/// extracts the correct variant from a Python object.
+#[proc_macro_attribute]
+pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the user’s enum
+    let input_enum: ItemEnum = parse_macro_input!(item as ItemEnum);
+    let enum_ident = &input_enum.ident;
 
-    let enum_variants = ops.iter().map(|op| {
-        quote! {
-            #op(#op)
-        }
-    });
-    let enum_def = quote! {
-        #[derive(Debug, Clone)]
-        pub enum DuplicatesCleanerDispatcher {
-            #(#enum_variants),*
-        }
-    };
+    // Gather (variant, type) pairs for each tuple variant
+    let ops: Vec<(proc_macro2::Ident, Type)> = input_enum
+        .variants
+        .iter()
+        .filter_map(|v| match &v.fields {
+            Fields::Unnamed(f) if f.unnamed.len() == 1 => {
+                Some((v.ident.clone(), f.unnamed[0].ty.clone()))
+            }
+            _ => None,
+        })
+        .collect();
 
-    let from_impls = ops.iter().map(|op| {
+    // impl From<Type> for the enum
+    let from_impls = ops.iter().map(|(var, ty)| {
         quote! {
-            impl From<#op> for DuplicatesCleanerDispatcher {
-                fn from(operator: #op) -> Self {
-                    DuplicatesCleanerDispatcher::#op(operator)
-                }
+            impl From<#ty> for #enum_ident {
+                fn from(op: #ty) -> Self { #enum_ident::#var(op) }
             }
         }
     });
 
-    // Implement PopulationCleaner trait.
-    let remove_arms = ops.iter().map(|op| {
+    // Implement PopulationCleaner by delegating remove(...)
+    let remove_arms = ops.iter().map(|(var, _)| {
         quote! {
-            DuplicatesCleanerDispatcher::#op(inner) => inner.remove(population, reference),
+            #enum_ident::#var(inner) => inner.remove(population, reference),
         }
     });
     let cleaner_impl = quote! {
-        impl moors::duplicates::PopulationCleaner for DuplicatesCleanerDispatcher {
+        impl moors::duplicates::PopulationCleaner for #enum_ident {
             fn remove(
                 &self,
                 population: &moors::genetic::PopulationGenes,
                 reference: Option<&moors::genetic::PopulationGenes>,
             ) -> moors::genetic::PopulationGenes {
-                match self {
-                    #(#remove_arms)*
-                }
+                match self { #(#remove_arms)* }
             }
         }
     };
 
-    let macro_calls = {
-        let calls = ops.iter().map(|op| {
-            quote! {
-                pymoors_macros::py_operator_duplicates!(#op);
-            }
-        });
-        quote! { #(#calls)* }
-    };
+    // Emit py_operator_duplicates!(Type) for each operator
+    let macro_calls = ops.iter().map(|(_, ty)| {
+        quote! { pymoors_macros::py_operator_duplicates!(#ty); }
+    });
 
-    let extract_arms = ops.iter().map(|op| {
-        let op_str = op.to_string();
-        let wrapper = Ident::new(&format!("Py{}", op_str), op.span());
+    // Constructor to extract from PyObject
+    let extract_arms = ops.iter().map(|(var, _)| {
+        let wrapper = format_ident!("Py{}", var);
         quote! {
             if let Ok(extracted) = py_obj.extract::<#wrapper>(py) {
-                return Ok(DuplicatesCleanerDispatcher::from(extracted.inner));
+                return Ok(#enum_ident::from(extracted.inner));
             }
         }
     });
-
-    let unwrap_fn = quote! {
-        pub fn unwrap_duplicates_operator(py_obj: pyo3::PyObject) -> pyo3::PyResult<DuplicatesCleanerDispatcher> {
-            pyo3::Python::with_gil(|py| {
-                #(#extract_arms)*
-                Err(pyo3::exceptions::PyValueError::new_err("Could not extract a valid duplicates operator"))
-            })
+    let ctor_impl = quote! {
+        impl #enum_ident {
+            /// Convert a Python-side duplicates operator into this dispatcher.
+            pub fn from_python_operator(
+                py_obj: pyo3::PyObject
+            ) -> pyo3::PyResult<Self> {
+                pyo3::Python::with_gil(|py| {
+                    #(#extract_arms)*
+                    Err(pyo3::exceptions::PyValueError::new_err(
+                        "Could not extract a valid duplicates operator",
+                    ))
+                })
+            }
         }
     };
 
-    let expanded = quote! {
-        #enum_def
+    // Emit the original enum plus all generated code
+    TokenStream::from(quote! {
+        #input_enum
         #(#from_impls)*
         #cleaner_impl
-        #macro_calls
-        #unwrap_fn
-    };
-
-    TokenStream::from(expanded)
+        #(#macro_calls)*
+        #ctor_impl
+    })
 }
 
 /// Implementation for the `py_algorithm` macro.

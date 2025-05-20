@@ -34,7 +34,7 @@ lock:   ## Rebuild Python lockfile
 
 build-dev:  ## Build & install in dev mode
 	@echo "[pymoors] dev build" \
-	  && uv sync --group dev \
+	  && uv sync --group all \
 	  && uv run maturin develop --uv
 
 build-release:  ## Build & install in release mode

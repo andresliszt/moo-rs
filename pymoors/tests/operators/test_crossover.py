@@ -47,8 +47,8 @@ def test_crossover_exposed_methods(operator_class, kwargs):
         assert getattr(op, k) == v
 
     # Call the crossover method with a fixed seed.
-    offspring = op.crossover(parents_a, parents_b, seed=42)
-    offspring_same_seed = op.crossover(parents_a, parents_b, seed=42)
+    offspring = op.operate(parents_a, parents_b, seed=42)
+    offspring_same_seed = op.operate(parents_a, parents_b, seed=42)
 
     np.testing.assert_array_equal(offspring, offspring_same_seed)
 
@@ -56,7 +56,7 @@ def test_crossover_exposed_methods(operator_class, kwargs):
     assert offspring.shape == (2 * population_size, num_vars)
 
     with pytest.raises(ValueError, match="parent_a numpy array must be 2D."):
-        op.crossover(parents_a[0], parents_b[0], seed=42)
+        op.operate(parents_a[0], parents_b[0], seed=42)
 
     with pytest.raises(ValueError, match="parent_b numpy array must be 2D."):
-        op.crossover(parents_a, parents_b[0], seed=42)
+        op.operate(parents_a, parents_b[0], seed=42)

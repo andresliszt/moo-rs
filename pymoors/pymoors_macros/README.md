@@ -26,7 +26,13 @@ default = []
 
 ## Mutation / Crossover / Sampling / Duplicates
 
-### Register operators in bulk
+From **v0.2** onward you register operators by declaring a dispatcher enum and
+annotating it with the corresponding `register_py_operators_*` macro.
+For each variant (except the *custom* wrapper) the macro
+
+1. Generates a `Py*` wrapper exposed to Python (e.g. `PyBitFlipMutation`).
+2. Implements `from_python_operator(obj: PyObject) -> PyResult<Self>` that
+   maps a Python instance back to the correct Rust variant.
 
 ```rust
 use moors::operators::{MutationOperator, CrossoverOperator, SamplingOperator};
@@ -38,33 +44,58 @@ use moors::operators::crossover::{OrderCrossover, SimulatedBinaryCrossover, /*�
 use moors::operators::sampling::{RandomSamplingFloat, PermutationSampling, /*…*/};
 use moors::duplicates::{ExactDuplicatesCleaner, CloseDuplicatesCleaner};
 
-// This expands to:
-//  - PyBitFlipMutation, PyScrambleMutation, … structs
-//  - impls of `.mutate()`, `.crossover()`, `.sample()`, `.remove_duplicates()`
-//  - Dispatcher enums + `unwrap_*` helpers
-pymoors_macros::register_py_operators_mutation!(
-    BitFlipMutation,
-    ScrambleMutation,
-    /* … */
-);
+use pymoors::custom_py_operators::{CustomPyMutationOperatorWrapper, CustomPyCrossoverOperatorWrapper, /*…*/};
 
-pymoors_macros::register_py_operators_crossover!(
-    OrderCrossover,
-    SimulatedBinaryCrossover,
+#[derive(Debug)]
+#[register_py_operators_mutation]
+pub enum MutationOperatorDispatcher {
+    BitFlipMutation(BitFlipMutation),
+    ScrambleMutation(ScrambleMutation),
     /* … */
-);
+    CustomPyMutationOperatorWrapper(CustomPyMutationOperatorWrapper),
+}
 
-pymoors_macros::register_py_operators_sampling!(
-    RandomSamplingFloat,
-    PermutationSampling,
+#[derive(Debug)]
+#[register_py_operators_crossover]
+pub enum CrossoverOperatorDispatcher {
+    OrderCrossover(OrderCrossover),
+    SimulatedBinaryCrossover(SimulatedBinaryCrossover),
     /* … */
-);
+    CustomPyCrossoverOperatorWrapper(CustomPyCrossoverOperatorWrapper),
+}
 
-pymoors_macros::register_py_operators_duplicates!(
-    ExactDuplicatesCleaner,
-    CloseDuplicatesCleaner
-);
+#[derive(Debug)]
+#[register_py_operators_sampling]
+pub enum SamplingOperatorDispatcher {
+    RandomSamplingFloat(RandomSamplingFloat),
+    PermutationSampling(PermutationSampling),
+    /* … */
+    CustomPySamplingOperatorWrapper(CustomPySamplingOperatorWrapper),
+}
+
+#[derive(Debug)]
+#[register_py_operators_duplicates]
+pub enum DuplicatesCleanerDispatcher {
+    ExactDuplicatesCleaner(ExactDuplicatesCleaner),
+    CloseDuplicatesCleaner(CloseDuplicatesCleaner),
+    /* … */
+    CustomPyDuplicatesOperatorWrapper(CustomPyDuplicatesOperatorWrapper),
+}
 ```
+
+The registration macros also generate:
+
+```rust
+/// Example for mutation:
+#[derive(Clone, Debug)]
+pub enum MutationOperatorDispatcher { /* … */ }
+
+pub fn unwrap_mutation_operator(
+    obj: pyo3::PyObject
+) -> pyo3::PyResult<MutationOperatorDispatcher> { /* … */ }
+```
+
+We use these in the algorithm bindings to convert a `PyObject` into the Rust enum.
 
 **Note:**
 Because **moors** is a pure‑Rust crate, we **cannot** use a `#[proc_macro_attribute]` on its types to extract constructors or fields.
