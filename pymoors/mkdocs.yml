@@ -60,8 +60,10 @@ extra_css:
 nav:
   - 🏠 Home: index.md
   - 🚀 Getting Started:
-       - pymoors: getting_started_pymoors.md
-       - moors: getting_started_moors.md
+       - pymoors:
+          - Installation: getting_started_pymoors/installation.md
+          - Knapsack Problem: getting_started_pymoors/knapsack.ipynb
+          - Small Real Valued Problem: getting_started_pymoors/real_valued.ipynb
   - 💻 Development: development.md
   - 📖 User Guide Pymoors:
       - Fitness and Constraints: user_guide/fitness_and_constraints.md
@@ -74,6 +76,7 @@ nav:
         - NSGA-III: user_guide/algorithms/nsga3.ipynb
         - AGE-MOEA: user_guide/algorithms/agemoea.ipynb
         - REVEA: user_guide/algorithms/revea.ipynb
+        - SPEA-II: user_guide/algorithms/spea2.ipynb
 
 plugins:
     - mkdocs-jupyter
