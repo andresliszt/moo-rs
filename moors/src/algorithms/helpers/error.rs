@@ -1,89 +1,32 @@
-use std::{error::Error, fmt};
+use thiserror::Error;
 
 use crate::evaluator::EvaluatorError;
-use crate::operators::EvolveError;
+use crate::operators::evolve::EvolveError;
 
 /// Errors that can occur during initialization of the population.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum InitializationError {
     /// Error from the evaluator.
-    Evaluator(EvaluatorError),
+    #[error("Error during evaluation at initialization: {0}")]
+    Evaluator(#[from] EvaluatorError),
     /// Fitness array length does not match number of objectives.
+    #[error("Invalid fitness setup: {0}")]
     InvalidFitness(String),
-    /// Constraints array length mismatch or unexpected absence.
+    #[error("Invalid constraints setup: {0}")]
     InvalidConstraints(String),
-    /// Trying to access to algorithm attributes set after initialization
+    /// Constraints array length mismatch or unexpected absence.
+    #[error("Algorithm is not initialized yet: {0}")]
     NotInitializated(String),
 }
 
-impl fmt::Display for InitializationError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            InitializationError::Evaluator(e) => {
-                write!(f, "Error during evaluation in initialization: {}", e)
-            }
-            InitializationError::InvalidFitness(msg) => write!(f, "Invalid fitness setup: {}", msg),
-            InitializationError::InvalidConstraints(msg) => {
-                write!(f, "Invalid constraints setup: {}", msg)
-            }
-            InitializationError::NotInitializated(msg) => {
-                write!(f, "Algorithm is not initialized yet: {}", msg)
-            }
-        }
-    }
-}
-
-impl From<EvaluatorError> for InitializationError {
-    fn from(e: EvaluatorError) -> Self {
-        InitializationError::Evaluator(e)
-    }
-}
-
-impl Error for InitializationError {}
-
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum MultiObjectiveAlgorithmError {
-    Evolve(EvolveError),
-    Evaluator(EvaluatorError),
+    #[error("Error during evolution: {0}")]
+    Evolve(#[from] EvolveError),
+    #[error("Error during evaluation: {0}")]
+    Evaluator(#[from] EvaluatorError),
+    #[error("Invalid parameter: {0}")]
     InvalidParameter(String),
-    Initialization(InitializationError),
+    #[error("Error during onitialization: {0}")]
+    Initialization(#[from] InitializationError),
 }
-
-impl fmt::Display for MultiObjectiveAlgorithmError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MultiObjectiveAlgorithmError::Evolve(msg) => {
-                write!(f, "Error during evolution: {}", msg)
-            }
-            MultiObjectiveAlgorithmError::Evaluator(msg) => {
-                write!(f, "Error during evaluation: {}", msg)
-            }
-            MultiObjectiveAlgorithmError::InvalidParameter(msg) => {
-                write!(f, "Invalid parameter: {}", msg)
-            }
-            MultiObjectiveAlgorithmError::Initialization(msg) => {
-                write!(f, "Error during initialization: {}", msg)
-            }
-        }
-    }
-}
-
-impl From<EvolveError> for MultiObjectiveAlgorithmError {
-    fn from(e: EvolveError) -> Self {
-        MultiObjectiveAlgorithmError::Evolve(e)
-    }
-}
-
-impl From<EvaluatorError> for MultiObjectiveAlgorithmError {
-    fn from(e: EvaluatorError) -> Self {
-        MultiObjectiveAlgorithmError::Evaluator(e)
-    }
-}
-
-impl From<InitializationError> for MultiObjectiveAlgorithmError {
-    fn from(e: InitializationError) -> Self {
-        MultiObjectiveAlgorithmError::Initialization(e)
-    }
-}
-
-impl Error for MultiObjectiveAlgorithmError {}

@@ -783,6 +783,7 @@ dependencies = [
  "rand_distr 0.5.1",
  "rayon",
  "rstest",
+ "thiserror 2.0.12",
 ]
 
 [[package]]

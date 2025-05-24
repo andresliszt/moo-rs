@@ -169,7 +169,7 @@ fn test_no_feasible_in_initialization() {
             let msg = inner.to_string();
             assert_eq!(
                 msg,
-                "Error during evaluation in initialization: No feasible individuals found in the population.",
+                "Error during evaluation at initialization: No feasible individuals found in the population.",
             );
         }
         other => panic!("Incorrect error raised: {:?}", other),
