@@ -337,11 +337,9 @@ where
                         );
                     }
                 }
-                Err(MultiObjectiveAlgorithmError::Evolve(EvolveError::EmptyMatingResult {
-                    message,
-                    ..
-                })) => {
-                    println!("Warning: {}. Terminating the algorithm early.", message);
+                Err(MultiObjectiveAlgorithmError::Evolve(err @ EvolveError::EmptyMatingResult)) => {
+                    // `err` implementa Display → produce el mensaje
+                    println!("Warning: {}. Terminating the algorithm early.", err);
                     break;
                 }
                 Err(e) => return Err(e),

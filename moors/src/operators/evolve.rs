@@ -1,5 +1,6 @@
-use std::fmt;
 use std::fmt::Debug;
+
+use thiserror::Error;
 
 use crate::{
     duplicates::PopulationCleaner,
@@ -26,31 +27,10 @@ where
     upper_bound: Option<f64>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Error)]
 pub enum EvolveError {
-    EmptyMatingResult {
-        message: String,
-        current_offspring_count: usize,
-        required_offsprings: usize,
-    },
-}
-
-impl fmt::Display for EvolveError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            EvolveError::EmptyMatingResult {
-                message,
-                current_offspring_count,
-                required_offsprings,
-            } => {
-                write!(
-                    f,
-                    "{} (generated offsprings: {}, required: {})",
-                    message, current_offspring_count, required_offsprings
-                )
-            }
-        }
-    }
+    #[error("No offsprings were generated in the mating process")]
+    EmptyMatingResult,
 }
 
 impl<Sel, Cross, Mut, DC> Evolve<Sel, Cross, Mut, DC>
@@ -181,11 +161,7 @@ where
         }
 
         if all_offsprings.is_empty() {
-            return Err(EvolveError::EmptyMatingResult {
-                message: "No offspring were generated.".to_string(),
-                current_offspring_count: 0,
-                required_offsprings: num_offsprings,
-            });
+            return Err(EvolveError::EmptyMatingResult);
         }
 
         // Convert Vec<Vec<f64>> into a single Array2.
