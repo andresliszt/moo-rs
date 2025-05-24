@@ -1,22 +1,28 @@
-use faer::linalg::solvers::Solve;
-use faer::prelude::*;
+use faer::{linalg::solvers::Solve, prelude::*};
 use faer_ext::{IntoFaer, IntoNdarray};
 use ndarray::{Array1, Array2, ArrayView1};
 
-use crate::genetic::PopulationFitness;
-use crate::helpers::extreme_points::get_nadir;
+use crate::{
+    genetic::PopulationFitness, helpers::extreme_points::get_nadir, operators::error::SurvivalError,
+};
 
 pub trait HyperPlaneNormalization {
     /// This corresponds to the Z_max defined in the NSGA3 - AGEMOEA referenced papers
-    fn compute_extreme_points(&self, population_fitness: &PopulationFitness) -> Array2<f64>;
+    fn compute_extreme_points(
+        &self,
+        population_fitness: &PopulationFitness,
+    ) -> Result<Array2<f64>, SurvivalError>;
 
     /// Computes the intercepts vector `a` by solving the linear system:
     /// Z_max * b = 1, where 1 is a vector of ones.
     /// then the intercepts in the objective axis are given by a = 1/b
-    fn compute_hyperplane_intercepts(&self, population_fitness: &PopulationFitness) -> Array1<f64> {
+    fn compute_hyperplane_intercepts(
+        &self,
+        population_fitness: &PopulationFitness,
+    ) -> Result<Array1<f64>, SurvivalError> {
         let m = population_fitness.ncols();
         // Compute Z_max
-        let z_max = self.compute_extreme_points(&population_fitness);
+        let z_max = self.compute_extreme_points(&population_fitness)?;
         // We have to use faer  solver --- We don't use ndarray-linalg due that is not maintained
         let z_max_faer = z_max.view().into_faer();
 
@@ -25,13 +31,12 @@ pub trait HyperPlaneNormalization {
         let plu = z_max_faer.partial_piv_lu();
         let solution = plu.solve(&ones);
         let solution_ndarray = solution.as_ref().into_ndarray();
-        // this step is done because faer responds as two array [[...], [...], ..., [...]]
-        let solution_ndarray: ArrayView1<f64> = solution_ndarray
-            .into_shape_with_order(solution_ndarray.len())
-            .unwrap();
+        // this step is done because faer responds as 2D array [[...], [...], ..., [...]]
+        let solution_ndarray: ArrayView1<f64> =
+            solution_ndarray.into_shape_with_order(solution_ndarray.len())?;
         if solution_ndarray.iter().any(|&x| !x.is_finite() || x <= 0.0) {
             // this is the case for singullar matrices
-            get_nadir(&population_fitness)
+            Ok(get_nadir(&population_fitness))
         } else {
             // Calculate intercepts as 1 / a.
             let intercept = solution_ndarray.mapv(|val| 1.0 / val);
@@ -43,7 +48,7 @@ pub trait HyperPlaneNormalization {
                 .zip(fallback.iter())
                 .map(|(&calc, &fb)| if calc < fb { fb } else { calc })
                 .collect();
-            Array1::from(combined)
+            Ok(Array1::from(combined))
         }
     }
 }
@@ -57,11 +62,15 @@ mod tests {
     struct TestHyperPlaneNormalizerNonSingular;
 
     impl HyperPlaneNormalization for TestHyperPlaneNormalizerNonSingular {
-        fn compute_extreme_points(&self, _population_fitness: &PopulationFitness) -> Array2<f64> {
+        fn compute_extreme_points(
+            &self,
+            _population_fitness: &PopulationFitness,
+        ) -> Result<Array2<f64>, SurvivalError> {
             // Return a non-singular (diagonal) matrix:
             // [ [2.0, 0.0],
             //   [0.0, 0.5] ]
-            Array2::from_shape_vec((2, 2), vec![2.0, 0.0, 0.0, 0.5]).unwrap()
+            let ep = Array2::from_shape_vec((2, 2), vec![2.0, 0.0, 0.0, 0.5])?;
+            Ok(ep)
         }
     }
 
@@ -69,16 +78,20 @@ mod tests {
     struct TestHyperPlaneNormalizerSingular;
 
     impl HyperPlaneNormalization for TestHyperPlaneNormalizerSingular {
-        fn compute_extreme_points(&self, _population_fitness: &PopulationFitness) -> Array2<f64> {
+        fn compute_extreme_points(
+            &self,
+            _population_fitness: &PopulationFitness,
+        ) -> Result<Array2<f64>, SurvivalError> {
             // Return a singular matrix:
             // [ [1.0, 2.0],
             //   [2.0, 4.0] ]
-            Array2::from_shape_vec((2, 2), vec![1.0, 2.0, 2.0, 4.0]).unwrap()
+            let ep = Array2::from_shape_vec((2, 2), vec![1.0, 2.0, 2.0, 4.0])?;
+            Ok(ep)
         }
     }
 
     #[test]
-    fn test_compute_hyperplane_intercepts_non_singular() {
+    fn test_compute_hyperplane_intercepts_non_singular() -> Result<(), SurvivalError> {
         // Non-singular case:
         // Define the population fitness as:
         // pop_fit = [ [0.2, 0.3],
@@ -94,7 +107,7 @@ mod tests {
         let pop_fit = array![[0.2, 0.3], [1.0, 1.0], [0.9, 0.8]];
 
         let normalizer = TestHyperPlaneNormalizerNonSingular;
-        let result = normalizer.compute_hyperplane_intercepts(&pop_fit);
+        let result = normalizer.compute_hyperplane_intercepts(&pop_fit)?;
         let expected = array![2.0, 1.0];
 
         assert_eq!(
@@ -102,10 +115,11 @@ mod tests {
             "Non-singular test failed: expected {:?}, got {:?}",
             expected, result
         );
+        Ok(())
     }
 
     #[test]
-    fn test_compute_hyperplane_intercepts_singular() {
+    fn test_compute_hyperplane_intercepts_singular() -> Result<(), SurvivalError> {
         // Singular case:
         // Define the population fitness as:
         // pop_fit = [ [5.0, 6.0],
@@ -118,7 +132,7 @@ mod tests {
         let pop_fit = array![[5.0, 6.0], [4.0, 5.0]];
 
         let normalizer = TestHyperPlaneNormalizerSingular;
-        let result = normalizer.compute_hyperplane_intercepts(&pop_fit);
+        let result = normalizer.compute_hyperplane_intercepts(&pop_fit)?;
         let expected = array![5.0, 6.0];
 
         assert_eq!(
@@ -126,5 +140,6 @@ mod tests {
             "Singular test failed: expected {:?}, got {:?}",
             expected, result
         );
+        Ok(())
     }
 }

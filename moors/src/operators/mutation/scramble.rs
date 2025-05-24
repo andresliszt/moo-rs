@@ -2,7 +2,7 @@ use ndarray::s;
 
 use crate::{
     genetic::IndividualGenesMut,
-    operators::{GeneticOperator, MutationOperator},
+    operators::{GeneticOperator, MutationOperator, error::MutationError},
     random::RandomGenerator,
 };
 
@@ -23,7 +23,11 @@ impl GeneticOperator for ScrambleMutation {
 }
 
 impl MutationOperator for ScrambleMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(
+        &self,
+        mut individual: IndividualGenesMut<'a>,
+        rng: &mut impl RandomGenerator,
+    ) -> Result<(), MutationError> {
         let n = individual.len();
         // Select two random indices to define the segment.
         let idx1 = rng.gen_range_usize(0, n);
@@ -34,7 +38,7 @@ impl MutationOperator for ScrambleMutation {
             (idx2, idx1)
         };
         if start == end {
-            return;
+            return Ok(());
         }
         // Extract the segment.
         let mut segment = individual.slice(s![start..end]).to_vec();
@@ -44,6 +48,7 @@ impl MutationOperator for ScrambleMutation {
         for (i, &value) in segment.iter().enumerate() {
             individual[start + i] = value;
         }
+        Ok(())
     }
 }
 

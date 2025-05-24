@@ -1,7 +1,7 @@
 use ndarray::Array1;
 
 use crate::genetic::IndividualGenes;
-use crate::operators::{CrossoverOperator, GeneticOperator};
+use crate::operators::{CrossoverOperator, GeneticOperator, error::CrossoverError};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -26,7 +26,7 @@ impl CrossoverOperator for OrderCrossover {
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> Result<(IndividualGenes, IndividualGenes), CrossoverError> {
         let len = parent_a.len();
         assert_eq!(len, parent_b.len());
 
@@ -75,7 +75,7 @@ impl CrossoverOperator for OrderCrossover {
             }
         }
 
-        (child_a, child_b)
+        Ok((child_a, child_b))
     }
 }
 
@@ -117,7 +117,7 @@ mod tests {
     }
 
     #[test]
-    fn test_order_crossover_controlled() {
+    fn test_order_crossover_controlled() -> Result<(), CrossoverError> {
         let len = 8;
         // Define parent_a as [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
         let parent_a: IndividualGenes = Array1::from_vec((0..len).map(|x| x as f64).collect());
@@ -134,8 +134,8 @@ mod tests {
         let mut fake_rng = ControlledFakeRandomGenerator::new(vec![2, 5]);
 
         // Perform the crossover.
-        let (child_a, child_b) = crossover_operator.crossover(&parent_a, &parent_b, &mut fake_rng);
-
+        let (child_a, child_b) =
+            crossover_operator.crossover(&parent_a, &parent_b, &mut fake_rng)?;
         // Expected offspring:
         //
         // With p1 = 2 and p2 = 5:
@@ -164,5 +164,6 @@ mod tests {
             child_b, expected_child_b,
             "Child B does not match the expected output"
         );
+        Ok(())
     }
 }

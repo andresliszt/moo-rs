@@ -2,7 +2,7 @@ use ndarray::Axis;
 
 use crate::{
     genetic::{IndividualGenesMut, PopulationGenes},
-    operators::GeneticOperator,
+    operators::{GeneticOperator, error::MutationError},
     random::RandomGenerator,
 };
 
@@ -26,7 +26,11 @@ pub trait MutationOperator: GeneticOperator {
     ///
     /// * `individual` - The individual to mutate, provided as a mutable view.
     /// * `rng` - A random number generator.
-    fn mutate<'a>(&self, individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator);
+    fn mutate<'a>(
+        &self,
+        individual: IndividualGenesMut<'a>,
+        rng: &mut impl RandomGenerator,
+    ) -> Result<(), MutationError>;
 
     /// Selects individuals for mutation based on the mutation rate.
     fn select_individuals_for_mutation(
@@ -52,7 +56,7 @@ pub trait MutationOperator: GeneticOperator {
         population: &mut PopulationGenes,
         mutation_rate: f64,
         rng: &mut impl RandomGenerator,
-    ) {
+    ) -> Result<(), MutationError> {
         // Get the number of individuals (i.e. the number of rows).
         let population_size = population.len_of(Axis(0));
         // Generate a boolean mask for which individuals will be mutated.
@@ -63,8 +67,9 @@ pub trait MutationOperator: GeneticOperator {
         for (i, mut individual) in population.outer_iter_mut().enumerate() {
             if mask[i] {
                 // Pass a mutable view of the individual to the mutate method.
-                self.mutate(individual.view_mut(), rng);
+                self.mutate(individual.view_mut(), rng)?;
             }
         }
+        Ok(())
     }
 }

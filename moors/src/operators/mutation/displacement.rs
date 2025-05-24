@@ -2,7 +2,7 @@ use ndarray::{Array1, Axis, concatenate, s};
 
 use crate::{
     genetic::IndividualGenesMut,
-    operators::{GeneticOperator, MutationOperator},
+    operators::{GeneticOperator, MutationOperator, error::MutationError},
     random::RandomGenerator,
 };
 
@@ -24,7 +24,11 @@ impl GeneticOperator for DisplacementMutation {
 }
 
 impl MutationOperator for DisplacementMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(
+        &self,
+        mut individual: IndividualGenesMut<'a>,
+        rng: &mut impl RandomGenerator,
+    ) -> Result<(), MutationError> {
         let n = individual.len();
 
         // Select two random indices to define the segment boundaries.
@@ -38,7 +42,7 @@ impl MutationOperator for DisplacementMutation {
 
         // If the indices are equal, there is no segment to displace.
         if start == end {
-            return;
+            return Ok(());
         }
 
         // Split the individual into three parts: left, segment, and right.
@@ -59,9 +63,9 @@ impl MutationOperator for DisplacementMutation {
 
         // Reconstruct the mutated individual by concatenating remainder_left, segment, and remainder_right.
         let new_individual = concatenate![Axis(0), remainder_left, segment, remainder_right];
-
         // Copy the result back into the original individual view.
         individual.assign(&new_individual);
+        Ok(())
     }
 }
 

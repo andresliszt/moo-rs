@@ -2,7 +2,7 @@ use crate::{
     algorithms::helpers::context::AlgorithmContext,
     genetic::{Fronts, FrontsExt, Population},
     non_dominated_sorting::build_fronts,
-    operators::GeneticOperator,
+    operators::{GeneticOperator, error::SurvivalError},
     random::RandomGenerator,
 };
 
@@ -44,7 +44,7 @@ pub trait SurvivalOperator: GeneticOperator {
         num_survive: usize,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    ) -> Population;
+    ) -> Result<Population, SurvivalError>;
 }
 
 /// A more specific survival trait for **front-and-ranking** algorithms
@@ -70,7 +70,7 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator {
         fronts: &mut Fronts,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    );
+    ) -> Result<(), SurvivalError>;
 
     /// Selects the individuals that will survive to the next generation.
     /// Default `operate` that builds fronts, scores, and splits any "overflowing" front.
@@ -80,7 +80,7 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator {
         num_survive: usize,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> Result<Population, SurvivalError> {
         // Build fronts
         let mut fronts = build_fronts(population, num_survive);
         // Set survival score
@@ -101,6 +101,7 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator {
                 let remaining = num_survive - n_survivors;
                 if remaining > 0 {
                     // Clone survival_score vector for sorting.
+                    // TODO: Is there a way to avoid this clone?
                     let scores = front
                         .survival_score
                         .clone()
@@ -124,7 +125,7 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator {
                 break;
             }
         }
-        survivors_parts.to_population()
+        Ok(survivors_parts.to_population())
     }
 }
 
@@ -136,7 +137,7 @@ impl<T: FrontsAndRankingBasedSurvival> SurvivalOperator for T {
         num_survive: usize,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> Result<Population, SurvivalError> {
         // Delegate to the FrontsAndRankingBasedSurvival default implementation
         <T as FrontsAndRankingBasedSurvival>::operate(
             self,

@@ -3,7 +3,7 @@ use crate::{
     duplicates::PopulationCleaner,
     evaluator::Evaluator,
     genetic::{Individual, Population, PopulationConstraints, PopulationFitness, PopulationGenes},
-    operators::{SamplingOperator, SurvivalOperator},
+    operators::{SamplingOperator, SurvivalOperator, error::OperatorError},
     random::RandomGenerator,
 };
 
@@ -27,7 +27,9 @@ impl Initialization {
         G: Fn(&PopulationGenes) -> PopulationConstraints,
     {
         // Get the initial genes
-        let mut genes = sampler.operate(context.population_size, context.num_vars, rng);
+        let mut genes = sampler
+            .operate(context.population_size, context.num_vars, rng)
+            .map_err(OperatorError::from)?;
         // If duplicates cleaner is passed then clean
         if let Some(cleaner) = duplicates_cleaner {
             genes = cleaner.remove(&genes, None);
@@ -45,7 +47,9 @@ impl Initialization {
         // we use num_survive = context.population_size, but this step is adding the ranking
         // and the survival scorer (if the algorithm needs them), so in the selection step
         // we have all we need. See: https://github.com/andresliszt/moo-rs/issues/145
-        population = survivor.operate(population, context.population_size, rng, &context);
+        population = survivor
+            .operate(population, context.population_size, rng, &context)
+            .map_err(OperatorError::from)?;
         Ok(population)
     }
 

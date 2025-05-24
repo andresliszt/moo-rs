@@ -1,5 +1,5 @@
 use crate::genetic::{IndividualGenes, PopulationGenes};
-use crate::operators::GeneticOperator;
+use crate::operators::{GeneticOperator, error::CrossoverError};
 use crate::random::RandomGenerator;
 
 pub mod exponential;
@@ -25,7 +25,7 @@ pub trait CrossoverOperator: GeneticOperator {
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes);
+    ) -> Result<(IndividualGenes, IndividualGenes), CrossoverError>;
 
     /// Applies the crossover operator to the population.
     /// Takes two parent populations and returns two offspring populations.
@@ -36,7 +36,7 @@ pub trait CrossoverOperator: GeneticOperator {
         parents_b: &PopulationGenes,
         crossover_rate: f64,
         rng: &mut impl RandomGenerator,
-    ) -> PopulationGenes {
+    ) -> Result<PopulationGenes, CrossoverError> {
         let population_size = parents_a.nrows();
         assert_eq!(
             population_size,
@@ -61,7 +61,7 @@ pub trait CrossoverOperator: GeneticOperator {
 
             if rng.gen_proability() <= crossover_rate {
                 // Perform crossover
-                let (child_a, child_b) = self.crossover(&parent_a, &parent_b, rng);
+                let (child_a, child_b) = self.crossover(&parent_a, &parent_b, rng)?;
                 flat_offspring.extend(child_a.into_iter());
                 flat_offspring.extend(child_b.into_iter());
             } else {
@@ -78,8 +78,7 @@ pub trait CrossoverOperator: GeneticOperator {
                 num_genes,
             ),
             flat_offspring,
-        )
-        .expect("Failed to create offspring population");
-        offspring_population
+        )?;
+        Ok(offspring_population)
     }
 }

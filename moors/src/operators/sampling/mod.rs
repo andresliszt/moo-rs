@@ -1,6 +1,6 @@
 use crate::{
     genetic::{IndividualGenes, PopulationGenes},
-    operators::GeneticOperator,
+    operators::{GeneticOperator, error::SamplingError},
     random::RandomGenerator,
 };
 
@@ -12,8 +12,11 @@ pub use random::{RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt};
 
 pub trait SamplingOperator: GeneticOperator {
     /// Samples a single individual.
-    fn sample_individual(&self, num_vars: usize, rng: &mut impl RandomGenerator)
-    -> IndividualGenes;
+    fn sample_individual(
+        &self,
+        num_vars: usize,
+        rng: &mut impl RandomGenerator,
+    ) -> Result<IndividualGenes, SamplingError>;
 
     /// Samples a population of individuals.
     fn operate(
@@ -21,12 +24,12 @@ pub trait SamplingOperator: GeneticOperator {
         population_size: usize,
         num_vars: usize,
         rng: &mut impl RandomGenerator,
-    ) -> PopulationGenes {
+    ) -> Result<PopulationGenes, SamplingError> {
         let mut population = Vec::with_capacity(population_size);
 
         // Sample individuals and collect them
         for _ in 0..population_size {
-            let individual = self.sample_individual(num_vars, rng);
+            let individual = self.sample_individual(num_vars, rng)?;
             population.push(individual);
         }
 
@@ -41,11 +44,9 @@ pub trait SamplingOperator: GeneticOperator {
 
         // Create the shape: (number of individuals, number of genes)
         let shape = (population_size, num_genes);
-
         // Use from_shape_vec to create PopulationGenes
-        let population_genes = PopulationGenes::from_shape_vec(shape, flat_population)
-            .expect("Failed to create PopulationGenes from vector");
+        let population_genes = PopulationGenes::from_shape_vec(shape, flat_population)?;
 
-        population_genes
+        Ok(population_genes)
     }
 }

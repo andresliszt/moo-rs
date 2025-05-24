@@ -1,6 +1,7 @@
 use ndarray::Array1;
 
 use crate::genetic::IndividualGenes;
+use crate::operators::error::CrossoverError;
 use crate::operators::{CrossoverOperator, GeneticOperator};
 use crate::random::RandomGenerator;
 
@@ -50,7 +51,7 @@ pub fn sbx_crossover_array(
     distribution_index: f64,
     prob_exchange: f64,
     rng: &mut impl RandomGenerator,
-) -> (Array1<f64>, Array1<f64>) {
+) -> Result<(Array1<f64>, Array1<f64>), CrossoverError> {
     let n = p1.len();
     let eps = 1e-16;
     let mut offspring1 = p1.clone();
@@ -98,7 +99,7 @@ pub fn sbx_crossover_array(
         offspring2[i] = new2;
     }
 
-    (offspring1, offspring2)
+    Ok((offspring1, offspring2))
 }
 
 impl GeneticOperator for SimulatedBinaryCrossover {
@@ -116,9 +117,11 @@ impl CrossoverOperator for SimulatedBinaryCrossover {
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> Result<(IndividualGenes, IndividualGenes), CrossoverError> {
         // TODO: Enable prob_exchange
-        sbx_crossover_array(parent_a, parent_b, self.distribution_index, 0.0, rng)
+        let offsprings =
+            sbx_crossover_array(parent_a, parent_b, self.distribution_index, 0.0, rng)?;
+        Ok(offsprings)
     }
 }
 
@@ -161,7 +164,7 @@ mod tests {
     }
 
     #[test]
-    fn test_simulated_binary_crossover() {
+    fn test_simulated_binary_crossover() -> Result<(), CrossoverError> {
         // Define two parent genes as IndividualGenes.
         // For gene 0: p1 = 1.0, p2 = 3.0 (SBX is applied).
         // For gene 1: p1 = 5.0, p2 = 5.0 (no crossover is applied).
@@ -180,7 +183,7 @@ mod tests {
                   // No random values for gene 1.
         ]);
 
-        let (child_a, child_b) = operator.crossover(&parent_a, &parent_b, &mut fake_rng);
+        let (child_a, child_b) = operator.crossover(&parent_a, &parent_b, &mut fake_rng)?;
         let tol = 1e-8;
 
         // For gene 0:
@@ -210,5 +213,6 @@ mod tests {
             (child_b[1] - 5.0).abs() < tol,
             "Gene 1 of child_b not as expected"
         );
+        Ok(())
     }
 }

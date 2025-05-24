@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::{
     genetic::IndividualGenes,
-    operators::{GeneticOperator, SamplingOperator},
+    operators::{GeneticOperator, SamplingOperator, error::SamplingError},
     random::RandomGenerator,
 };
 
@@ -30,9 +30,10 @@ impl SamplingOperator for RandomSamplingFloat {
         &self,
         num_vars: usize,
         rng: &mut impl RandomGenerator,
-    ) -> IndividualGenes {
-        (0..num_vars)
+    ) -> Result<IndividualGenes, SamplingError> {
+        let sample = (0..num_vars)
             .map(|_| rng.gen_range_f64(self.min, self.max))
-            .collect()
+            .collect();
+        Ok(sample)
     }
 }

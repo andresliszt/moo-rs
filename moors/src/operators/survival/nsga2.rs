@@ -5,7 +5,9 @@ use ndarray::Array1;
 
 use crate::algorithms::helpers::context::AlgorithmContext;
 use crate::genetic::{Fronts, PopulationFitness};
-use crate::operators::{GeneticOperator, survival::FrontsAndRankingBasedSurvival};
+use crate::operators::{
+    GeneticOperator, error::SurvivalError, survival::FrontsAndRankingBasedSurvival,
+};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -29,13 +31,12 @@ impl FrontsAndRankingBasedSurvival for Nsga2RankCrowdingSurvival {
         fronts: &mut Fronts,
         _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) {
+    ) -> Result<(), SurvivalError> {
         for front in fronts.iter_mut() {
             let crowding_distance = crowding_distance(&front.fitness);
-            front
-                .set_survival_score(crowding_distance)
-                .expect("Failed to set survival score in Nsga2");
+            front.set_survival_score(crowding_distance)?;
         }
+        Ok(())
     }
 }
 
@@ -219,7 +220,7 @@ mod tests {
     }
 
     #[test]
-    fn test_survival_selection_all_survive_single_front() {
+    fn test_survival_selection_all_survive_single_front() -> Result<(), SurvivalError> {
         // All individuals belong to a single front (rank 0) and num_survive equals the population size.
         let genes: Array2<f64> = array![[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]];
         let fitness: Array2<f64> = array![[0.1, 0.9], [0.2, 0.8], [0.3, 0.7]];
@@ -230,7 +231,7 @@ mod tests {
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
-        let new_population = selector.operate(population, num_survive, &mut _rng, &_context);
+        let new_population = selector.operate(population, num_survive, &mut _rng, &_context)?;
 
         // The resulting population should remain unchanged.
         assert_eq!(new_population.genes, genes);
@@ -239,10 +240,11 @@ mod tests {
             new_population.rank.unwrap(),
             array![0_usize, 0_usize, 0_usize]
         );
+        Ok(())
     }
 
     #[test]
-    fn test_survival_selection_multiple_fronts() {
+    fn test_survival_selection_multiple_fronts() -> Result<(), SurvivalError> {
         /*
         Tests survival selection in NSGA-II when multiple fronts are present.
 
@@ -275,7 +277,7 @@ mod tests {
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
-        let new_population = selector.operate(population, num_survive, &mut _rng, &_context);
+        let new_population = selector.operate(population, num_survive, &mut _rng, &_context)?;
 
         // The final population must have 4 individuals.
         assert_eq!(new_population.len(), num_survive);
@@ -323,5 +325,6 @@ mod tests {
             new_rank.as_slice().unwrap(),
             expected_rank.as_slice().unwrap()
         );
+        Ok(())
     }
 }

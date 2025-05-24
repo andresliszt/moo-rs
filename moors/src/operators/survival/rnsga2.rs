@@ -1,15 +1,16 @@
-use std::cmp::Ordering;
-use std::fmt::Debug;
+use std::{cmp::Ordering, fmt::Debug};
 
 use ndarray::{Array1, Array2, ArrayView1, Axis};
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{Fronts, PopulationFitness};
-use crate::helpers::extreme_points::{get_ideal, get_nadir};
-use crate::operators::survival::{
-    FrontsAndRankingBasedSurvival, GeneticOperator, SurvivalScoringComparison,
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{Fronts, PopulationFitness},
+    helpers::extreme_points::{get_ideal, get_nadir},
+    operators::survival::{
+        FrontsAndRankingBasedSurvival, GeneticOperator, SurvivalError, SurvivalScoringComparison,
+    },
+    random::RandomGenerator,
 };
-use crate::random::RandomGenerator;
 
 /// Implementation of the survival operator for the R-NSGA2 algorithm presented in the paper
 /// Reference Point Based Multi-Objective Optimization Using Evolutionary Algorithms
@@ -45,7 +46,7 @@ impl FrontsAndRankingBasedSurvival for Rnsga2ReferencePointsSurvival {
         fronts: &mut Fronts,
         rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) {
+    ) -> Result<(), SurvivalError> {
         let len_fronts = fronts.len();
         let num_objectives = fronts[0].fitness.ncols();
         let weights = Array1::from_elem(num_objectives, 1.0 / (num_objectives as f64));
@@ -81,6 +82,7 @@ impl FrontsAndRankingBasedSurvival for Rnsga2ReferencePointsSurvival {
                 .set_survival_score(survival_score)
                 .expect("Failed to set survival score in Rsga2");
         }
+        Ok(())
     }
 }
 

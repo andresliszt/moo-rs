@@ -1,15 +1,20 @@
-use std::collections::HashSet;
-use std::fmt::Debug;
+use std::{collections::HashSet, fmt::Debug};
 
 use ndarray::{Array1, Array2, ArrayView1, Axis, stack};
 use ndarray_stats::QuantileExt;
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::PopulationFitness;
-use crate::helpers::extreme_points::get_ideal;
-use crate::helpers::linalg::{cross_p_distances, lp_norm_arrayview};
-use crate::operators::{GeneticOperator, survival::helpers::HyperPlaneNormalization};
-use crate::random::RandomGenerator;
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::PopulationFitness,
+    helpers::{
+        extreme_points::get_ideal,
+        linalg::{cross_p_distances, lp_norm_arrayview},
+    },
+    operators::{
+        GeneticOperator, error::SurvivalError, survival::helpers::HyperPlaneNormalization,
+    },
+    random::RandomGenerator,
+};
 
 use super::FrontsAndRankingBasedSurvival;
 
@@ -21,7 +26,10 @@ impl AgeMoeaHyperPlaneNormalization {
     }
 }
 impl HyperPlaneNormalization for AgeMoeaHyperPlaneNormalization {
-    fn compute_extreme_points(&self, population_fitness: &Array2<f64>) -> Array2<f64> {
+    fn compute_extreme_points(
+        &self,
+        population_fitness: &Array2<f64>,
+    ) -> Result<Array2<f64>, SurvivalError> {
         let extreme_indices: Vec<usize> = population_fitness
             .axis_iter(Axis(1))
             .map(|col| col.argmax().unwrap())
@@ -31,14 +39,14 @@ impl HyperPlaneNormalization for AgeMoeaHyperPlaneNormalization {
             .iter()
             .map(|&i| population_fitness.row(i).to_owned())
             .collect();
-        stack(
+        let extreme_points = stack(
             Axis(0),
             &extreme_rows
                 .iter()
                 .map(|row| row.view())
                 .collect::<Vec<_>>(),
-        )
-        .unwrap()
+        )?;
+        Ok(extreme_points)
     }
 }
 
@@ -63,13 +71,13 @@ impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
         fronts: &mut crate::genetic::Fronts,
         _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) {
+    ) -> Result<(), SurvivalError> {
         // Split the fronts into the first one and the rest
         if let Some((first_front, other_fronts)) = fronts.split_first_mut() {
             let z_min = get_ideal(&first_front.fitness);
             let translated = &first_front.fitness - &z_min;
             let normalizer = AgeMoeaHyperPlaneNormalization::new();
-            let intercepts = normalizer.compute_hyperplane_intercepts(&translated);
+            let intercepts = normalizer.compute_hyperplane_intercepts(&translated)?;
             let normalized_first_front = translated / &intercepts;
             let central_point = get_central_point_normalized(&normalized_first_front);
             // Check if the central point is a zero vector.
@@ -79,35 +87,29 @@ impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
             // filled entirely with infinity.
             if central_point.iter().all(|&x| x == 0.0) {
                 first_front
-                    .set_survival_score(Array1::from_elem(first_front.len(), std::f64::INFINITY))
-                    .expect("Failed to set survival score in AgeMoea");
+                    .set_survival_score(Array1::from_elem(first_front.len(), std::f64::INFINITY))?;
                 // Process the remaining fronts with the standard function
                 for front in other_fronts.iter_mut() {
-                    front
-                        .set_survival_score(Array1::from_elem(
-                            first_front.len(),
-                            std::f64::INFINITY,
-                        ))
-                        .expect("Failed to set survival score in AgeMoea");
+                    front.set_survival_score(Array1::from_elem(
+                        first_front.len(),
+                        std::f64::INFINITY,
+                    ))?;
                 }
             } else {
                 let p = compute_exponent_p(&central_point);
                 let score_first_front =
                     assign_survival_scores_first_front(&normalized_first_front, p);
-                first_front
-                    .set_survival_score(score_first_front)
-                    .expect("Failed to set survival score in AgeMoea");
+                first_front.set_survival_score(score_first_front)?;
                 for front in other_fronts.iter_mut() {
                     //let z_min = get_ideal(&front.fitness);
                     let translated = &front.fitness - &z_min;
                     let normalized_front = translated / &intercepts;
                     let score = assign_survival_scores_higher_front(&normalized_front, p);
-                    front
-                        .set_survival_score(score)
-                        .expect("Failed to set survival score in AgeMoea");
+                    front.set_survival_score(score)?;
                 }
             }
         }
+        Ok(())
     }
 }
 
@@ -325,7 +327,7 @@ mod tests {
     use ndarray::{Array1, Array2, array};
 
     #[test]
-    fn test_solve_intercepts() {
+    fn test_solve_intercepts() -> Result<(), SurvivalError> {
         // Front: [[1.0, 2.0],
         //         [3.0, 1.0]]
         // Ideal point = [1.0, 1.0]
@@ -337,13 +339,14 @@ mod tests {
         let z_min = crate::helpers::extreme_points::get_ideal(&front);
         let translated = &front - &z_min;
         let normalizer = AgeMoeaHyperPlaneNormalization::new();
-        let intercepts = normalizer.compute_hyperplane_intercepts(&translated);
+        let intercepts = normalizer.compute_hyperplane_intercepts(&translated)?;
         let expected = array![2.0, 1.0];
         assert_eq!(&intercepts, &expected);
+        Ok(())
     }
 
     #[test]
-    fn test_solve_intercepts_no_solution() {
+    fn test_solve_intercepts_no_solution() -> Result<(), SurvivalError> {
         // Front: [[1.0, 2.0],
         //         [1.0, 3.0]]
         // Ideal point = [1.0, 2.0]
@@ -356,9 +359,10 @@ mod tests {
         let z_min = get_ideal(&front);
         let translated = front - z_min;
         let normalizer = AgeMoeaHyperPlaneNormalization::new();
-        let intercepts = normalizer.compute_hyperplane_intercepts(&translated);
+        let intercepts = normalizer.compute_hyperplane_intercepts(&translated)?;
         let expected = array![0.0, 1.0];
         assert_eq!(&intercepts, &expected);
+        Ok(())
     }
 
     #[test]
@@ -466,7 +470,7 @@ mod tests {
     }
 
     #[test]
-    fn test_operate_age_moea_survival() {
+    fn test_operate_age_moea_survival() -> Result<(), SurvivalError> {
         // Front 1: 3 individuals and Front 2: 2 individuals
         let fitness: Array2<f64> =
             array![[1.0, 0.0], [0.5, 0.5], [0.0, 1.0], [0.8, 0.2], [0.2, 0.8]];
@@ -480,7 +484,7 @@ mod tests {
         let mut rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(2, 5, 5, 2, 1, 0, None, None);
-        let survivors = operator.operate(population, num_survive, &mut rng, &_context);
+        let survivors = operator.operate(population, num_survive, &mut rng, &_context)?;
 
         assert_eq!(
             survivors.len(),
@@ -488,6 +492,7 @@ mod tests {
             "Expected {} survivors, got {}",
             num_survive,
             survivors.len()
-        )
+        );
+        Ok(())
     }
 }

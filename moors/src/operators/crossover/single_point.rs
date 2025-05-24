@@ -1,7 +1,7 @@
 use ndarray::{Array1, Axis, concatenate, s};
 
 use crate::genetic::IndividualGenes;
-use crate::operators::{CrossoverOperator, GeneticOperator};
+use crate::operators::{CrossoverOperator, GeneticOperator, error::CrossoverError};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -26,35 +26,27 @@ impl CrossoverOperator for SinglePointBinaryCrossover {
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> Result<(IndividualGenes, IndividualGenes), CrossoverError> {
         let num_genes = parent_a.len();
-        assert_eq!(
-            num_genes,
-            parent_b.len(),
-            "Parents must have the same number of genes"
-        );
 
         if num_genes == 0 {
-            return (Array1::default(0), Array1::default(0));
+            return Ok((Array1::default(0), Array1::default(0)));
         }
-
         // Choose a crossover point between 1 and num_genes - 1
         let crossover_point = rng.gen_range_usize(1, num_genes);
-
         // Split parents at the crossover point and create offspring
         let offspring_a = concatenate![
             Axis(0),
             parent_a.slice(s![..crossover_point]),
             parent_b.slice(s![crossover_point..])
         ];
-
         let offspring_b = concatenate![
             Axis(0),
             parent_b.slice(s![..crossover_point]),
             parent_a.slice(s![crossover_point..])
         ];
 
-        (offspring_a, offspring_b)
+        Ok((offspring_a, offspring_b))
     }
 }
 
@@ -96,7 +88,7 @@ mod tests {
     }
 
     #[test]
-    fn test_single_point_binary_crossover_controlled() {
+    fn test_single_point_binary_crossover_controlled() -> Result<(), CrossoverError> {
         // Define two binary-encoded parents.
         let parent_a: Array1<f64> = array![0.0, 1.0, 1.0, 0.0, 1.0];
         let parent_b: Array1<f64> = array![1.0, 0.0, 0.0, 1.0, 0.0];
@@ -111,7 +103,7 @@ mod tests {
 
         // Perform the crossover.
         let (offspring_a, offspring_b) =
-            crossover_operator.crossover(&parent_a, &parent_b, &mut fake_rng);
+            crossover_operator.crossover(&parent_a, &parent_b, &mut fake_rng)?;
 
         // With a crossover point of 3:
         // offspring_a = [parent_a[0..3], parent_b[3..]] = [0.0, 1.0, 1.0, 1.0, 0.0]
@@ -128,5 +120,6 @@ mod tests {
             offspring_b, expected_offspring_b,
             "Offspring B did not match the expected output"
         );
+        Ok(())
     }
 }

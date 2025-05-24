@@ -1,5 +1,5 @@
 use crate::genetic::IndividualGenes;
-use crate::operators::{CrossoverOperator, GeneticOperator};
+use crate::operators::{CrossoverOperator, GeneticOperator, error::CrossoverError};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -24,7 +24,7 @@ impl CrossoverOperator for UniformBinaryCrossover {
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> Result<(IndividualGenes, IndividualGenes), CrossoverError> {
         assert_eq!(
             parent_a.len(),
             parent_b.len(),
@@ -47,7 +47,7 @@ impl CrossoverOperator for UniformBinaryCrossover {
             }
         }
 
-        (offspring_a, offspring_b)
+        Ok((offspring_a, offspring_b))
     }
 }
 
@@ -91,7 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn test_uniform_binary_crossover_controlled() {
+    fn test_uniform_binary_crossover_controlled() -> Result<(), CrossoverError> {
         // Define two parent individuals.
         let parent_a: Array1<f64> = array![0.0, 1.0, 1.0, 0.0, 1.0];
         let parent_b: Array1<f64> = array![1.0, 0.0, 0.0, 1.0, 0.0];
@@ -111,7 +111,7 @@ mod tests {
 
         // Perform the uniform binary crossover.
         let (offspring_a, offspring_b) =
-            crossover_operator.crossover(&parent_a, &parent_b, &mut fake_rng);
+            crossover_operator.crossover(&parent_a, &parent_b, &mut fake_rng)?;
 
         // Expected offspring:
         // For index 0: no swap → offspring_a[0] = parent_a[0] = 0.0, offspring_b[0] = parent_b[0] = 1.0.
@@ -130,5 +130,6 @@ mod tests {
             offspring_b, expected_offspring_b,
             "Offspring B is not as expected"
         );
+        Ok(())
     }
 }

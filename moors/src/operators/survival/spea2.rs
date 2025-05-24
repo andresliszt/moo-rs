@@ -2,12 +2,14 @@ use std::cmp::Ordering;
 
 use ndarray::{Array1, Array2, Axis};
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{Population, PopulationFitness};
-use crate::helpers::linalg::cross_euclidean_distances_as_array;
-use crate::non_dominated_sorting::fast_non_dominated_sorting;
-use crate::operators::{GeneticOperator, SurvivalOperator};
-use crate::random::RandomGenerator;
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{Population, PopulationFitness},
+    helpers::linalg::cross_euclidean_distances_as_array,
+    non_dominated_sorting::fast_non_dominated_sorting,
+    operators::{GeneticOperator, SurvivalOperator, error::SurvivalError},
+    random::RandomGenerator,
+};
 
 #[derive(Debug, Clone)]
 pub struct Spea2KnnSurvival;
@@ -31,7 +33,7 @@ impl SurvivalOperator for Spea2KnnSurvival {
         num_survive: usize,
         _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> Result<Population, SurvivalError> {
         // Compute raw fitness F(i) = R(i) + D(i)
         let k = population.len().isqrt();
         let distance_matrix =
@@ -68,7 +70,7 @@ impl SurvivalOperator for Spea2KnnSurvival {
         let selected_scores: Array1<f64> = raw_fitness.select(Axis(0), &s);
         // ignore Result
         _ = survivors.set_survival_score(selected_scores);
-        survivors
+        Ok(survivors)
     }
 }
 
@@ -291,7 +293,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fills_when_underflow() {
+    fn test_fills_when_underflow() -> Result<(), SurvivalError> {
         // Define objective fitness = [0.5, 1.2, 1.5]
         let fit = array![[0.5], [1.2], [1.5]];
         let pop = make_population(fit.clone());
@@ -326,7 +328,7 @@ mod tests {
         // 3) Run operate with capacity = 2
         let mut rng = NoopRandomGenerator::new();
         let ctx = AlgorithmContext::new(10, 10, 5, 1, 1, 0, None, None);
-        let survivors = Spea2KnnSurvival::new().operate(pop, 2, &mut rng, &ctx);
+        let survivors = Spea2KnnSurvival::new().operate(pop, 2, &mut rng, &ctx)?;
 
         // 4) Extract survivors’ survival_score fields
         let scores: Vec<f64> = survivors
@@ -340,10 +342,11 @@ mod tests {
         assert_eq!(scores.len(), 2);
         assert!((scores[0] - expected_raw[0]).abs() < 1e-6,);
         assert!((scores[1] - expected_raw[1]).abs() < 1e-6);
+        Ok(())
     }
 
     #[test]
-    fn test_overflow_keeps_first_two_when_all_tie() {
+    fn test_overflow_keeps_first_two_when_all_tie() -> Result<(), SurvivalError> {
         // Four pair‑wise non‑dominated points:
         //   #0 (0,3)   #1 (1,2)   #2 (2,1)   #3 (3,0)
         let fit = array![[0.0, 3.0], [1.0, 2.0], [2.0, 1.0], [3.0, 0.0],];
@@ -352,7 +355,7 @@ mod tests {
         // Capacity = 2 → overflow branch
         let mut rng = NoopRandomGenerator::new();
         let ctx = AlgorithmContext::new(10, 10, 5, 2, 2, 0, None, None);
-        let survivors = Spea2KnnSurvival::new().operate(pop, 2, &mut rng, &ctx);
+        let survivors = Spea2KnnSurvival::new().operate(pop, 2, &mut rng, &ctx)?;
 
         // Expect exactly two survivors
         assert_eq!(survivors.len(), 2);
@@ -375,10 +378,11 @@ mod tests {
         assert_eq!(scores.len(), 2);
         assert!((scores[0] - expected[0]).abs() < 1e-6);
         assert!((scores[1] - expected[1]).abs() < 1e-6);
+        Ok(())
     }
 
     #[test]
-    fn all_survive_when_capacity_equals_population() {
+    fn all_survive_when_capacity_equals_population() -> Result<(), SurvivalError> {
         // Same four pair‑wise non‑dominated points as before
         let fit = array![
             [0.0, 3.0], // #0
@@ -391,9 +395,10 @@ mod tests {
         // Capacity exactly equals population size (4) → no truncation
         let mut rng = NoopRandomGenerator::new();
         let ctx = AlgorithmContext::new(10, 10, 5, 4, 2, 0, None, None);
-        let survivors = Spea2KnnSurvival::new().operate(pop, 4, &mut rng, &ctx);
+        let survivors = Spea2KnnSurvival::new().operate(pop, 4, &mut rng, &ctx)?;
 
         // all individuals must survive
         assert_eq!(survivors.len(), 4);
+        Ok(())
     }
 }

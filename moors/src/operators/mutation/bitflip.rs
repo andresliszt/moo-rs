@@ -1,6 +1,6 @@
 use crate::{
     genetic::IndividualGenesMut,
-    operators::{GeneticOperator, MutationOperator},
+    operators::{GeneticOperator, MutationOperator, error::MutationError},
     random::RandomGenerator,
 };
 
@@ -11,7 +11,6 @@ pub struct BitFlipMutation {
 }
 
 impl BitFlipMutation {
-    #[allow(dead_code)]
     pub fn new(gene_mutation_rate: f64) -> Self {
         Self { gene_mutation_rate }
     }
@@ -24,12 +23,17 @@ impl GeneticOperator for BitFlipMutation {
 }
 
 impl MutationOperator for BitFlipMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(
+        &self,
+        mut individual: IndividualGenesMut<'a>,
+        rng: &mut impl RandomGenerator,
+    ) -> Result<(), MutationError> {
         for gene in individual.iter_mut() {
             if rng.gen_bool(self.gene_mutation_rate) {
                 *gene = if *gene == 0.0 { 1.0 } else { 0.0 };
             }
         }
+        Ok(())
     }
 }
 
@@ -65,7 +69,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bit_flip_mutation_controlled() {
+    fn test_bit_flip_mutation_controlled() -> Result<(), MutationError> {
         // Create a population with two individuals:
         // - The first individual is all zeros.
         // - The second individual is all ones.
@@ -81,7 +85,7 @@ mod tests {
 
         // Mutate the population. The `operate` method (from MutationOperator) should
         // call `mutate` on each individual.
-        mutation_operator.operate(&mut pop, 1.0, &mut rng);
+        mutation_operator.operate(&mut pop, 1.0, &mut rng)?;
 
         // After mutation, every bit should be flipped:
         // - The first individual (originally all 0.0) becomes all 1.0.
@@ -89,5 +93,6 @@ mod tests {
         let expected_pop: PopulationGenes =
             array![[1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0]];
         assert_eq!(expected_pop, pop);
+        Ok(())
     }
 }

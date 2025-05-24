@@ -109,8 +109,8 @@ use crate::{
     genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes},
     helpers::printer::print_minimum_objectives,
     operators::{
-        CrossoverOperator, Evolve, EvolveError, MutationOperator, SamplingOperator,
-        SelectionOperator, SurvivalOperator,
+        CrossoverOperator, Evolve, MutationOperator, SamplingOperator, SelectionOperator,
+        SurvivalOperator, error::OperatorError,
     },
     random::MOORandomGenerator,
 };
@@ -302,12 +302,15 @@ where
         let evaluated_population: Population = self.evaluator.evaluate(combined_genes)?;
 
         // Select survivors to the next iteration population
-        let survivors = self.survivor.operate(
-            evaluated_population,
-            self.context.population_size,
-            &mut self.rng,
-            &self.context,
-        );
+        let survivors = self
+            .survivor
+            .operate(
+                evaluated_population,
+                self.context.population_size,
+                &mut self.rng,
+                &self.context,
+            )
+            .map_err(OperatorError::from)?;
         // Update the population attribute
         self.population = Some(survivors);
 
@@ -337,11 +340,11 @@ where
                         );
                     }
                 }
-                Err(MultiObjectiveAlgorithmError::Evolve(EvolveError::EmptyMatingResult {
-                    message,
-                    ..
-                })) => {
-                    println!("Warning: {}. Terminating the algorithm early.", message);
+                Err(MultiObjectiveAlgorithmError::Evolve(
+                    err @ OperatorError::EmptyMatingResult,
+                )) => {
+                    // `err` implementa Display → produce el mensaje
+                    println!("Warning: {}. Terminating the algorithm early.", err);
                     break;
                 }
                 Err(e) => return Err(e),

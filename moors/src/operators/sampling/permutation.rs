@@ -4,7 +4,7 @@ use ndarray::Array1;
 
 use crate::{
     genetic::IndividualGenes,
-    operators::{GeneticOperator, SamplingOperator},
+    operators::{GeneticOperator, SamplingOperator, error::SamplingError},
     random::RandomGenerator,
 };
 
@@ -31,14 +31,12 @@ impl SamplingOperator for PermutationSampling {
         &self,
         num_vars: usize,
         rng: &mut impl RandomGenerator,
-    ) -> IndividualGenes {
-        // 1) Create a vector of indices [0, 1, 2, ..., num_vars - 1]
+    ) -> Result<IndividualGenes, SamplingError> {
+        // Create a vector of indices [0, 1, 2, ..., num_vars - 1]
         let mut indices: Vec<f64> = (0..num_vars).map(|i| i as f64).collect();
-
-        // 2) Shuffle the indices in-place using the `SliceRandom` trait
+        // Shuffle the indices in-place using the `SliceRandom` trait
         rng.shuffle_vec(&mut indices);
-
-        Array1::from_vec(indices)
+        Ok(Array1::from_vec(indices))
     }
 }
 
@@ -74,7 +72,7 @@ mod tests {
     }
 
     #[test]
-    fn test_permutation_sampling_controlled() {
+    fn test_permutation_sampling_controlled() -> Result<(), SamplingError> {
         // Create the sampling operator.
         let sampler = PermutationSampling;
         assert_eq!(sampler.name(), "PermutationSampling");
@@ -86,7 +84,7 @@ mod tests {
 
         // Generate the population. It is assumed that `operate` (defined via
         // the SamplingOperator trait) generates population_size individuals.
-        let population = sampler.operate(population_size, num_vars, &mut rng);
+        let population = sampler.operate(population_size, num_vars, &mut rng)?;
 
         // Check the population shape.
         assert_eq!(population.nrows(), population_size);
@@ -102,5 +100,6 @@ mod tests {
                 "The permutation did not match the expected value."
             );
         }
+        Ok(())
     }
 }

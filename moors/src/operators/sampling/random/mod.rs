@@ -10,10 +10,13 @@ pub use int::RandomSamplingInt;
 mod tests {
     use crate::random::{RandomGenerator, TestDummyRng};
 
-    use crate::operators::sampling::random::binary::RandomSamplingBinary;
-    use crate::operators::sampling::random::float::RandomSamplingFloat;
-    use crate::operators::sampling::random::int::RandomSamplingInt;
-    use crate::operators::{GeneticOperator, SamplingOperator};
+    use crate::operators::{
+        GeneticOperator, SamplingOperator,
+        error::SamplingError,
+        sampling::random::{
+            binary::RandomSamplingBinary, float::RandomSamplingFloat, int::RandomSamplingInt,
+        },
+    };
 
     /// A controlled fake RandomGenerator for testing purposes.
     /// It returns predictable values:
@@ -51,48 +54,51 @@ mod tests {
     }
 
     #[test]
-    fn test_random_sampling_float_controlled() {
+    fn test_random_sampling_float_controlled() -> Result<(), SamplingError> {
         let sampler = RandomSamplingFloat::new(-1.0, 1.0);
         assert_eq!(sampler.name(), "RandomSamplingFloat");
         let mut rng = FakeRandomGenerator::new();
 
         // Generate a population of 10 individuals, each with 5 genes.
-        let population = sampler.operate(10, 5, &mut rng);
+        let population = sampler.operate(10, 5, &mut rng)?;
 
         // Since our fake returns the minimum for every call to `gen_range_f64`,
         // every gene in the population should be -1.0.
         for gene in population.iter() {
             assert_eq!(*gene, -1.0);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_random_sampling_int_controlled() {
+    fn test_random_sampling_int_controlled() -> Result<(), SamplingError> {
         let sampler = RandomSamplingInt::new(0, 10);
         assert_eq!(sampler.name(), "RandomSamplingInt");
         let mut rng = FakeRandomGenerator::new();
 
-        let population = sampler.operate(10, 5, &mut rng);
+        let population = sampler.operate(10, 5, &mut rng)?;
 
         // The operator uses `gen_range_f64` (with `min` as 0.0) for each gene,
         // so every gene should be 0.0.
         for gene in population.iter() {
             assert_eq!(*gene, 0.0);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_random_sampling_binary_controlled() {
+    fn test_random_sampling_binary_controlled() -> Result<(), SamplingError> {
         let sampler = RandomSamplingBinary::new();
         assert_eq!(sampler.name(), "RandomSamplingBinary");
         let mut rng = FakeRandomGenerator::new();
 
-        let population = sampler.operate(10, 5, &mut rng);
+        let population = sampler.operate(10, 5, &mut rng)?;
 
         // Since our fake returns false for every call to `gen_bool(0.5)`,
         // each gene will be 0.0 (because the sampling operator maps false to 0.0).
         for gene in population.iter() {
             assert_eq!(*gene, 0.0);
         }
+        Ok(())
     }
 }

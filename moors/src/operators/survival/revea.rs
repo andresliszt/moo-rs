@@ -2,12 +2,16 @@ use std::collections::HashMap;
 
 use ndarray::{Array1, Array2};
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::Population;
-use crate::helpers::extreme_points::{get_ideal, get_nadir};
-use crate::helpers::linalg::{faer_dot_and_norms, faer_dot_from_array};
-use crate::operators::{GeneticOperator, survival::SurvivalOperator};
-use crate::random::RandomGenerator;
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::Population,
+    helpers::{
+        extreme_points::{get_ideal, get_nadir},
+        linalg::{faer_dot_and_norms, faer_dot_from_array},
+    },
+    operators::{GeneticOperator, error::SurvivalError, survival::SurvivalOperator},
+    random::RandomGenerator,
+};
 
 /// Implementation of the survival operator for the REVEA algorithm presented in the paper
 /// A Reference Vector Guided Evolutionary Algorithm for Many-objective Optimization
@@ -45,7 +49,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
         _n_survive: usize,
         _rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> Result<Population, SurvivalError> {
         let z_min = get_ideal(&population.fitness);
         let z_max = get_nadir(&population.fitness);
         let translated = &population.fitness - &z_min;
@@ -93,7 +97,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
                 update_reference_vectors(&z_min, &z_max, &self.initial_reference_points);
             self.reference_points = new_reference_points;
         }
-        population.selected(&selected_indices)
+        Ok(population.selected(&selected_indices))
     }
 }
 

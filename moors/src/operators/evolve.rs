@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use crate::{
     duplicates::PopulationCleaner,
     genetic::{Population, PopulationGenes},
-    operators::{CrossoverOperator, MutationOperator, SelectionOperator},
+    operators::{CrossoverOperator, MutationOperator, SelectionOperator, error::OperatorError},
     random::RandomGenerator,
 };
 
@@ -24,33 +24,6 @@ where
     crossover_rate: f64,
     lower_bound: Option<f64>,
     upper_bound: Option<f64>,
-}
-
-#[derive(Debug, Clone)]
-pub enum EvolveError {
-    EmptyMatingResult {
-        message: String,
-        current_offspring_count: usize,
-        required_offsprings: usize,
-    },
-}
-
-impl fmt::Display for EvolveError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            EvolveError::EmptyMatingResult {
-                message,
-                current_offspring_count,
-                required_offsprings,
-            } => {
-                write!(
-                    f,
-                    "{} (generated offsprings: {}, required: {})",
-                    message, current_offspring_count, required_offsprings
-                )
-            }
-        }
-    }
 }
 
 impl<Sel, Cross, Mut, DC> Evolve<Sel, Cross, Mut, DC>
@@ -91,14 +64,14 @@ where
         parents_a: &PopulationGenes,
         parents_b: &PopulationGenes,
         rng: &mut impl RandomGenerator,
-    ) -> PopulationGenes {
-        // 1) Perform crossover in one batch.
-        let mut offsprings = self
-            .crossover
-            .operate(parents_a, parents_b, self.crossover_rate, rng);
-        // 2) Perform mutation in one batch (often in-place).
+    ) -> Result<PopulationGenes, OperatorError> {
+        // Perform crossover in one batch.
+        let mut offsprings =
+            self.crossover
+                .operate(parents_a, parents_b, self.crossover_rate, rng)?;
+        // Perform mutation in one batch (often in-place).
         self.mutation
-            .operate(&mut offsprings, self.mutation_rate, rng);
+            .operate(&mut offsprings, self.mutation_rate, rng)?;
         // Clamp each gene's value if bounds are provided.
         if let Some(lb) = self.lower_bound {
             for x in offsprings.iter_mut() {
@@ -110,7 +83,7 @@ where
                 *x = (*x).min(ub);
             }
         }
-        offsprings
+        Ok(offsprings)
     }
 
     /// Cleans duplicates in `genes`, optionally comparing against a reference population.
@@ -143,7 +116,7 @@ where
         num_offsprings: usize,
         max_iter: usize,
         rng: &mut impl RandomGenerator,
-    ) -> Result<PopulationGenes, EvolveError> {
+    ) -> Result<PopulationGenes, OperatorError> {
         // Accumulate offspring rows in a Vec<Vec<f64>>
         let mut all_offsprings: Vec<Vec<f64>> = Vec::with_capacity(num_offsprings);
         let num_genes = population.genes.ncols();
@@ -156,7 +129,7 @@ where
             let (parents_a, parents_b) = self.selection.operate(population, crossover_needed, rng);
 
             // Create offspring from these parents (crossover + mutation)
-            let mut new_offsprings = self.mating_batch(&parents_a.genes, &parents_b.genes, rng);
+            let mut new_offsprings = self.mating_batch(&parents_a.genes, &parents_b.genes, rng)?;
             // Clean duplicates within the new offspring (internal cleaning)
             new_offsprings = self.clean_duplicates(new_offsprings, None);
             // Clean duplicates between new offspring and the current population.
@@ -181,11 +154,7 @@ where
         }
 
         if all_offsprings.is_empty() {
-            return Err(EvolveError::EmptyMatingResult {
-                message: "No offspring were generated.".to_string(),
-                current_offspring_count: 0,
-                required_offsprings: num_offsprings,
-            });
+            return Err(OperatorError::EmptyMatingResult);
         }
 
         // Convert Vec<Vec<f64>> into a single Array2.

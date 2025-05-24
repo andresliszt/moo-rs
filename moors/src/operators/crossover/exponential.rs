@@ -1,5 +1,5 @@
 use crate::genetic::IndividualGenes;
-use crate::operators::{CrossoverOperator, GeneticOperator};
+use crate::operators::{CrossoverOperator, GeneticOperator, error::CrossoverError};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -31,7 +31,7 @@ impl CrossoverOperator for ExponentialCrossover {
         parent_a: &IndividualGenes,
         parent_b: &IndividualGenes,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> Result<(IndividualGenes, IndividualGenes), CrossoverError> {
         let len = parent_a.len();
         assert_eq!(len, parent_b.len());
 
@@ -73,7 +73,7 @@ impl CrossoverOperator for ExponentialCrossover {
             }
         }
 
-        (child_a, child_b)
+        Ok((child_a, child_b))
     }
 }
 
@@ -124,7 +124,7 @@ mod tests {
     }
 
     #[test]
-    fn test_exponential_crossover() {
+    fn test_exponential_crossover() -> Result<(), CrossoverError> {
         // Define two parent IndividualGenes as small Array1<f64> vectors.
         // For simplicity, we use arrays of length 3.
         let parent_a: IndividualGenes = array![1.0, 2.0, 3.0];
@@ -145,7 +145,7 @@ mod tests {
         let mut fake_rng = FakeRandom::new(vec![1, 2], vec![0.7, 0.8]);
 
         // Perform the exponential crossover.
-        let (child_a, child_b) = operator.crossover(&parent_a, &parent_b, &mut fake_rng);
+        let (child_a, child_b) = operator.crossover(&parent_a, &parent_b, &mut fake_rng)?;
 
         // Expected outcome:
         // For child_a: start index 1 -> replace gene at index 1 with parent_b[1] (5.0),
@@ -165,5 +165,6 @@ mod tests {
             child_b, expected_child_b,
             "child_b does not match expected output"
         );
+        Ok(())
     }
 }

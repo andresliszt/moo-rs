@@ -1,6 +1,6 @@
 use crate::{
     genetic::IndividualGenesMut,
-    operators::{GeneticOperator, MutationOperator},
+    operators::{GeneticOperator, MutationOperator, error::MutationError},
     random::RandomGenerator,
 };
 
@@ -23,7 +23,11 @@ impl GeneticOperator for SwapMutation {
 /// In a typical permutation-based setup, each row is an array of distinct values.
 /// The "swap" mutation picks two indices at random and swaps them.
 impl MutationOperator for SwapMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(
+        &self,
+        mut individual: IndividualGenesMut<'a>,
+        rng: &mut impl RandomGenerator,
+    ) -> Result<(), MutationError> {
         let length = individual.len();
         // If there is at most one element, there's nothing to swap.
         if length > 1 {
@@ -37,6 +41,7 @@ impl MutationOperator for SwapMutation {
             // Swap the elements in place.
             individual.swap(idx1, idx2);
         }
+        Ok(())
     }
 }
 

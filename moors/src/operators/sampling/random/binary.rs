@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::{
     genetic::IndividualGenes,
-    operators::{GeneticOperator, SamplingOperator},
+    operators::{GeneticOperator, SamplingOperator, error::SamplingError},
     random::RandomGenerator,
 };
 
@@ -27,9 +27,10 @@ impl SamplingOperator for RandomSamplingBinary {
         &self,
         num_vars: usize,
         rng: &mut impl RandomGenerator,
-    ) -> IndividualGenes {
-        (0..num_vars)
+    ) -> Result<IndividualGenes, SamplingError> {
+        let sample = (0..num_vars)
             .map(|_| if rng.gen_bool(0.5) { 1.0 } else { 0.0 })
-            .collect()
+            .collect();
+        Ok(sample)
     }
 }

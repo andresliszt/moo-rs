@@ -5,24 +5,16 @@
 //! takes a 2‑D array of genomes (`PopulationGenes` = `Array2<f64>`) and returns
 //! a fully populated [`Population`] with fitness values and optional constraints
 
-use crate::genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes};
 use ndarray::Axis;
-use std::fmt;
+use thiserror::Error;
+
+use crate::genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes};
 
 /// Error type for the Evaluator.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum EvaluatorError {
+    #[error("No feasible individuals found in the population.")]
     NoFeasibleIndividuals,
-}
-
-impl fmt::Display for EvaluatorError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            EvaluatorError::NoFeasibleIndividuals => {
-                write!(f, "No feasible individuals found in the population.")
-            }
-        }
-    }
 }
 
 /// Evaluator struct for calculating fitness and (optionally) constraints,

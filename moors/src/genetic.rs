@@ -17,6 +17,7 @@
 //! | `Population`               | – | Bundle of the three matrices plus optional rank / survival score vectors. |
 //! | `Fronts` & `FrontsExt`     | `Vec<Population>` | Convenience for non‑dominated sorting (`fronts.to_population()`). |
 //!
+use crate::operators::error::SurvivalError;
 use ndarray::{Array1, Array2, ArrayViewMut1, Axis, concatenate};
 
 /// Represents an individual in the population.
@@ -182,13 +183,12 @@ impl Population {
     ///
     /// This method validates that the provided `diversity` vector has the same number of elements
     /// as individuals in the population. If not, it returns an error.
-    pub fn set_survival_score(&mut self, score: Array1<f64>) -> Result<(), String> {
+    pub fn set_survival_score(&mut self, score: Array1<f64>) -> Result<(), SurvivalError> {
         if score.len() != self.len() {
-            return Err(format!(
-                "The diversity vector has length {} but the population contains {} individuals.",
-                score.len(),
-                self.len()
-            ));
+            return Err(SurvivalError::LengthMismatch {
+                score_len: score.len(),
+                population_len: self.len(),
+            });
         }
         self.survival_score = Some(score);
         Ok(())

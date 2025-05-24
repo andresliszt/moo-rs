@@ -3,14 +3,18 @@ use std::borrow::Cow;
 use ndarray::{Array1, Array2, Axis, s};
 use ndarray_stats::QuantileExt;
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{Population, PopulationFitness};
-use crate::helpers::extreme_points::get_ideal;
-use crate::non_dominated_sorting::build_fronts;
-use crate::operators::survival::helpers::HyperPlaneNormalization;
-use crate::operators::{GeneticOperator, survival::SurvivalOperator};
-use crate::random::RandomGenerator;
-
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{Population, PopulationFitness},
+    helpers::extreme_points::get_ideal,
+    non_dominated_sorting::build_fronts,
+    operators::{
+        GeneticOperator,
+        error::SurvivalError,
+        survival::{SurvivalOperator, helpers::HyperPlaneNormalization},
+    },
+    random::RandomGenerator,
+};
 /// Implementation of the survival operator for the NSGA3 algorithm presented in the paper
 /// An Evolutionary Many-Objective Optimization Algorithm Using Reference-point Based Non-dominated Sorting Approach
 
@@ -42,11 +46,13 @@ impl HyperPlaneNormalization for Nsga3HyperPlaneNormalization {
     /// For each objective j, constructs a weight vector:
     ///   w^j = [eps, ..., 1.0 (at position j), ..., eps],
     /// then selects the solution that minimizes ASF(s, w^j) using argmin from ndarray-stats.
-    fn compute_extreme_points(&self, translated_population: &PopulationFitness) -> Array2<f64> {
+    fn compute_extreme_points(
+        &self,
+        translated_population: &PopulationFitness,
+    ) -> Result<Array2<f64>, SurvivalError> {
         let num_objectives = translated_population.ncols();
         // Initialize an array to hold the extreme vectors; one per objective.
         let mut extreme_points = Array2::<f64>::zeros((num_objectives, num_objectives));
-
         // For each objective j, compute the corresponding extreme point.
         for j in 0..num_objectives {
             // Build the weight vector for objective j:
@@ -62,7 +68,7 @@ impl HyperPlaneNormalization for Nsga3HyperPlaneNormalization {
             let asf_array = Array1::from(asf_values);
 
             // Use argmin from ndarray-stats to get the index of the minimum ASF value.
-            let best_idx = asf_array.argmin().unwrap();
+            let best_idx = asf_array.argmin()?;
 
             // The extreme point for objective j is the translated objective vector
             // of the solution that minimized ASF with weight vector w^j.
@@ -70,7 +76,7 @@ impl HyperPlaneNormalization for Nsga3HyperPlaneNormalization {
             // Place this extreme vector in the j-th row of extreme_points.
             extreme_points.slice_mut(s![j, ..]).assign(&extreme);
         }
-        extreme_points
+        Ok(extreme_points)
     }
 }
 
@@ -98,7 +104,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
         num_survive: usize,
         rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> Result<Population, SurvivalError> {
         // Build fronts
         let mut fronts = build_fronts(population, num_survive);
         // Accumulator for the merged population.
@@ -106,7 +112,6 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
         let mut n_survivors = 0;
         // Drain fronts to consume them and get an iterator of owned Population values.
         let drained = fronts.drain(..).enumerate();
-        // Iterate over all fronts with enumerate (we no longer differentiate contexts).
         for (_i, front) in drained {
             // Save the length of the current front.
             let front_len = front.len();
@@ -133,7 +138,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
                     let translated_population = &st.fitness - &z_min;
                     let normalizer = Nsga3HyperPlaneNormalization::new();
                     let intercepts =
-                        normalizer.compute_hyperplane_intercepts(&translated_population);
+                        normalizer.compute_hyperplane_intercepts(&translated_population)?;
                     // This call is the normalize function (Algorithm 2)
                     let normalized_fitness = &translated_population / (&intercepts - &z_min);
                     // Now as the paper says, if the points are aspirational then normalize
@@ -172,7 +177,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
                 break;
             }
         }
-        survivors.expect("Failed to build survivors")
+        Ok(survivors.unwrap())
     }
 }
 
@@ -192,28 +197,21 @@ fn asf(x: &Array1<f64>, w: &Array1<f64>) -> f64 {
 /// This is the algorithm (3) in the presented paper
 fn associate(st_fitness: &PopulationFitness, zr: &Array2<f64>) -> (Vec<usize>, Vec<f64>) {
     let n = st_fitness.nrows();
-
-    // 1. Compute squared norms for each solution: shape (n,)
+    // Compute squared norms for each solution: shape (n,)
     let norm_s_sq: Array1<f64> = st_fitness.outer_iter().map(|s| s.dot(&s)).collect();
-
-    // 2. Compute squared norms for each reference: shape (m,)
+    // Compute squared norms for each reference: shape (m,)
     let norm_w_sq: Array1<f64> = zr.outer_iter().map(|w| w.dot(&w)).collect();
-
-    // 3. Compute dot products between each s and each w: matrix A of shape (n, m)
+    // Compute dot products between each s and each w: matrix A of shape (n, m)
     let dot = st_fitness.dot(&zr.t());
-
-    // 4. Reshape norms for broadcasting:
+    // Reshape norms for broadcasting:
     let norm_s_sq = norm_s_sq.insert_axis(Axis(1)); // shape (n, 1)
     let norm_w_sq = norm_w_sq.insert_axis(Axis(0)); // shape (1, m)
-
-    // 5. Compute the squared dot products
+    // Compute the squared dot products
     let dot_sq = dot.mapv(|x| x * x);
-
-    // 6. Compute the squared perpendicular distance:
+    // Compute the squared perpendicular distance:
     // d2[i, j] = ||s_i||^2 - (dot[i,j]^2 / ||w_j||^2)
     let d2 = &norm_s_sq - &dot_sq / &norm_w_sq;
-
-    // 8. For each solution (each row in d), find the index of the reference that minimizes the distance.
+    // For each solution (each row in d), find the index of the reference that minimizes the distance.
     let mut assignments = Vec::with_capacity(n);
     let mut distances = Vec::with_capacity(n);
 
@@ -225,7 +223,6 @@ fn associate(st_fitness: &PopulationFitness, zr: &Array2<f64>) -> (Vec<usize>, V
         assignments.push(min_idx);
         distances.push(min_val);
     }
-
     (assignments, distances)
 }
 
@@ -277,7 +274,7 @@ fn niching(
             break;
         }
 
-        // Step 3: Compute Jmin = { j in available_refs such that ρ_j is minimal }
+        // Compute Jmin = { j in available_refs such that ρ_j is minimal }
         let min_count = available_refs
             .iter()
             .map(|&j| niche_counts[j])
@@ -289,10 +286,10 @@ fn niching(
             .filter(|&j| niche_counts[j] == min_count)
             .collect();
 
-        // Step 4: Select a random reference point from Jmin
+        // Select a random reference point from Jmin
         let j_bar = *rng.choose_usize(&jmin).unwrap();
 
-        // Step 5: I_j_bar = { s in splitting_front such that assignments[s] == j_bar }
+        // I_j_bar = { s in splitting_front such that assignments[s] == j_bar }
         let i_j_bar: Vec<usize> = splitting_front
             .iter()
             .copied()
@@ -311,15 +308,12 @@ fn niching(
                 // Otherwise, select a random solution from I_j_bar
                 *rng.choose_usize(&i_j_bar).unwrap()
             };
-
             // Add the chosen solution to Pt+1
             pt_next.push(s_chosen);
-
             // Remove the chosen solution from the splitting front
             if let Some(pos) = splitting_front.iter().position(|&s| s == s_chosen) {
                 splitting_front.remove(pos);
             }
-
             // Update the niche count for j_bar and decrement n_remaining
             niche_counts[j_bar] += 1;
             n_remaining -= 1;
@@ -381,13 +375,13 @@ mod tests {
 
     // Test compute_extreme_points using a simple two-solution, two-objective case.
     #[test]
-    fn test_compute_extreme_points() {
+    fn test_compute_extreme_points() -> Result<(), SurvivalError> {
         // Two solutions:
         //   Solution A: [1.0, 10.0]
         //   Solution B: [10.0, 1.0]
         let pop = array![[1.0, 10.0], [10.0, 1.0]];
         let normalizer = Nsga3HyperPlaneNormalization::new();
-        let extreme = normalizer.compute_extreme_points(&pop);
+        let extreme = normalizer.compute_extreme_points(&pop)?;
 
         // For objective 0, we expect the extreme point to be B: [10.0, 1.0]
         // For objective 1, we expect the extreme point to be A: [1.0, 10.0]
@@ -397,6 +391,7 @@ mod tests {
             extreme, expected,
             "Computed extreme points do not match expected values"
         );
+        Ok(())
     }
 
     // Test associate: simple case with two solutions and two reference points.
@@ -480,7 +475,7 @@ mod tests {
     /// Test the operate method when the first (and only) front is larger than num_survive.
     /// In this case splitting occurs with no previously accumulated survivors.
     #[test]
-    fn test_operate_split_first_front_content() {
+    fn test_operate_split_first_front_content() -> Result<(), SurvivalError> {
         // Create one front with 5 individuals having distinct fitness values.
         let fitness = array![[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0]];
         // For simplicity, genes = fitness
@@ -493,7 +488,7 @@ mod tests {
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(2, 5, 5, 2, 1, 0, None, None);
         // Set num_survive to 3 so that splitting must occur on the single front.
-        let survivors = survival_operator.operate(population, 3, &mut rng, &_context);
+        let survivors = survival_operator.operate(population, 3, &mut rng, &_context)?;
         assert_eq!(survivors.len(), 3, "Final survivors count should be 3");
 
         // Verify that each selected individual comes from the original front.
@@ -512,12 +507,13 @@ mod tests {
                 survivor
             );
         }
+        Ok(())
     }
 
     /// Test the operate method when multiple fronts are provided and splitting occurs on a later front.
     /// In this scenario the complete first front is preserved and a part of the second front is selected.
     #[test]
-    fn test_operate_split_later_front_content() {
+    fn test_operate_split_later_front_content() -> Result<(), SurvivalError> {
         // Front 1: 3 individuals (1.x fitness). Front 2: 4 individuals with higher fitness values (2.x fitness)
         let fitness = array![
             [1.0, 1.0],
@@ -539,7 +535,7 @@ mod tests {
         // Total individuals if merged completely would be 7.
         // Set num_survive to 5 so that the first front (3 individuals) is completely taken
         // and 2 individuals are selected from the second front.
-        let survivors = survival_operator.operate(population, 5, &mut rng, &_context);
+        let survivors = survival_operator.operate(population, 5, &mut rng, &_context)?;
         assert_eq!(survivors.len(), 5, "Final survivors count should be 5");
 
         // Check that the survivors include all individuals from the first front.
@@ -577,5 +573,6 @@ mod tests {
                 i, survivor_row
             );
         }
+        Ok(())
     }
 }
