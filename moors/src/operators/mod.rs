@@ -19,8 +19,9 @@
 //! | [`SurvivalOperator`]   | Decide which individuals survive to the next generation. | `FrontsAndRankingBasedSurvival`, `Nsga3ReferencePointsSurvival`, ... |
 //!
 //! ```rust
+//! use ndarray::ArrayViewMut1;
+//!
 //! use moors::{
-//!     genetic::IndividualGenesMut,
 //!     operators::{GeneticOperator, MutationOperator},
 //!     random::RandomGenerator,
 //! };
