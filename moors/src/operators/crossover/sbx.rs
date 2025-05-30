@@ -115,7 +115,7 @@ impl CrossoverOperator for SimulatedBinaryCrossover {
         parent_a: &Array1<f64>,
         parent_b: &Array1<f64>,
         rng: &mut impl RandomGenerator,
-    ) -> (((Array1<f64>, Array1<f64>))) {
+    ) -> (Array1<f64>, Array1<f64>) {
         // TODO: Enable prob_exchange
         sbx_crossover_array(parent_a, parent_b, self.distribution_index, 0.0, rng)
     }

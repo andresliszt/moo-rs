@@ -26,7 +26,7 @@ pub trait CrossoverOperator: GeneticOperator {
         parent_a: &Array1<f64>,
         parent_b: &Array1<f64>,
         rng: &mut impl RandomGenerator,
-    ) -> ((Array1<f64>, Array1<f64>));
+    ) -> (Array1<f64>, Array1<f64>);
 
     /// Applies the crossover operator to the population.
     /// Takes two parent populations and returns two offspring populations.
