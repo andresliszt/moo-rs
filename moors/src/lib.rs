@@ -27,12 +27,11 @@
 //! ## Quick start
 //!
 //! ```rust,no_run
-//! use ndarray::{Array1, Axis, stack};
+//! use ndarray::{Array1, Array2, Axis, stack};
 //!
 //! use moors::{
 //!     algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
 //!     duplicates::ExactDuplicatesCleaner,
-//!     genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
 //!     operators::{
 //!         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
 //!         sampling::RandomSamplingBinary,
@@ -45,7 +44,7 @@
 //! const CAPACITY: f64 = 15.0;
 //!
 //! /// Multi‑objective fitness ⇒ [−total_value, total_weight]
-//! fn fitness(pop_genes: &Array2<f64>) -> PopulationFitness {
+//! fn fitness(pop_genes: &Array2<f64>) -> Array2<f64> {
 //!     let w = Array1::from_vec(WEIGHTS.into());
 //!     let v = Array1::from_vec(VALUES.into());
 //!     let total_v = pop_genes.dot(&v);
@@ -54,9 +53,9 @@
 //! }
 //!
 //! /// Single inequality constraint ⇒ total_weight − CAPACITY ≤ 0
-//! fn constraints(pop_genes: &Array2<f64>) -> PopulationConstraints {
+//! fn constraints(pop_genes: &Array2<f64>) -> Array1<f64> {
 //!     let w = Array1::from_vec(WEIGHTS.into());
-//!     (pop_genes.dot(&w) - CAPACITY).insert_axis(Axis(1))
+//!     pop_genes.dot(&w) - CAPACITY
 //! }
 //!
 //! fn main() -> Result<(), MultiObjectiveAlgorithmError> {

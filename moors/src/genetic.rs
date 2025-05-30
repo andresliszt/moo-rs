@@ -4,19 +4,6 @@
 //! evolutionary algorithm in *moors*—from initial sampling to final Pareto
 //! archive.  They are intentionally *minimal* (pure `ndarray` wrappers) so they
 //! can be inspected, cloned, or serialised without pulling extra dependencies.
-//!
-//! ## Type overview
-//!
-//! | Alias / Struct | Shape | Purpose |
-//! |----------------|-------|---------|
-//! | `IndividualGenes`           | `Array1<f64>` | One genome (decision‑variable vector). |
-//! | `Individual`               | – | Genome + fitness + constraints + rank + optional survival score. |
-//! | `PopulationGenes`          | `Array2<f64>` | Matrix of *N* genomes (row‑wise). |
-//! | `PopulationFitness`        | `Array2<f64>` | Matrix of *N × k* objective values. |
-//! | `PopulationConstraints`    | `Array2<f64>` | Matrix of *N × c* constraint values (≤ 0 ⇒ feasible). |
-//! | `Population`               | – | Bundle of the three matrices plus optional rank / survival score vectors. |
-//! | `Fronts` & `FrontsExt`     | `Vec<Population>` | Convenience for non‑dominated sorting (`fronts.to_population()`). |
-//!
 use ndarray::{
     Array1, Array2, ArrayBase, ArrayView, ArrayView1, Axis, Dimension, Ix0, Ix1, Ix2, OwnedRepr,
     RemoveAxis, concatenate,
@@ -315,7 +302,6 @@ pub type PopulationSOO<ConstrDim = Ix1> = Population<Ix1, ConstrDim>;
 pub type IndividualMOO<'a, ConstrDim> = Individual<'a, Ix1, ConstrDim>;
 /// Type alias for Individual in Single Objective Optimization
 pub type IndividualSOO<'a, ConstrDim> = Individual<'a, Ix0, ConstrDim>;
-
 /// Type alias for a vector of `Population` representing multiple fronts.
 pub type Fronts<ConstrDim> = Vec<PopulationMOO<ConstrDim>>;
 

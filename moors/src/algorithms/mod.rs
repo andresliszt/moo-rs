@@ -23,11 +23,10 @@
 //! ## Quick example: NSGA‑II
 //!
 //! ```rust,no_run, ignore
-//! use ndarray::{Array1, Axis, stack};
+//! use ndarray::{Array1, Array2, Axis, stack};
 //! use moors::{
 //!     algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
 //!     duplicates::ExactDuplicatesCleaner,
-//!     genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
 //!     operators::{
 //!         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
 //!         sampling::RandomSamplingBinary,
@@ -39,8 +38,8 @@
 //! # const WEIGHTS: [f64; 5] = [12.0, 2.0, 1.0, 4.0, 10.0];
 //! # const VALUES:  [f64; 5] = [ 4.0, 2.0, 1.0, 5.0,  3.0];
 //! # const CAPACITY: f64 = 15.0;
-//! # fn fitness(_: &Array2<f64>) -> PopulationFitness { todo!() }
-//! # fn constraints(_: &Array2<f64>) -> PopulationConstraints { todo!() }
+//! # fn fitness(_: &Array2<f64>) -> Array2<f64> { todo!() }
+//! # fn constraints(_: &Array2<f64>) -> Array2<f64> { todo!() }
 //!
 //! fn main() -> Result<(), MultiObjectiveAlgorithmError> {
 //!     let mut algorithm = Nsga2Builder::default()
