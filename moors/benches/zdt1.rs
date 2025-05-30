@@ -3,12 +3,12 @@ extern crate moors;
 use std::time::Duration;
 
 use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion_main};
-use ndarray::{Axis, stack};
+use ndarray::{Array2, Axis, stack};
 
 use moors::{
     algorithms::Nsga2Builder,
     duplicates::CloseDuplicatesCleaner,
-    genetic::{FitnessFn, NoConstraintsFn, PopulationFitness, PopulationGenes},
+    evaluator::NoConstraintsFnPointer,
     operators::{
         crossover::SimulatedBinaryCrossover, mutation::GaussianMutation,
         sampling::RandomSamplingFloat,
@@ -19,7 +19,7 @@ use moors::{
 /// f1(x) = x₀
 /// g(x)  = 1 + 9/(n−1) * Σᵢ₌₁ⁿ⁻₁ xᵢ
 /// f2(x) = g(x) * (1 − sqrt(f1(x) / g(x)))
-fn zdt1(pop_genes: &PopulationGenes) -> PopulationFitness {
+fn zdt1(pop_genes: &Array2<f64>) -> Array2<f64> {
     let n = pop_genes.ncols();
     let f1 = pop_genes.column(0).to_owned();
     let sum_rest = pop_genes.sum_axis(Axis(1)) - &f1;
@@ -31,12 +31,12 @@ fn zdt1(pop_genes: &PopulationGenes) -> PopulationFitness {
 fn bench_nsga2_zdt1(c: &mut Criterion) {
     c.bench_function("nsga2_zdt1", |b| {
         b.iter(|| {
-            let mut algorithm = Nsga2Builder::<_, _, _, _, NoConstraintsFn, _>::default()
+            let mut algorithm = Nsga2Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
                 .sampler(RandomSamplingFloat::new(0.0, 1.0))
                 .crossover(SimulatedBinaryCrossover::new(15.0))
                 .mutation(GaussianMutation::new(0.5, 0.01))
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
-                .fitness_fn(zdt1 as FitnessFn)
+                .fitness_fn(zdt1)
                 .num_vars(10)
                 .num_objectives(2)
                 .population_size(1000)

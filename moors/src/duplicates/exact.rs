@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 use std::fmt::Debug;
 
+use ndarray::Array2;
 use ordered_float::OrderedFloat;
 
 use crate::duplicates::PopulationCleaner;
-use crate::genetic::PopulationGenes;
 
 #[derive(Debug, Clone)]
 /// Exact duplicates cleaner based on Hash
@@ -17,11 +17,7 @@ impl ExactDuplicatesCleaner {
 }
 
 impl PopulationCleaner for ExactDuplicatesCleaner {
-    fn remove(
-        &self,
-        population: &PopulationGenes,
-        reference: Option<&PopulationGenes>,
-    ) -> PopulationGenes {
+    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64> {
         let ncols = population.ncols();
         let mut unique_rows: Vec<Vec<f64>> = Vec::new();
         // A HashSet to hold the hashable representation of rows.
@@ -47,7 +43,7 @@ impl PopulationCleaner for ExactDuplicatesCleaner {
 
         // Flatten the unique rows into a single vector.
         let data_flat: Vec<f64> = unique_rows.into_iter().flatten().collect();
-        PopulationGenes::from_shape_vec((data_flat.len() / ncols, ncols), data_flat)
+        Array2::<f64>::from_shape_vec((data_flat.len() / ncols, ncols), data_flat)
             .expect("Failed to create deduplicated Array2")
     }
 }
@@ -55,7 +51,6 @@ impl PopulationCleaner for ExactDuplicatesCleaner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::genetic::PopulationGenes;
     use ndarray::array;
 
     #[test]
@@ -68,7 +63,7 @@ mod tests {
             4.0, 5.0, 6.0, // row 4 (duplicate of row 1)
         ];
         let population =
-            PopulationGenes::from_shape_vec((5, 3), raw_data).expect("Failed to create test array");
+            Array2::<f64>::from_shape_vec((5, 3), raw_data).expect("Failed to create test array");
         let cleaner = ExactDuplicatesCleaner::new();
         let cleaned = cleaner.remove(&population, None);
         assert_eq!(cleaned.nrows(), 3);

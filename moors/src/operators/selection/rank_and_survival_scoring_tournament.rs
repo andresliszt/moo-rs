@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::genetic::Individual;
+use crate::genetic::{D01, IndividualMOO};
 use crate::operators::{
     selection::DuelResult,
     survival::SurvivalScoringComparison,
@@ -58,12 +58,15 @@ impl GeneticOperator for RankAndScoringSelection {
 impl SelectionOperator for RankAndScoringSelection {
     /// Runs tournament selection on the given population and returns the duel result.
     /// This example assumes binary tournaments (pressure = 2).
-    fn tournament_duel(
+    fn tournament_duel<'a, ConstrDim>(
         &self,
-        p1: &Individual,
-        p2: &Individual,
+        p1: &IndividualMOO<'a, ConstrDim>,
+        p2: &IndividualMOO<'a, ConstrDim>,
         _rng: &mut impl RandomGenerator,
-    ) -> DuelResult {
+    ) -> DuelResult
+    where
+        ConstrDim: D01,
+    {
         /* 1. Feasibility dominates everything */
         match (p1.is_feasible(), p2.is_feasible()) {
             (true, false) => return DuelResult::LeftWins,
@@ -105,9 +108,9 @@ mod tests {
     use super::*;
     use rstest::rstest;
 
-    use ndarray::{Array1, array};
+    use ndarray::{Array1, Array2, arr0, array};
 
-    use crate::genetic::{Individual, Population, PopulationFitness, PopulationGenes};
+    use crate::genetic::PopulationMOO;
     use crate::operators::selection::{DuelResult, SelectionOperator};
     use crate::random::{RandomGenerator, TestDummyRng};
 
@@ -185,32 +188,27 @@ mod tests {
         let fitness = array![0.5];
 
         // Force feasibility by providing constraints: feasible if -1.0, infeasible if 1.0.
-        let left_constraints = Some(if left_feasible {
-            array![-1.0]
+        let left_arr0 = if left_feasible { arr0(-1.0) } else { arr0(1.0) };
+        let right_arr0 = if right_feasible {
+            arr0(-1.0)
         } else {
-            array![1.0]
-        });
-        let right_constraints = Some(if right_feasible {
-            array![-1.0]
-        } else {
-            array![1.0]
-        });
-
+            arr0(1.0)
+        };
+        let left_constraints = left_arr0.view();
+        let right_constraints = right_arr0.view();
         // Create individuals with the given rank and survival (diversity) values.
-        let p1 = Individual::new(
-            genes.clone(),
-            fitness.clone(),
-            left_constraints,
-            Some(left_rank),
-            Some(left_survival),
-        );
-        let p2 = Individual::new(
-            genes,
-            fitness,
-            right_constraints,
-            Some(right_rank),
-            Some(right_survival),
-        );
+        let p1: IndividualMOO<'_, ndarray::Ix0> = IndividualMOO {
+            genes: genes.view(),
+            fitness: fitness.view(),
+            constraints: Some(left_constraints),
+            rank: Some(left_rank),
+            survival_score: Some(left_survival),
+        };
+        let mut p2: IndividualMOO<'_, ndarray::Ix0> =
+            IndividualMOO::new(genes.view(), fitness.view(), right_constraints);
+        // Call setters to extend this test
+        p2.set_rank(right_rank);
+        p2.set_survival_score(right_survival);
 
         let selector = RankAndScoringSelection::new(true, true, survival_comparison);
         let mut rng = FakeRandomGenerator::new();
@@ -226,10 +224,10 @@ mod tests {
         // Diversity (CD): [10.0, 5.0, 9.0, 1.0]
         let genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]];
         let fitness = array![[0.5], [0.6], [0.7], [0.8]];
-        let constraints = None;
-        let rank = Some(array![0, 1, 0, 1]);
+        let rank = array![0, 1, 0, 1];
 
-        let population = Population::new(genes, fitness, constraints, rank);
+        let mut population = PopulationMOO::new_unconstrained(genes, fitness);
+        population.set_rank(rank);
 
         // n_crossovers = 2 → total_needed = 8 participants → 4 tournaments → 4 winners.
         // After splitting: pop_a = 2 winners, pop_b = 2 winners.
@@ -249,9 +247,10 @@ mod tests {
         // Individual 1: infeasible
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
         let fitness = array![[0.5], [0.6]];
-        let constraints = Some(array![[-1.0, 0.0], [1.0, 1.0]]);
-        let rank = Some(array![0, 0]);
-        let population = Population::new(genes, fitness, constraints, rank);
+        let constraints = array![[-1.0, 0.0], [1.0, 1.0]];
+        let rank = array![0, 0];
+        let mut population = PopulationMOO::new(genes, fitness, constraints);
+        population.set_rank(rank);
 
         // n_crossovers = 1 → total_needed = 4 participants → 2 tournaments → 2 winners total.
         // After splitting: pop_a = 1 winner, pop_b = 1 winner.
@@ -271,10 +270,9 @@ mod tests {
         // the tournament duel should result in a tie.
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
         let fitness = array![[0.5], [0.6]];
-        let constraints = None;
-        let rank = Some(array![0, 0]);
-
-        let population = Population::new(genes, fitness, constraints, rank);
+        let rank = array![0, 0];
+        let mut population = PopulationMOO::new_unconstrained(genes, fitness);
+        population.set_rank(rank);
 
         // n_crossovers = 1 → total_needed = 4 participants → 2 tournaments → 2 winners.
         // After splitting: pop_a = 1 winner, pop_b = 1 winner.
@@ -294,13 +292,11 @@ mod tests {
         // Large population test to ensure stability.
         let population_size = 100;
         let n_genes = 5;
-        let genes = PopulationGenes::from_shape_fn((population_size, n_genes), |(i, _)| i as f64);
-        let fitness =
-            PopulationFitness::from_shape_fn((population_size, 1), |(i, _)| i as f64 / 100.0);
-        let constraints = None;
-
-        let rank = Some(Array1::zeros(population_size));
-        let population = Population::new(genes, fitness, constraints, rank);
+        let genes = Array2::from_shape_fn((population_size, n_genes), |(i, _)| i as f64);
+        let fitness = Array2::from_shape_fn((population_size, 2), |(i, _)| i as f64 / 100.0);
+        let rank = Array1::zeros(population_size);
+        let mut population = PopulationMOO::new_unconstrained(genes, fitness);
+        population.set_rank(rank);
 
         // n_crossovers = 50 → total_needed = 200 participants → 100 tournaments → 100 winners.
         // After splitting: pop_a = 50 winners, pop_b = 50 winners.
@@ -320,11 +316,10 @@ mod tests {
         // total_needed = 4 participants → 2 tournaments → 2 winners.
         // After splitting: pop_a = 1, pop_b = 1.
         let genes = array![[10.0, 20.0], [30.0, 40.0]];
-        let fitness = array![[1.0], [2.0]];
-        let constraints = None;
-        let rank = Some(array![0, 1]);
-
-        let population = Population::new(genes, fitness, constraints, rank);
+        let fitness = array![[1.0, 2.0], [2.0, 1.0]];
+        let rank = array![0, 1];
+        let mut population = PopulationMOO::new_unconstrained(genes, fitness);
+        population.set_rank(rank);
 
         let n_crossovers = 1;
         let selector = RankAndScoringSelection::default();

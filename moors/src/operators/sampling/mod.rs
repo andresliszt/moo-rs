@@ -1,8 +1,6 @@
-use crate::{
-    genetic::{IndividualGenes, PopulationGenes},
-    operators::GeneticOperator,
-    random::RandomGenerator,
-};
+use ndarray::{Array1, Array2};
+
+use crate::{operators::GeneticOperator, random::RandomGenerator};
 
 mod permutation;
 mod random;
@@ -12,8 +10,7 @@ pub use random::{RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt};
 
 pub trait SamplingOperator: GeneticOperator {
     /// Samples a single individual.
-    fn sample_individual(&self, num_vars: usize, rng: &mut impl RandomGenerator)
-    -> IndividualGenes;
+    fn sample_individual(&self, num_vars: usize, rng: &mut impl RandomGenerator) -> Array1<f64>;
 
     /// Samples a population of individuals.
     fn operate(
@@ -21,7 +18,7 @@ pub trait SamplingOperator: GeneticOperator {
         population_size: usize,
         num_vars: usize,
         rng: &mut impl RandomGenerator,
-    ) -> PopulationGenes {
+    ) -> Array2<f64> {
         let mut population = Vec::with_capacity(population_size);
 
         // Sample individuals and collect them
@@ -43,7 +40,7 @@ pub trait SamplingOperator: GeneticOperator {
         let shape = (population_size, num_genes);
 
         // Use from_shape_vec to create PopulationGenes
-        let population_genes = PopulationGenes::from_shape_vec(shape, flat_population)
+        let population_genes = Array2::<f64>::from_shape_vec(shape, flat_population)
             .expect("Failed to create PopulationGenes from vector");
 
         population_genes

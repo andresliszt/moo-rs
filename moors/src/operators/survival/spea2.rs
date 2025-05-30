@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use ndarray::{Array1, Array2, Axis};
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{Population, PopulationFitness};
+use crate::genetic::{D12, PopulationMOO};
 use crate::helpers::linalg::cross_euclidean_distances_as_array;
 use crate::non_dominated_sorting::fast_non_dominated_sorting;
 use crate::operators::{GeneticOperator, SurvivalOperator};
@@ -25,13 +25,16 @@ impl Spea2KnnSurvival {
 }
 
 impl SurvivalOperator for Spea2KnnSurvival {
-    fn operate(
+    fn operate<ConstrDim>(
         &mut self,
-        population: Population,
+        population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> PopulationMOO<ConstrDim>
+    where
+        ConstrDim: D12,
+    {
         // Compute raw fitness F(i) = R(i) + D(i)
         let k = population.len().isqrt();
         let distance_matrix =
@@ -110,7 +113,7 @@ pub fn compute_density(distance_matrix: &Array2<f64>, k: usize) -> Array1<f64> {
 /// Internally this calls `fast_non_dominated_sorting(..., N)` to partition
 /// all individuals into successive non-dominated sets, then assigns each
 /// individual the index of the set it belongs to.
-pub fn compute_domination_indices(population_fitness: &PopulationFitness) -> Array1<f64> {
+pub fn compute_domination_indices(population_fitness: &Array2<f64>) -> Array1<f64> {
     let n = population_fitness.nrows();
     let ranks = fast_non_dominated_sorting(population_fitness, n);
 
@@ -259,7 +262,7 @@ mod tests {
         // A simple chain: A dominates B, B dominates C.
         // Fitness vectors: A = [1,1], B = [2,2], C = [3,3]
         // Expected ranks: A → 0, B → 1, C → 2
-        let fitness: PopulationFitness = array![[1.0, 1.0], [2.0, 2.0], [3.0, 3.0],];
+        let fitness = array![[1.0, 1.0], [2.0, 2.0], [3.0, 3.0],];
         let indices = compute_domination_indices(&fitness);
         assert_eq!(indices.len(), 3);
         assert_eq!(indices, array![0.0, 1.0, 2.0]);
@@ -269,25 +272,19 @@ mod tests {
     fn test_no_dominance_all_zero() {
         // All are non-dominated pairwise: rank 0 for everyone
         // Fitness: [1,4], [2,3], [3,2], [4,1]
-        let fitness: PopulationFitness = array![[1.0, 4.0], [2.0, 3.0], [3.0, 2.0], [4.0, 1.0],];
+        let fitness = array![[1.0, 4.0], [2.0, 3.0], [3.0, 2.0], [4.0, 1.0],];
         let indices = compute_domination_indices(&fitness);
         assert_eq!(indices.len(), 4);
         assert_eq!(indices, array![0.0, 0.0, 0.0, 0.0]);
     }
 
     /// Helper: build a Population from raw fitness only.
-    /// We use a dummy 1-column gene matrix and no constraints or rank.
-    fn make_population(fitness: Array2<f64>) -> Population {
+    /// We use a dummy 1-column gene matrix and no constraints nor rank.
+    fn make_population(fitness: Array2<f64>) -> PopulationMOO {
         let n = fitness.nrows();
         // 1 variable per individual, value zero—genes are never used by survival
         let genes = Array2::<f64>::zeros((n, 1));
-        Population {
-            genes,
-            fitness,
-            constraints: None,
-            rank: None,
-            survival_score: None,
-        }
+        PopulationMOO::new_unconstrained(genes, fitness)
     }
 
     #[test]

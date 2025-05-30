@@ -1,4 +1,5 @@
-use crate::genetic::{IndividualGenes, PopulationGenes};
+use ndarray::{Array1, Array2};
+
 use crate::operators::GeneticOperator;
 use crate::random::RandomGenerator;
 
@@ -22,21 +23,21 @@ pub trait CrossoverOperator: GeneticOperator {
     /// Performs crossover between two parents to produce two offspring.
     fn crossover(
         &self,
-        parent_a: &IndividualGenes,
-        parent_b: &IndividualGenes,
+        parent_a: &Array1<f64>,
+        parent_b: &Array1<f64>,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes);
+    ) -> (Array1<f64>, Array1<f64>);
 
     /// Applies the crossover operator to the population.
     /// Takes two parent populations and returns two offspring populations.
     /// Includes a `crossover_rate` to determine which pairs undergo crossover.
     fn operate(
         &self,
-        parents_a: &PopulationGenes,
-        parents_b: &PopulationGenes,
+        parents_a: &Array2<f64>,
+        parents_b: &Array2<f64>,
         crossover_rate: f64,
         rng: &mut impl RandomGenerator,
-    ) -> PopulationGenes {
+    ) -> Array2<f64> {
         let population_size = parents_a.nrows();
         assert_eq!(
             population_size,
@@ -72,7 +73,7 @@ pub trait CrossoverOperator: GeneticOperator {
         }
 
         // Create PopulationGenes directly from the flat vectors
-        let offspring_population = PopulationGenes::from_shape_vec(
+        let offspring_population = Array2::<f64>::from_shape_vec(
             (
                 self.n_offsprings_per_crossover() * population_size,
                 num_genes,

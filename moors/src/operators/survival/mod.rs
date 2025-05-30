@@ -1,6 +1,6 @@
 use crate::{
     algorithms::helpers::context::AlgorithmContext,
-    genetic::{Fronts, FrontsExt, Population},
+    genetic::{D12, Fronts, FrontsExt, PopulationMOO},
     non_dominated_sorting::build_fronts,
     operators::GeneticOperator,
     random::RandomGenerator,
@@ -38,13 +38,15 @@ pub enum SurvivalScoringComparison {
 /// implement this trait directly.
 pub trait SurvivalOperator: GeneticOperator {
     /// Selects the individuals that will survive to the next generation.
-    fn operate(
+    fn operate<ConstrDim>(
         &mut self,
-        population: Population,
+        population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    ) -> Population;
+    ) -> PopulationMOO<ConstrDim>
+    where
+        ConstrDim: D12;
 }
 
 /// A more specific survival trait for **front-and-ranking** algorithms
@@ -65,29 +67,33 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator {
 
     /// Computes the survival score for a given front's fitness.
     /// This is the only method that needs to be overridden by each survival operator.
-    fn set_front_survival_score(
+    fn set_front_survival_score<ConstrDim>(
         &self,
-        fronts: &mut Fronts,
+        fronts: &mut Fronts<ConstrDim>,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    );
+    ) where
+        ConstrDim: D12;
 
     /// Selects the individuals that will survive to the next generation.
     /// Default `operate` that builds fronts, scores, and splits any "overflowing" front.
-    fn operate(
+    fn operate<ConstrDim>(
         &mut self,
-        population: Population,
+        population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> PopulationMOO<ConstrDim>
+    where
+        ConstrDim: D12,
+    {
         // Build fronts
         let mut fronts = build_fronts(population, num_survive);
         // Set survival score
         self.set_front_survival_score(&mut fronts, rng, algorithm_context);
         // Drain all fronts.
         let drained = fronts.drain(..);
-        let mut survivors_parts: Vec<Population> = Vec::new();
+        let mut survivors_parts: Vec<PopulationMOO<ConstrDim>> = Vec::new();
         let mut n_survivors = 0;
 
         for front in drained {
@@ -130,13 +136,16 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator {
 
 // For any T that implements FrontsAndRankingBasedSurvival, also implement SurvivalOperator
 impl<T: FrontsAndRankingBasedSurvival> SurvivalOperator for T {
-    fn operate(
+    fn operate<ConstrDim>(
         &mut self,
-        population: Population,
+        population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> PopulationMOO<ConstrDim>
+    where
+        ConstrDim: D12,
+    {
         // Delegate to the FrontsAndRankingBasedSurvival default implementation
         <T as FrontsAndRankingBasedSurvival>::operate(
             self,

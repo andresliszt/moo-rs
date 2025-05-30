@@ -4,138 +4,170 @@
 //! evolutionary algorithm in *moors*—from initial sampling to final Pareto
 //! archive.  They are intentionally *minimal* (pure `ndarray` wrappers) so they
 //! can be inspected, cloned, or serialised without pulling extra dependencies.
-//!
-//! ## Type overview
-//!
-//! | Alias / Struct | Shape | Purpose |
-//! |----------------|-------|---------|
-//! | `IndividualGenes`           | `Array1<f64>` | One genome (decision‑variable vector). |
-//! | `Individual`               | – | Genome + fitness + constraints + rank + optional survival score. |
-//! | `PopulationGenes`          | `Array2<f64>` | Matrix of *N* genomes (row‑wise). |
-//! | `PopulationFitness`        | `Array2<f64>` | Matrix of *N × k* objective values. |
-//! | `PopulationConstraints`    | `Array2<f64>` | Matrix of *N × c* constraint values (≤ 0 ⇒ feasible). |
-//! | `Population`               | – | Bundle of the three matrices plus optional rank / survival score vectors. |
-//! | `Fronts` & `FrontsExt`     | `Vec<Population>` | Convenience for non‑dominated sorting (`fronts.to_population()`). |
-//!
-use ndarray::{Array1, Array2, ArrayViewMut1, Axis, concatenate};
+use ndarray::{
+    Array1, Array2, ArrayBase, ArrayView, ArrayView1, Axis, Dimension, Ix0, Ix1, Ix2, OwnedRepr,
+    RemoveAxis, concatenate,
+};
 
-/// Represents an individual in the population.
-/// Each `IndividualGenes` is an `Array1<f64>`.
-pub type IndividualGenes = Array1<f64>;
-pub type IndividualGenesMut<'a> = ArrayViewMut1<'a, f64>;
+pub type Constraints<D> = ArrayBase<OwnedRepr<f64>, D>;
+pub type Fitness<D> = ArrayBase<OwnedRepr<f64>, D>;
 
-/// Represents an individual with genes, fitness, constraints (if any),
+pub trait D01: Dimension {}
+
+impl D01 for Ix0 {} // for Array0<T>  (scalar)
+impl D01 for Ix1 {} // for Array1<T>  (vector)
+
+/// Dimensions allowed in moors are 1D and 2D. Fitness might be 1D
+/// (Single Objective Optimization) or 2D (Multi Objective Optimizations), in this
+/// case each column represents an objective. In both, each row is an individual. We
+/// restrict the implementors to this traits to ndarray::Ix1 and ndarray:Ix2 only.
+pub trait D12: Dimension + RemoveAxis {}
+
+impl D12 for Ix1 {}
+impl D12 for Ix2 {}
+
+/// Represents an individual with genes, fitness, optional constraints,
 /// rank, and an optional survival score.
-pub struct Individual {
-    pub genes: IndividualGenes,
-    pub fitness: Array1<f64>,
-    pub constraints: Option<Array1<f64>>,
+#[derive(Debug, Clone)]
+pub struct Individual<'a, FDim, ConstrDim>
+where
+    FDim: D01,
+    ConstrDim: D01,
+{
+    pub genes: ArrayView1<'a, f64>,
+    pub fitness: ArrayView<'a, f64, FDim>,
+    pub constraints: Option<ArrayView<'a, f64, ConstrDim>>,
     pub rank: Option<usize>,
     pub survival_score: Option<f64>,
 }
 
-impl Individual {
+impl<'a, FDim, ConstrDim> Individual<'a, FDim, ConstrDim>
+where
+    FDim: D01,
+    ConstrDim: D01,
+{
+    /// Creates a new `Individual` with given genes, fitness, and constraints.
+    /// `rank` and `survival_score` are initialized to `None`.
     pub fn new(
-        genes: IndividualGenes,
-        fitness: Array1<f64>,
-        constraints: Option<Array1<f64>>,
-        rank: Option<usize>,
-        survival_score: Option<f64>,
+        genes: ArrayView1<'a, f64>,
+        fitness: ArrayView<'a, f64, FDim>,
+        constraints: ArrayView<'a, f64, ConstrDim>,
     ) -> Self {
         Self {
             genes,
             fitness,
-            constraints,
-            rank,
-            survival_score,
+            constraints: Some(constraints),
+            rank: None,
+            survival_score: None,
         }
     }
 
+    /// Checks if the individual is feasible.
+    /// If `constraints` is `None`, it's always feasible.
+    /// Otherwise, all constraint values must be ≤ 0.0.
     pub fn is_feasible(&self) -> bool {
         match &self.constraints {
+            Some(c) => c.iter().all(|&val| val <= 0.0),
             None => true,
-            Some(c) => c.iter().sum::<f64>() <= 0.0,
+        }
+    }
+
+    /// Sets the rank of the individual.
+    pub fn set_rank(&mut self, rank: usize) {
+        self.rank = Some(rank);
+    }
+
+    /// Sets the survival score of the individual.
+    pub fn set_survival_score(&mut self, survival_score: f64) {
+        self.survival_score = Some(survival_score);
+    }
+}
+
+impl<'a, FDim> Individual<'a, FDim, ndarray::Ix0>
+where
+    FDim: D01,
+{
+    /// Creates a new `Individual` with given genes, fitness and without constraints.
+    /// `rank` and `survival_score` are initialized to `None`.
+    pub fn new_unconstrained(
+        genes: ArrayView1<'a, f64>,
+        fitness: ArrayView<'a, f64, FDim>,
+    ) -> Self {
+        Self {
+            genes,
+            fitness,
+            constraints: None,
+            rank: None,
+            survival_score: None,
         }
     }
 }
 
-/// Type aliases to work with populations.
-pub type PopulationGenes = Array2<f64>;
-pub type PopulationFitness = Array2<f64>;
-pub type PopulationConstraints = Array2<f64>;
-/// Type aliases for functions
-pub type FitnessFn = fn(&PopulationGenes) -> PopulationFitness;
-pub type ConstraintsFn = fn(&PopulationGenes) -> PopulationConstraints;
-// this below type is tricky: When any algorithm builder e.g Nsga2Builder omits
-// contraints_fn from the set process, then an explicit type must be given
-// algorithm: Nsga2<_, _, _, _, NoConstraintsFn, _> = Nsga2Builder::default().fitness_fn....
-// See moors_macros and several tests using the annotation
-// See also: https://github.com/colin-kiegel/rust-derive-builder/issues/343
-pub type NoConstraintsFn = fn(&PopulationGenes) -> PopulationConstraints;
-
 /// The `Population` struct contains genes, fitness, constraints (if any),
 /// rank (optional), and optionally a survival score vector.
-#[derive(Debug)]
-pub struct Population {
-    pub genes: PopulationGenes,
-    pub fitness: PopulationFitness,
-    pub constraints: Option<PopulationConstraints>,
+#[derive(Debug, Clone)]
+pub struct Population<FDim = Ix2, ConstrDim = Ix2>
+where
+    FDim: D12,
+    ConstrDim: D12,
+{
+    pub genes: Array2<f64>,
+    pub fitness: Fitness<FDim>,
+    pub constraints: Option<Constraints<ConstrDim>>,
     pub rank: Option<Array1<usize>>,
     pub survival_score: Option<Array1<f64>>,
 }
 
-impl Clone for Population {
-    fn clone(&self) -> Self {
-        Self {
-            genes: self.genes.clone(),
-            fitness: self.fitness.clone(),
-            constraints: self.constraints.clone(),
-            rank: self.rank.clone(),
-            survival_score: self.survival_score.clone(),
-        }
-    }
-}
-
-impl Population {
+impl<FDim, ConstrDim> Population<FDim, ConstrDim>
+where
+    FDim: D12,
+    ConstrDim: D12,
+{
     /// Creates a new `Population` instance with the given genes, fitness, constraints, and rank.
     /// The `survival_score` field is set to `None` by default.
     pub fn new(
-        genes: PopulationGenes,
-        fitness: PopulationFitness,
-        constraints: Option<PopulationConstraints>,
-        rank: Option<Array1<usize>>,
+        genes: Array2<f64>,
+        fitness: Fitness<FDim>,
+        constraints: Constraints<ConstrDim>,
     ) -> Self {
         Self {
             genes,
             fitness,
-            constraints,
-            rank,
-            survival_score: None, // Initialized to None by default.
+            constraints: Some(constraints),
+            rank: None,
+            survival_score: None,
         }
     }
 
-    /// Retrieves an `Individual` from the population by index.
-    pub fn get(&self, idx: usize) -> Individual {
-        let constraints = self.constraints.as_ref().map(|c| c.row(idx).to_owned());
-        let survival_score = self.survival_score.as_ref().map(|ss| ss[idx]);
+    pub fn get<'a>(
+        &'a self,
+        idx: usize,
+    ) -> Individual<'a, <FDim as Dimension>::Smaller, <ConstrDim as Dimension>::Smaller>
+    where
+        <FDim as Dimension>::Smaller: D01,
+        <ConstrDim as Dimension>::Smaller: D01,
+    {
+        let genes: ArrayView1<'a, f64> = self.genes.row(idx);
+        let fitness = self.fitness.index_axis(Axis(0), idx);
+        let constraints = self
+            .constraints
+            .as_ref()
+            .map(|mat| mat.index_axis(Axis(0), idx));
+
         let rank = self.rank.as_ref().map(|r| r[idx]);
-        Individual::new(
-            self.genes.row(idx).to_owned(),
-            self.fitness.row(idx).to_owned(),
+        let survival_score = self.survival_score.as_ref().map(|s| s[idx]);
+
+        Individual {
+            genes,
+            fitness,
             constraints,
             rank,
             survival_score,
-        )
-    }
-
-    /// Returns an iterator over all Individuals in this Population.
-    pub fn iter(&self) -> impl Iterator<Item = Individual> + '_ {
-        let n = self.len();
-        (0..n).map(move |i| self.get(i))
+        }
     }
 
     /// Returns a new `Population` containing only the individuals at the specified indices.
-    pub fn selected(&self, indices: &[usize]) -> Population {
+    pub fn selected(&self, indices: &[usize]) -> Self {
         let genes = self.genes.select(Axis(0), indices);
         let fitness = self.fitness.select(Axis(0), indices);
         let rank = self.rank.as_ref().map(|r| r.select(Axis(0), indices));
@@ -146,15 +178,15 @@ impl Population {
         let constraints = self
             .constraints
             .as_ref()
-            .map(|c| c.select(Axis(0), indices));
+            .map(|mat| mat.select(Axis(0), indices));
 
-        let mut selected_population = Population::new(genes, fitness, constraints, rank);
-        if let Some(score) = survival_score {
-            selected_population
-                .set_survival_score(score)
-                .expect("Failed to set survival score");
+        Population {
+            genes,
+            fitness,
+            constraints,
+            rank,
+            survival_score,
         }
-        selected_population
     }
 
     /// Returns the number of individuals in the population.
@@ -164,7 +196,7 @@ impl Population {
 
     /// Returns a new `Population` containing only the individuals with rank = 0.
     /// If no ranking information is available, the entire population is returned.
-    pub fn best(&self) -> Population {
+    pub fn best(&self) -> Self {
         if let Some(ranks) = &self.rank {
             let indices: Vec<usize> = ranks
                 .iter()
@@ -179,23 +211,20 @@ impl Population {
     }
 
     /// Updates the population's `survival_score` field.
-    ///
-    /// This method validates that the provided `diversity` vector has the same number of elements
-    /// as individuals in the population. If not, it returns an error.
-    pub fn set_survival_score(&mut self, score: Array1<f64>) -> Result<(), String> {
-        if score.len() != self.len() {
-            return Err(format!(
-                "The diversity vector has length {} but the population contains {} individuals.",
-                score.len(),
-                self.len()
-            ));
-        }
+    pub fn set_survival_score(&mut self, score: Array1<f64>) {
         self.survival_score = Some(score);
-        Ok(())
+    }
+
+    /// Updates the population's `rank` field.
+    pub fn set_rank(&mut self, rank: Array1<usize>) {
+        self.rank = Some(rank);
     }
 
     /// Merges two populations into one.
-    pub fn merge(population1: &Population, population2: &Population) -> Population {
+    pub fn merge(
+        population1: &Population<FDim, ConstrDim>,
+        population2: &Population<FDim, ConstrDim>,
+    ) -> Population<FDim, ConstrDim> {
         // Concatenate genes (assumed to be an Array2).
         let merged_genes = concatenate(
             Axis(0),
@@ -219,13 +248,17 @@ impl Population {
             _ => panic!("Mismatched population rank: one is set and the other is None"),
         };
 
-        // Merge constraints: both must be Some or both must be None.
+        // Merge constraints: both must have values or both must be None.
         let merged_constraints = match (&population1.constraints, &population2.constraints) {
-            (Some(c1), Some(c2)) => Some(
-                concatenate(Axis(0), &[c1.view(), c2.view()]).expect("Failed to merge constraints"),
-            ),
+            (Some(mat1), Some(mat2)) => {
+                let merged = concatenate(Axis(0), &[mat1.view(), mat2.view()])
+                    .expect("Failed to merge constraints");
+                Some(merged)
+            }
             (None, None) => None,
-            _ => panic!("Mismatched population constraints: one is set and the other is None"),
+            _ => panic!(
+                "Mismatched population constraints: one has constraints and the other does not"
+            ),
         };
 
         // Merge survival_score: both must be Some or both must be None.
@@ -239,35 +272,59 @@ impl Population {
             _ => panic!("Mismatched population survival scores: one is set and the other is None"),
         };
 
-        let mut merged_population = Population::new(
-            merged_genes,
-            merged_fitness,
-            merged_constraints,
-            merged_rank,
-        );
-
-        if let Some(score) = merged_survival_score {
-            merged_population
-                .set_survival_score(score)
-                .expect("Failed to set survival score");
+        Population {
+            genes: merged_genes,
+            fitness: merged_fitness,
+            constraints: merged_constraints,
+            rank: merged_rank,
+            survival_score: merged_survival_score,
         }
-        merged_population
     }
 }
 
+/// When no constraints are set, type it as Ix1 for simplicity and avoid turbofish
+impl<FDim> Population<FDim, Ix1>
+where
+    FDim: D12,
+{
+    pub fn new_unconstrained(genes: Array2<f64>, fitness: Fitness<FDim>) -> Self {
+        Self {
+            genes,
+            fitness,
+            constraints: None,
+            rank: None,
+            survival_score: None,
+        }
+    }
+}
+
+/// Type alias for Population in Multi Objective Optimization
+pub type PopulationMOO<ConstrDim = Ix1> = Population<Ix2, ConstrDim>;
+/// Type alias for Population in Single Objective Optimization
+pub type PopulationSOO<ConstrDim = Ix1> = Population<Ix1, ConstrDim>;
+/// Type alias for Individual in Multi Objective Optimization
+pub type IndividualMOO<'a, ConstrDim> = Individual<'a, Ix1, ConstrDim>;
+/// Type alias for Individual in Single Objective Optimization
+pub type IndividualSOO<'a, ConstrDim> = Individual<'a, Ix0, ConstrDim>;
 /// Type alias for a vector of `Population` representing multiple fronts.
-pub type Fronts = Vec<Population>;
+pub type Fronts<ConstrDim> = Vec<PopulationMOO<ConstrDim>>;
 
 /// An extension trait for `Fronts` that adds a `.to_population()` method
 /// which flattens multiple fronts into a single `Population`.
-pub trait FrontsExt {
-    fn to_population(self) -> Population;
+pub trait FrontsExt<ConstrDim>
+where
+    ConstrDim: D12,
+{
+    fn to_population(self) -> PopulationMOO<ConstrDim>;
 }
 
-impl FrontsExt for Vec<Population> {
-    fn to_population(self) -> Population {
+impl<ConstrDim> FrontsExt<ConstrDim> for Vec<PopulationMOO<ConstrDim>>
+where
+    ConstrDim: D12,
+{
+    fn to_population(self) -> PopulationMOO<ConstrDim> {
         self.into_iter()
-            .reduce(|pop1, pop2| Population::merge(&pop1, &pop2))
+            .reduce(|pop1, pop2| PopulationMOO::merge(&pop1, &pop2))
             .expect("Error when merging population vector")
     }
 }
@@ -275,24 +332,27 @@ impl FrontsExt for Vec<Population> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::array;
+    use ndarray::{arr0, array};
 
     #[test]
-    fn test_individual_is_feasible() {
+    fn test_individual_moo_is_feasible() {
         // Individual with no constraints should be feasible.
-        let ind1 = Individual::new(array![1.0, 2.0], array![0.5, 1.0], None, Some(0), None);
+        let genes_ind1 = array![1.0, 2.0];
+        let fitness_ind1 = array![0.5, 1.0];
+        let ind1 = IndividualMOO::new_unconstrained(genes_ind1.view(), fitness_ind1.view());
         assert!(
             ind1.is_feasible(),
             "Individual with no constraints should be feasible"
         );
 
         // Individual with constraints summing to <= 0 is feasible.
-        let ind2 = Individual::new(
-            array![1.0, 2.0],
-            array![0.5, 1.0],
-            Some(array![-1.0, 0.0]),
-            Some(0),
-            None,
+        let genes_ind2 = array![1.0, 2.0];
+        let fitness_ind2 = array![0.5, 1.0];
+        let constraints_ind2 = array![-1.0, 0.0];
+        let ind2 = IndividualMOO::new(
+            genes_ind2.view(),
+            fitness_ind2.view(),
+            constraints_ind2.view(),
         );
         assert!(
             ind2.is_feasible(),
@@ -300,12 +360,13 @@ mod tests {
         );
 
         // Individual with constraints summing to > 0 is not feasible.
+        let genes_ind3 = array![1.0, 2.0];
+        let fitness_ind3 = array![0.5, 1.0];
+        let constraints_ind3 = array![1.0, 0.1];
         let ind3 = Individual::new(
-            array![1.0, 2.0],
-            array![0.5, 1.0],
-            Some(array![1.0, 0.1]),
-            Some(0),
-            None,
+            genes_ind3.view(),
+            fitness_ind3.view(),
+            constraints_ind3.view(),
         );
         assert!(
             !ind3.is_feasible(),
@@ -314,13 +375,14 @@ mod tests {
     }
 
     #[test]
-    fn test_population_new_get_selected_len() {
+    fn test_population_moo_new_get_selected_len() {
         // Create a population with two individuals.
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
         let fitness = array![[0.5, 1.0], [1.5, 2.0]];
         // Using a rank array here.
-        let rank = Some(array![0, 1]);
-        let pop = Population::new(genes.clone(), fitness.clone(), None, rank);
+        let rank = array![0, 1];
+        let mut pop = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
+        pop.set_rank(rank);
 
         // Test len()
         assert_eq!(pop.len(), 2, "Population should have 2 individuals");
@@ -345,13 +407,14 @@ mod tests {
     }
 
     #[test]
-    fn test_population_best_with_rank() {
+    fn test_population_moo_best_with_rank() {
         // Create a population with three individuals and varying ranks.
         let genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
         let fitness = array![[0.5, 1.0], [1.5, 2.0], [2.5, 3.0]];
         // First and third individuals have rank 0, second has rank 1.
-        let rank = Some(array![0, 1, 0]);
-        let pop = Population::new(genes, fitness, None, rank);
+        let rank = array![0, 1, 0];
+        let mut pop = PopulationMOO::new_unconstrained(genes, fitness);
+        pop.set_rank(rank);
         let best = pop.best();
         // Expect best population to contain only individuals with rank 0.
         assert_eq!(best.len(), 2, "Best population should have 2 individuals");
@@ -366,11 +429,11 @@ mod tests {
     }
 
     #[test]
-    fn test_population_best_without_rank() {
+    fn test_population_moo_best_without_rank() {
         // Create a population without rank information.
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
         let fitness = array![[0.5, 1.0], [1.5, 2.0]];
-        let pop = Population::new(genes.clone(), fitness.clone(), None, None);
+        let pop = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
         // Since there is no rank, best() should return the whole population.
         let best = pop.best();
         assert_eq!(
@@ -385,41 +448,29 @@ mod tests {
         // Create a population with two individuals.
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
         let fitness = array![[0.5, 1.0], [1.5, 2.0]];
-        let rank = Some(array![0, 1]);
-        let mut pop = Population::new(genes, fitness, None, rank);
+        let mut pop = PopulationMOO::new_unconstrained(genes, fitness);
         // Set a survival score vector with correct length.
         let score = array![0.1, 0.2];
-        assert!(pop.set_survival_score(score.clone()).is_ok());
+        pop.set_survival_score(score.clone());
         assert_eq!(pop.survival_score.unwrap(), score);
     }
 
     #[test]
-    fn test_set_survival_score_err() {
-        // Create a population with two individuals.
-        let genes = array![[1.0, 2.0], [3.0, 4.0]];
-        let fitness = array![[0.5, 1.0], [1.5, 2.0]];
-        let rank = Some(array![0, 1]);
-        let mut pop = Population::new(genes, fitness, None, rank);
-
-        // Setting a survival score vector with incorrect length should error.
-        let wrong_score = array![0.1];
-        assert!(pop.set_survival_score(wrong_score).is_err());
-    }
-
-    #[test]
-    fn test_population_merge() {
+    fn test_population_moo_merge() {
         // Create two populations with rank information.
         let genes1 = array![[1.0, 2.0], [3.0, 4.0]];
         let fitness1 = array![[0.5, 1.0], [1.5, 2.0]];
-        let rank1 = Some(array![0, 0]);
-        let pop1 = Population::new(genes1, fitness1, None, rank1);
+        let rank1 = array![0, 0];
+        let mut pop1 = PopulationMOO::new_unconstrained(genes1, fitness1);
+        pop1.set_rank(rank1);
 
         let genes2 = array![[5.0, 6.0], [7.0, 8.0]];
         let fitness2 = array![[2.5, 3.0], [3.5, 4.0]];
-        let rank2 = Some(array![1, 1]);
-        let pop2 = Population::new(genes2, fitness2, None, rank2);
+        let rank2 = array![1, 1];
+        let mut pop2 = PopulationMOO::new_unconstrained(genes2, fitness2);
+        pop2.set_rank(rank2);
 
-        let merged = Population::merge(&pop1, &pop2);
+        let merged = PopulationMOO::merge(&pop1, &pop2);
         assert_eq!(
             merged.len(),
             4,
@@ -440,19 +491,17 @@ mod tests {
     }
 
     #[test]
-    fn test_fronts_ext_to_population() {
+    fn test_fronts_ext_to_population_moo() {
         // Create two fronts.
         let genes1 = array![[1.0, 2.0], [3.0, 4.0]];
         let fitness1 = array![[0.5, 1.0], [1.5, 2.0]];
-        let rank1 = Some(array![0, 0]);
-        let pop1 = Population::new(genes1, fitness1, None, rank1);
+        let pop1 = PopulationMOO::new_unconstrained(genes1, fitness1);
 
         let genes2 = array![[5.0, 6.0], [7.0, 8.0]];
         let fitness2 = array![[2.5, 3.0], [3.5, 4.0]];
-        let rank2 = Some(array![1, 1]);
-        let pop2 = Population::new(genes2, fitness2, None, rank2);
+        let pop2 = PopulationMOO::new_unconstrained(genes2, fitness2);
 
-        let fronts: Vec<Population> = vec![pop1.clone(), pop2.clone()];
+        let fronts = vec![pop1.clone(), pop2.clone()];
         let merged = fronts.to_population();
 
         assert_eq!(
@@ -467,41 +516,70 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Mismatched population constraints: one is set and the other is None"
+        expected = "Mismatched population constraints: one has constraints and the other does not"
     )]
-    fn test_population_merge_mismatched_constraints() {
-        // Crear dos poblaciones con constraints incompatibles: una con Some y otra sin.
+    fn test_population_moo_merge_mismatched_constraints() {
         let genes1 = array![[1.0, 2.0]];
         let fitness1 = array![[0.5, 1.0]];
-        let constraints1 = Some(array![[-1.0, 0.0]]);
-        let pop1 = Population::new(genes1, fitness1, constraints1, None);
+        let constraints1 = array![-1.0]; // Single constraints;
+        let pop1 = PopulationMOO::new(genes1, fitness1, constraints1);
 
         let genes2 = array![[3.0, 4.0]];
         let fitness2 = array![[1.5, 2.0]];
-        // pop2 sin constraints.
-        let pop2 = Population::new(genes2, fitness2, None, None);
+        // pop2 without constraints.
+        let pop2 = PopulationMOO {
+            genes: genes2,
+            fitness: fitness2,
+            constraints: None,
+            rank: None,
+            survival_score: None,
+        };
 
-        Population::merge(&pop1, &pop2);
+        PopulationMOO::merge(&pop1, &pop2);
     }
 
     #[test]
     #[should_panic(
         expected = "Mismatched population survival scores: one is set and the other is None"
     )]
-    fn test_population_merge_mismatched_survival_score() {
-        // Crear dos poblaciones con survival_score incompatibles: una con Some y otra sin.
+    fn test_population_moo_merge_mismatched_survival_score() {
         let genes1 = array![[1.0, 2.0]];
         let fitness1 = array![[0.5, 1.0]];
-        let mut pop1 = Population::new(genes1, fitness1, None, None);
-        // Asignar survival_score a pop1.
+        let mut pop1 = PopulationMOO::new_unconstrained(genes1, fitness1);
         let score1 = array![0.1];
-        pop1.set_survival_score(score1).unwrap();
+        pop1.set_survival_score(score1);
 
         let genes2 = array![[3.0, 4.0]];
         let fitness2 = array![[1.5, 2.0]];
-        // pop2 sin survival_score.
-        let pop2 = Population::new(genes2, fitness2, None, None);
+        let pop2 = PopulationMOO::new_unconstrained(genes2, fitness2);
 
         Population::merge(&pop1, &pop2);
+    }
+
+    #[test]
+    fn test_individual_soo_with_and_without_constraints() {
+        // Unconstrained individual: fitness is 0-D
+        let genes = array![0.1, 0.2, 0.3];
+        let fitness = arr0(42.0);
+        let ind_unconstrained = IndividualSOO::new_unconstrained(genes.view(), fitness.view());
+        // Should have no constraints
+        assert!(ind_unconstrained.constraints.is_none());
+        assert!(ind_unconstrained.is_feasible());
+        assert_eq!(ind_unconstrained.rank, None);
+        assert_eq!(ind_unconstrained.survival_score, None);
+
+        // Constrained individual with a scalar constraint ≤ 0
+        let constraint_ok = arr0(-0.5);
+        let ind_ok = IndividualSOO::new(genes.view(), fitness.view(), constraint_ok.view());
+        let c_ok = ind_ok.constraints.unwrap().into_scalar();
+        assert_eq!(*c_ok, -0.5);
+        assert!(ind_ok.is_feasible());
+
+        // Constrained individual with a scalar constraint > 0
+        let constraint_fail = arr0(1.5);
+        let ind_fail = IndividualSOO::new(genes.view(), fitness.view(), constraint_fail.view());
+        let c_fail = ind_fail.constraints.unwrap().into_scalar();
+        assert_eq!(*c_fail, 1.5);
+        assert!(!ind_fail.is_feasible());
     }
 }

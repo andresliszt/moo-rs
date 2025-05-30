@@ -1,5 +1,6 @@
+use ndarray::ArrayViewMut1;
+
 use crate::{
-    genetic::IndividualGenesMut,
     operators::{GeneticOperator, MutationOperator},
     random::RandomGenerator,
 };
@@ -24,7 +25,7 @@ impl GeneticOperator for BitFlipMutation {
 }
 
 impl MutationOperator for BitFlipMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: ArrayViewMut1<'a, f64>, rng: &mut impl RandomGenerator) {
         for gene in individual.iter_mut() {
             if rng.gen_bool(self.gene_mutation_rate) {
                 *gene = if *gene == 0.0 { 1.0 } else { 0.0 };
@@ -36,7 +37,6 @@ impl MutationOperator for BitFlipMutation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::genetic::PopulationGenes;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
 
@@ -69,7 +69,7 @@ mod tests {
         // Create a population with two individuals:
         // - The first individual is all zeros.
         // - The second individual is all ones.
-        let mut pop: PopulationGenes = array![[0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0]];
+        let mut pop = array![[0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0]];
 
         // Create a BitFlipMutation operator with a gene mutation rate of 1.0,
         // so every gene should be considered for mutation.
@@ -86,8 +86,7 @@ mod tests {
         // After mutation, every bit should be flipped:
         // - The first individual (originally all 0.0) becomes all 1.0.
         // - The second individual (originally all 1.0) becomes all 0.0.
-        let expected_pop: PopulationGenes =
-            array![[1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0]];
+        let expected_pop = array![[1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0]];
         assert_eq!(expected_pop, pop);
     }
 }

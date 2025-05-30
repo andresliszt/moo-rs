@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use ndarray::{Array1, Array2, ArrayView1, Axis};
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{Fronts, PopulationFitness};
+use crate::genetic::{D12, Fronts};
 use crate::helpers::extreme_points::{get_ideal, get_nadir};
 use crate::operators::survival::{
     FrontsAndRankingBasedSurvival, GeneticOperator, SurvivalScoringComparison,
@@ -40,12 +40,14 @@ impl FrontsAndRankingBasedSurvival for Rnsga2ReferencePointsSurvival {
         SurvivalScoringComparison::Minimize
     }
 
-    fn set_front_survival_score(
+    fn set_front_survival_score<ConstrDim>(
         &self,
-        fronts: &mut Fronts,
+        fronts: &mut Fronts<ConstrDim>,
         rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) {
+    ) where
+        ConstrDim: D12,
+    {
         let len_fronts = fronts.len();
         let num_objectives = fronts[0].fitness.ncols();
         let weights = Array1::from_elem(num_objectives, 1.0 / (num_objectives as f64));
@@ -60,9 +62,7 @@ impl FrontsAndRankingBasedSurvival for Rnsga2ReferencePointsSurvival {
                 &nadir,
                 &ideal,
             );
-            front
-                .set_survival_score(survival_score)
-                .expect("Failed to set survival score in Rsga2");
+            front.set_survival_score(survival_score);
         }
         // Process the last front with the special crowding_distance_last_front function
         if let Some(last_front) = fronts.last_mut() {
@@ -77,9 +77,7 @@ impl FrontsAndRankingBasedSurvival for Rnsga2ReferencePointsSurvival {
                 &ideal,
                 rng,
             );
-            last_front
-                .set_survival_score(survival_score)
-                .expect("Failed to set survival score in Rsga2");
+            last_front.set_survival_score(survival_score);
         }
     }
 }
@@ -107,7 +105,7 @@ fn weighted_normalized_euclidean_distance(
 }
 
 fn distance_to_reference(
-    front_fitness: &PopulationFitness,
+    front_fitness: &Array2<f64>,
     reference_points: &Array2<f64>,
     weights: &Array1<f64>,
     ideal: &Array1<f64>,
@@ -163,7 +161,7 @@ fn distance_to_reference(
 /// # Returns
 /// A vector of crowding distances (as f64) for each solution.
 fn assign_crowding_distance_to_inner_front(
-    front_fitness: &PopulationFitness,
+    front_fitness: &Array2<f64>,
     reference_points: &Array2<f64>,
     weights: &Array1<f64>,
     nadir: &Array1<f64>,
@@ -173,7 +171,7 @@ fn assign_crowding_distance_to_inner_front(
 }
 
 fn assign_crowding_distance_splitting_front(
-    front_fitness: &PopulationFitness,
+    front_fitness: &Array2<f64>,
     reference_points: &Array2<f64>,
     weights: &Array1<f64>,
     epsilon: f64,

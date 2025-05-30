@@ -5,7 +5,7 @@ use ndarray::{Array1, Array2, ArrayView1, Axis, stack};
 use ndarray_stats::QuantileExt;
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::PopulationFitness;
+use crate::genetic::{D12, Fronts};
 use crate::helpers::extreme_points::get_ideal;
 use crate::helpers::linalg::{cross_p_distances, lp_norm_arrayview};
 use crate::operators::{GeneticOperator, survival::helpers::HyperPlaneNormalization};
@@ -58,12 +58,14 @@ impl AgeMoeaSurvival {
 }
 
 impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
-    fn set_front_survival_score(
+    fn set_front_survival_score<ConstrDim>(
         &self,
-        fronts: &mut crate::genetic::Fronts,
+        fronts: &mut Fronts<ConstrDim>,
         _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) {
+    ) where
+        ConstrDim: D12,
+    {
         // Split the fronts into the first one and the rest
         if let Some((first_front, other_fronts)) = fronts.split_first_mut() {
             let z_min = get_ideal(&first_front.fitness);
@@ -79,32 +81,25 @@ impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
             // filled entirely with infinity.
             if central_point.iter().all(|&x| x == 0.0) {
                 first_front
-                    .set_survival_score(Array1::from_elem(first_front.len(), std::f64::INFINITY))
-                    .expect("Failed to set survival score in AgeMoea");
+                    .set_survival_score(Array1::from_elem(first_front.len(), std::f64::INFINITY));
                 // Process the remaining fronts with the standard function
                 for front in other_fronts.iter_mut() {
-                    front
-                        .set_survival_score(Array1::from_elem(
-                            first_front.len(),
-                            std::f64::INFINITY,
-                        ))
-                        .expect("Failed to set survival score in AgeMoea");
+                    front.set_survival_score(Array1::from_elem(
+                        first_front.len(),
+                        std::f64::INFINITY,
+                    ))
                 }
             } else {
                 let p = compute_exponent_p(&central_point);
                 let score_first_front =
                     assign_survival_scores_first_front(&normalized_first_front, p);
-                first_front
-                    .set_survival_score(score_first_front)
-                    .expect("Failed to set survival score in AgeMoea");
+                first_front.set_survival_score(score_first_front);
                 for front in other_fronts.iter_mut() {
                     //let z_min = get_ideal(&front.fitness);
                     let translated = &front.fitness - &z_min;
                     let normalized_front = translated / &intercepts;
                     let score = assign_survival_scores_higher_front(&normalized_front, p);
-                    front
-                        .set_survival_score(score)
-                        .expect("Failed to set survival score in AgeMoea");
+                    front.set_survival_score(score)
                 }
             }
         }
@@ -133,7 +128,7 @@ impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
 /// # Returns
 ///
 /// An Array1<f64> corresponding to the central point in the normalized objective space.
-fn get_central_point_normalized(normalized_fitness: &PopulationFitness) -> Array1<f64> {
+fn get_central_point_normalized(normalized_fitness: &Array2<f64>) -> Array1<f64> {
     // Determine the number of objectives (columns)
     let num_objectives = normalized_fitness.shape()[1];
 
@@ -215,7 +210,7 @@ fn proximity(normalized_individual_fitness: &ArrayView1<f64>, p: f64) -> f64 {
 ///
 /// An Array1<f64> containing the survival scores for each solution in the same order as the rows of `front`.
 fn assign_survival_scores_first_front(
-    normalized_front_fitness: &PopulationFitness,
+    normalized_front_fitness: &Array2<f64>,
     p: f64,
 ) -> Array1<f64> {
     let num_solutions = normalized_front_fitness.nrows();
@@ -303,7 +298,7 @@ fn assign_survival_scores_first_front(
 
 /// An Array1<f64> with the survival scores for each solution in the same order as the rows of `normalized_front_fitness`.
 pub fn assign_survival_scores_higher_front(
-    normalized_front_fitness: &PopulationFitness,
+    normalized_front_fitness: &Array2<f64>,
     p: f64,
 ) -> Array1<f64> {
     // Iterate over each row (solution) and compute the score.
@@ -319,7 +314,7 @@ pub fn assign_survival_scores_higher_front(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::genetic::{Population, PopulationGenes};
+    use crate::genetic::PopulationMOO;
     use crate::operators::survival::helpers::HyperPlaneNormalization;
     use crate::random::NoopRandomGenerator;
     use ndarray::{Array1, Array2, array};
@@ -333,7 +328,7 @@ mod tests {
         //                     [2.0, 0.0]]
         // Expected extreme vectors: for obj0 -> row1 = [2.0, 0.0], for obj1 -> row0 = [0.0, 1.0]
         // Therefore, system: 2*a0 = 1, 1*a1 = 1 → a = [0.5, 1.0] → intercepts = [2.0, 1.0]
-        let front: PopulationGenes = array![[1.0, 2.0], [3.0, 1.0]];
+        let front = array![[1.0, 2.0], [3.0, 1.0]];
         let z_min = crate::helpers::extreme_points::get_ideal(&front);
         let translated = &front - &z_min;
         let normalizer = AgeMoeaHyperPlaneNormalization::new();
@@ -352,7 +347,7 @@ mod tests {
         // For objective 0, both values are 0.0.
         // For objective 1, extreme vector = row1 = [0.0, 1.0].
         // Fallback should return the nadir of translated front: [0.0, 1.0]
-        let front: PopulationGenes = array![[1.0, 2.0], [1.0, 3.0]];
+        let front = array![[1.0, 2.0], [1.0, 3.0]];
         let z_min = get_ideal(&front);
         let translated = front - z_min;
         let normalizer = AgeMoeaHyperPlaneNormalization::new();
@@ -368,7 +363,7 @@ mod tests {
         //   [0.9, 0.1],
         //   [0.5, 0.5] ]
         // The central point should be [0.5, 0.5] (minimal perpendicular distance).
-        let normalized: PopulationFitness = array![[0.1, 0.9], [0.9, 0.1], [0.5, 0.5]];
+        let normalized = array![[0.1, 0.9], [0.9, 0.1], [0.5, 0.5]];
         let central = get_central_point_normalized(&normalized);
         let expected: Array1<f64> = array![0.5, 0.5];
         assert_eq!(&central, &expected);
@@ -381,7 +376,7 @@ mod tests {
         //   [0.0, 1.0],
         //   [0.5, 0.5] ]
         // Expected central point = [0.5, 0.5]
-        let normalized: PopulationFitness = array![[1.0, 0.0], [0.0, 1.0], [0.5, 0.5]];
+        let normalized = array![[1.0, 0.0], [0.0, 1.0], [0.5, 0.5]];
         let central = get_central_point_normalized(&normalized);
         let expected: Array1<f64> = array![0.5, 0.5];
         assert_eq!(&central, &expected);
@@ -411,7 +406,7 @@ mod tests {
         //   [0.0, 1.0] ]
         // With p = 2, extreme solutions (max per objective) are indices 0 and 2 (score = +∞).
         // The candidate at index 1: diversity = 0.5 + 0.5 = 1.0, proximity ~ 0.70710678, expected score ~ 1.41421356.
-        let front: PopulationFitness = array![[1.0, 0.0], [0.5, 0.5], [0.0, 1.0]];
+        let front = array![[1.0, 0.0], [0.5, 0.5], [0.0, 1.0]];
         let p = 2.0;
         let scores = assign_survival_scores_first_front(&front, p);
         assert!(scores[0].is_infinite(), "Index 0 should be extreme (∞)");
@@ -429,7 +424,7 @@ mod tests {
         // Same front as above, with p = 1 (Manhattan distance).
         // For candidate at index 1:
         // Manhattan distances to extremes are both 1.0 → diversity = 2.0, proximity = 1.0, expected score = 2.0.
-        let front: PopulationFitness = array![[1.0, 0.0], [0.5, 0.5], [0.0, 1.0]];
+        let front = array![[1.0, 0.0], [0.5, 0.5], [0.0, 1.0]];
         let p = 1.0;
         let scores = assign_survival_scores_first_front(&front, p);
         assert!(scores[0].is_infinite(), "Index 0 should be extreme (∞)");
@@ -449,7 +444,7 @@ mod tests {
         //   [0.2, 0.8],
         //   [0.0, 1.0] ]
         // Extreme solutions (max in at least one objective) are indices 0 and 3.
-        let front: PopulationFitness = array![[1.0, 0.0], [0.8, 0.2], [0.2, 0.8], [0.0, 1.0]];
+        let front = array![[1.0, 0.0], [0.8, 0.2], [0.2, 0.8], [0.0, 1.0]];
         let p = 2.0;
         let scores = assign_survival_scores_first_front(&front, p);
         assert!(scores[0].is_infinite(), "Index 0 should be extreme (∞)");
@@ -472,7 +467,7 @@ mod tests {
             array![[1.0, 0.0], [0.5, 0.5], [0.0, 1.0], [0.8, 0.2], [0.2, 0.8]];
         // For simplicity, let genes be equal to fitness.
         let genes = fitness.clone();
-        let population = Population::new(genes, fitness, None, None);
+        let population = PopulationMOO::new_unconstrained(genes, fitness);
         // Set the desired number of survivors (e.g., 4).
         let num_survive = 4;
 

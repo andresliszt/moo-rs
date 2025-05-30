@@ -1,5 +1,6 @@
+use ndarray::ArrayViewMut1;
+
 use crate::{
-    genetic::IndividualGenesMut,
     operators::{GeneticOperator, MutationOperator},
     random::RandomGenerator,
 };
@@ -23,7 +24,7 @@ impl GeneticOperator for SwapMutation {
 /// In a typical permutation-based setup, each row is an array of distinct values.
 /// The "swap" mutation picks two indices at random and swaps them.
 impl MutationOperator for SwapMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: ArrayViewMut1<'a, f64>, rng: &mut impl RandomGenerator) {
         let length = individual.len();
         // If there is at most one element, there's nothing to swap.
         if length > 1 {
@@ -43,7 +44,6 @@ impl MutationOperator for SwapMutation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::genetic::PopulationGenes;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
 
@@ -82,7 +82,7 @@ mod tests {
     #[test]
     fn test_swap_mutation_controlled() {
         // Create an individual: [0, 1, 2, 3, 4]
-        let mut original: PopulationGenes = array![[0.0, 1.0, 2.0, 3.0, 4.0]];
+        let mut original = array![[0.0, 1.0, 2.0, 3.0, 4.0]];
         let original_row = original.row(0).to_owned();
 
         // Create a SwapMutation operator.

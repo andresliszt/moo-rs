@@ -1,17 +1,16 @@
 use moors::{
     algorithms::{InitializationError, MultiObjectiveAlgorithmError, Nsga2, Nsga2Builder},
     duplicates::{ExactDuplicatesCleaner, NoDuplicatesCleaner},
-    evaluator::EvaluatorError,
-    genetic::{NoConstraintsFn, PopulationConstraints, PopulationFitness, PopulationGenes},
+    evaluator::{EvaluatorError, NoConstraintsFnPointer},
     operators::{
         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
         sampling::RandomSamplingBinary,
     },
 };
-use ndarray::{Array2, Axis, stack};
+use ndarray::{Array1, Array2, Axis, stack};
 
 /// Binary bi‐objective fitness: [sum(x), sum(1−x)]
-fn fitness_binary_biobj(genes: &PopulationGenes) -> PopulationFitness {
+fn fitness_binary_biobj(genes: &Array2<f64>) -> Array2<f64> {
     let f1 = genes.sum_axis(Axis(1));
     let ones = Array2::from_elem(genes.raw_dim(), 1.0);
     let f2 = (&ones - genes).sum_axis(Axis(1));
@@ -19,16 +18,16 @@ fn fitness_binary_biobj(genes: &PopulationGenes) -> PopulationFitness {
 }
 
 /// Infeasible constraint: num_vars - sum(x) + 1 > 0 for all individuals ⇒ always infeasible
-fn constraints_always_infeasible(genes: &PopulationGenes) -> PopulationConstraints {
+fn constraints_always_infeasible(genes: &Array2<f64>) -> Array1<f64> {
     let n = genes.ncols() as f64;
     let sum = genes.sum_axis(Axis(1));
     let c = sum.mapv(|s| n - s + 1.0);
-    c.insert_axis(Axis(1))
+    c
 }
 
 #[test]
 fn test_keep_infeasible() {
-    let mut algorithm: Nsga2<_, _, _, _, _, NoDuplicatesCleaner> = Nsga2Builder::default()
+    let mut algorithm: Nsga2<_, _, _, _, _, _, NoDuplicatesCleaner> = Nsga2Builder::default()
         .fitness_fn(fitness_binary_biobj)
         .constraints_fn(constraints_always_infeasible)
         .sampler(RandomSamplingBinary::new())
@@ -54,7 +53,7 @@ fn test_keep_infeasible() {
 }
 #[test]
 fn test_keep_infeasible_out_of_bounds() {
-    let mut algorithm: Nsga2<_, _, _, _, NoConstraintsFn, NoDuplicatesCleaner> =
+    let mut algorithm: Nsga2<_, _, _, _, _, NoConstraintsFnPointer, NoDuplicatesCleaner> =
         Nsga2Builder::default()
             .fitness_fn(fitness_binary_biobj)
             .sampler(RandomSamplingBinary::new())

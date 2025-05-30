@@ -23,7 +23,7 @@
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
-    genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
+    genetic::{Constraints, D01, D12},
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
         selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
@@ -32,30 +32,44 @@ use crate::{
 };
 
 use moors_macros::algorithm_builder;
+use ndarray::Array2;
 
 #[derive(Debug)]
-pub struct Spea2<S, Cross, Mut, F, G, DC>
+pub struct Spea2<ConstrDim, S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
+    F: Fn(&Array2<f64>) -> Array2<f64>,
+    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
     DC: PopulationCleaner,
+    ConstrDim: D12,
+    <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
-    pub inner:
-        MultiObjectiveAlgorithm<S, RankAndScoringSelection, Spea2KnnSurvival, Cross, Mut, F, G, DC>,
+    pub inner: MultiObjectiveAlgorithm<
+        S,
+        RankAndScoringSelection,
+        Spea2KnnSurvival,
+        Cross,
+        Mut,
+        F,
+        G,
+        DC,
+        ConstrDim,
+    >,
 }
 
 #[algorithm_builder]
-impl<S, Cross, Mut, F, G, DC> Spea2<S, Cross, Mut, F, G, DC>
+impl<ConstrDim, S, Cross, Mut, F, G, DC> Spea2<ConstrDim, S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
+    F: Fn(&Array2<f64>) -> Array2<f64>,
+    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
     DC: PopulationCleaner,
+    ConstrDim: D12,
+    <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(

@@ -1,8 +1,9 @@
 use crate::{
-    genetic::{Individual, Population},
+    genetic::{D01, D12, IndividualMOO, PopulationMOO},
     operators::GeneticOperator,
     random::RandomGenerator,
 };
+use ndarray::Dimension;
 
 pub mod random_tournament;
 pub mod rank_and_survival_scoring_tournament;
@@ -30,7 +31,7 @@ pub trait SelectionOperator: GeneticOperator {
     /// Selects random participants from the population for the tournaments.
     /// If `n_crossovers * pressure` is greater than the population size, it will create multiple permutations
     /// to ensure there are enough random indices.
-    fn _select_participants(
+    fn select_participants(
         &self,
         population_size: usize,
         n_crossovers: usize,
@@ -60,23 +61,27 @@ pub trait SelectionOperator: GeneticOperator {
     }
 
     /// Tournament between 2 individuals.
-    fn tournament_duel(
+    fn tournament_duel<'a, ConstrDim>(
         &self,
-        p1: &Individual,
-        p2: &Individual,
+        p1: &IndividualMOO<'a, ConstrDim>,
+        p2: &IndividualMOO<'a, ConstrDim>,
         rng: &mut impl RandomGenerator,
-    ) -> DuelResult;
+    ) -> DuelResult
+    where
+        ConstrDim: D01;
 
-    fn operate(
+    fn operate<ConstrDim>(
         &self,
-        population: &Population,
+        population: &PopulationMOO<ConstrDim>,
         n_crossovers: usize,
         rng: &mut impl RandomGenerator,
-    ) -> (Population, Population) {
+    ) -> (PopulationMOO<ConstrDim>, PopulationMOO<ConstrDim>)
+    where
+        ConstrDim: D12,
+        <ConstrDim as Dimension>::Smaller: D01,
+    {
         let population_size = population.len();
-
-        let participants = self._select_participants(population_size, n_crossovers, rng);
-
+        let participants = self.select_participants(population_size, n_crossovers, rng);
         let mut winners = Vec::with_capacity(n_crossovers);
 
         // For binary tournaments:

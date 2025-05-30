@@ -1,6 +1,5 @@
 use ndarray::{Array1, Axis, concatenate, s};
 
-use crate::genetic::IndividualGenes;
 use crate::operators::{CrossoverOperator, GeneticOperator};
 use crate::random::RandomGenerator;
 
@@ -23,10 +22,10 @@ impl GeneticOperator for SinglePointBinaryCrossover {
 impl CrossoverOperator for SinglePointBinaryCrossover {
     fn crossover(
         &self,
-        parent_a: &IndividualGenes,
-        parent_b: &IndividualGenes,
+        parent_a: &Array1<f64>,
+        parent_b: &Array1<f64>,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> (Array1<f64>, Array1<f64>) {
         let num_genes = parent_a.len();
         assert_eq!(
             num_genes,

@@ -1,7 +1,7 @@
+use ndarray::ArrayViewMut1;
 use rand_distr::{Distribution, Normal};
 
 use crate::{
-    genetic::IndividualGenesMut,
     operators::{GeneticOperator, MutationOperator},
     random::RandomGenerator,
 };
@@ -29,7 +29,7 @@ impl GeneticOperator for GaussianMutation {
 }
 
 impl MutationOperator for GaussianMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: ArrayViewMut1<'a, f64>, rng: &mut impl RandomGenerator) {
         // Create a normal distribution with mean 0.0 and standard deviation sigma.
         let normal_dist = Normal::new(0.0, self.sigma)
             .expect("Failed to create normal distribution. Sigma must be > 0.");
@@ -48,7 +48,6 @@ impl MutationOperator for GaussianMutation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::genetic::PopulationGenes;
     use crate::random::MOORandomGenerator;
     use ndarray::array;
     use rand::SeedableRng;
@@ -57,7 +56,7 @@ mod tests {
     #[test]
     fn test_gaussian_mutation_all_genes() {
         // Create an individual [0.5, 0.5, 0.5]
-        let mut pop: PopulationGenes = array![[0.5, 0.5, 0.5]];
+        let mut pop = array![[0.5, 0.5, 0.5]];
         let pop_before_mut = array![[0.5, 0.5, 0.5]];
 
         // Create operator with 100% chance each gene is mutated, sigma=0.1
@@ -79,7 +78,7 @@ mod tests {
     #[test]
     fn test_gaussian_mutation_no_genes() {
         // If gene_mutation_rate=0.0, no genes are mutated
-        let mut pop: PopulationGenes = array![[0.5, 0.5, 0.5]];
+        let mut pop = array![[0.5, 0.5, 0.5]];
         let expected = array![[0.5, 0.5, 0.5]];
         let mutation_operator = GaussianMutation::new(0.0, 0.1);
 

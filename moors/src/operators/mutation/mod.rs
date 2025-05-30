@@ -1,10 +1,6 @@
-use ndarray::Axis;
+use ndarray::{Array2, ArrayViewMut1, Axis};
 
-use crate::{
-    genetic::{IndividualGenesMut, PopulationGenes},
-    operators::GeneticOperator,
-    random::RandomGenerator,
-};
+use crate::{operators::GeneticOperator, random::RandomGenerator};
 
 pub mod bitflip;
 pub mod displacement;
@@ -26,7 +22,7 @@ pub trait MutationOperator: GeneticOperator {
     ///
     /// * `individual` - The individual to mutate, provided as a mutable view.
     /// * `rng` - A random number generator.
-    fn mutate<'a>(&self, individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator);
+    fn mutate<'a>(&self, individual: ArrayViewMut1<'a, f64>, rng: &mut impl RandomGenerator);
 
     /// Selects individuals for mutation based on the mutation rate.
     fn select_individuals_for_mutation(
@@ -49,7 +45,7 @@ pub trait MutationOperator: GeneticOperator {
     /// * `rng` - A random number generator.
     fn operate(
         &self,
-        population: &mut PopulationGenes,
+        population: &mut Array2<f64>,
         mutation_rate: f64,
         rng: &mut impl RandomGenerator,
     ) {

@@ -1,12 +1,10 @@
 use std::cell::Cell;
 
+use ndarray::{Array1, Array2, ArrayViewMut1};
+
 use moors::{
     algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
     duplicates::CloseDuplicatesCleaner,
-    genetic::{
-        IndividualGenes, IndividualGenesMut, PopulationConstraints, PopulationFitness,
-        PopulationGenes,
-    },
     operators::{
         CrossoverOperator, GeneticOperator, MutationOperator, crossover::SimulatedBinaryCrossover,
         mutation::GaussianMutation, sampling::RandomSamplingFloat,
@@ -14,12 +12,12 @@ use moors::{
     random::RandomGenerator,
 };
 
-fn dummy_fitness(genes: &PopulationGenes) -> PopulationFitness {
+fn dummy_fitness(genes: &Array2<f64>) -> Array2<f64> {
     // just f(x) = x
     genes.clone()
 }
 
-fn dummy_constraints(genes: &PopulationGenes) -> PopulationConstraints {
+fn dummy_constraints(genes: &Array2<f64>) -> Array2<f64> {
     // g(x) =  1 - x
     1.0 - genes.clone()
 }
@@ -34,7 +32,7 @@ impl GeneticOperator for NoMutation {
 }
 
 impl MutationOperator for NoMutation {
-    fn mutate<'a>(&self, _individual: IndividualGenesMut<'a>, _rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(&self, _individual: ArrayViewMut1<'a, f64>, _rng: &mut impl RandomGenerator) {
         // do nothing
     }
 }
@@ -51,10 +49,10 @@ impl GeneticOperator for NoCrossOver {
 impl CrossoverOperator for NoCrossOver {
     fn crossover(
         &self,
-        parent_a: &IndividualGenes,
-        parent_b: &IndividualGenes,
+        parent_a: &Array1<f64>,
+        parent_b: &Array1<f64>,
         _rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> (Array1<f64>, Array1<f64>) {
         // return parents as children
         (parent_a.clone(), parent_b.clone())
     }
@@ -98,7 +96,7 @@ fn test_no_feasible_in_evaluation() {
     let counter: Cell<usize> = Cell::new(0);
     // this is a simple clousure, in the first and second call)all individuals are feasible because
     // g(x) < 0, but int the third and go on they aren't due that we multiply by a -1 factor
-    let constraints_fn = move |genes: &PopulationGenes| -> PopulationConstraints {
+    let constraints_fn = move |genes: &Array2<f64>| -> Array2<f64> {
         let idx = counter.get();
         counter.set(idx + 1);
 
@@ -141,8 +139,7 @@ fn test_no_feasible_in_initialization() {
     // When is not possible to get at leaste one feasible individual
     // in any iteration, an error is raised. This is same scenario than above
     // but the error happens in the initialization step
-    let constraints_fn =
-        move |genes: &PopulationGenes| -> PopulationConstraints { -dummy_constraints(genes) };
+    let constraints_fn = move |genes: &Array2<f64>| -> Array2<f64> { -dummy_constraints(genes) };
 
     let mut nsga2 = Nsga2Builder::default()
         .fitness_fn(dummy_fitness)

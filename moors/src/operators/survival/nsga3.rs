@@ -4,7 +4,7 @@ use ndarray::{Array1, Array2, Axis, s};
 use ndarray_stats::QuantileExt;
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{Population, PopulationFitness};
+use crate::genetic::{D12, PopulationMOO};
 use crate::helpers::extreme_points::get_ideal;
 use crate::non_dominated_sorting::build_fronts;
 use crate::operators::survival::helpers::HyperPlaneNormalization;
@@ -42,7 +42,7 @@ impl HyperPlaneNormalization for Nsga3HyperPlaneNormalization {
     /// For each objective j, constructs a weight vector:
     ///   w^j = [eps, ..., 1.0 (at position j), ..., eps],
     /// then selects the solution that minimizes ASF(s, w^j) using argmin from ndarray-stats.
-    fn compute_extreme_points(&self, translated_population: &PopulationFitness) -> Array2<f64> {
+    fn compute_extreme_points(&self, translated_population: &Array2<f64>) -> Array2<f64> {
         let num_objectives = translated_population.ncols();
         // Initialize an array to hold the extreme vectors; one per objective.
         let mut extreme_points = Array2::<f64>::zeros((num_objectives, num_objectives));
@@ -92,17 +92,20 @@ impl Nsga3ReferencePointsSurvival {
 }
 
 impl SurvivalOperator for Nsga3ReferencePointsSurvival {
-    fn operate(
+    fn operate<ConstrDim>(
         &mut self,
-        population: Population,
+        population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> PopulationMOO<ConstrDim>
+    where
+        ConstrDim: D12,
+    {
         // Build fronts
         let mut fronts = build_fronts(population, num_survive);
         // Accumulator for the merged population.
-        let mut survivors: Option<Population> = None;
+        let mut survivors: Option<PopulationMOO<ConstrDim>> = None;
         let mut n_survivors = 0;
         // Drain fronts to consume them and get an iterator of owned Population values.
         let drained = fronts.drain(..).enumerate();
@@ -114,7 +117,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
             if n_survivors + front_len <= num_survive {
                 // If the whole front fits, merge it with the accumulator.
                 survivors = Some(match survivors {
-                    Some(acc) => Population::merge(&acc, &front),
+                    Some(acc) => PopulationMOO::merge(&acc, &front),
                     None => front,
                 });
                 n_survivors += front_len;
@@ -126,7 +129,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
                     // Determine the base population for the splitting front.
                     // If no accumulated population exists, use the current front as st.
                     let (st, n_complete) = match &survivors {
-                        Some(acc) => (Population::merge(&acc, &front), acc.len()),
+                        Some(acc) => (PopulationMOO::merge(&acc, &front), acc.len()),
                         None => (front, 0),
                     };
                     let z_min = get_ideal(&st.fitness);
@@ -165,7 +168,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
                     let selection_from_splitting_front = st.selected(&chosen_indices);
                     // Merge the partial selection with the accumulator.
                     survivors = Some(match survivors {
-                        Some(acc) => Population::merge(&acc, &selection_from_splitting_front),
+                        Some(acc) => PopulationMOO::merge(&acc, &selection_from_splitting_front),
                         None => selection_from_splitting_front,
                     });
                 }
@@ -190,7 +193,7 @@ fn asf(x: &Array1<f64>, w: &Array1<f64>) -> f64 {
 /// Associates each solution s (each row in st) with the reference w (each row in zr)
 /// that minimizes the perpendicular distance d⊥(s, w).
 /// This is the algorithm (3) in the presented paper
-fn associate(st_fitness: &PopulationFitness, zr: &Array2<f64>) -> (Vec<usize>, Vec<f64>) {
+fn associate(st_fitness: &Array2<f64>, zr: &Array2<f64>) -> (Vec<usize>, Vec<f64>) {
     let n = st_fitness.nrows();
 
     // 1. Compute squared norms for each solution: shape (n,)
@@ -484,7 +487,7 @@ mod tests {
         // Create one front with 5 individuals having distinct fitness values.
         let fitness = array![[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0]];
         // For simplicity, genes = fitness
-        let population = Population::new(fitness.clone(), fitness.clone(), None, None);
+        let population = PopulationMOO::new_unconstrained(fitness.clone(), fitness.clone());
 
         // Use a simple reference points matrix: for 2 objectives we use the 2x2 identity.
         let reference_points = Nsga3ReferencePoints::new(Array2::eye(2), false);
@@ -529,7 +532,7 @@ mod tests {
             [2.3, 2.3]
         ];
         // For simplicity, genes = fitness
-        let population = Population::new(fitness.clone(), fitness.clone(), None, None);
+        let population = PopulationMOO::new_unconstrained(fitness.clone(), fitness.clone());
         // Use the identity as reference points for 2 objectives.
         let reference_points = Nsga3ReferencePoints::new(Array2::eye(2), false);
         let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);

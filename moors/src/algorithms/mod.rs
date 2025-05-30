@@ -23,11 +23,10 @@
 //! ## Quick example: NSGA‑II
 //!
 //! ```rust,no_run, ignore
-//! use ndarray::{Array1, Axis, stack};
+//! use ndarray::{Array1, Array2, Axis, stack};
 //! use moors::{
 //!     algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
 //!     duplicates::ExactDuplicatesCleaner,
-//!     genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
 //!     operators::{
 //!         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
 //!         sampling::RandomSamplingBinary,
@@ -39,8 +38,8 @@
 //! # const WEIGHTS: [f64; 5] = [12.0, 2.0, 1.0, 4.0, 10.0];
 //! # const VALUES:  [f64; 5] = [ 4.0, 2.0, 1.0, 5.0,  3.0];
 //! # const CAPACITY: f64 = 15.0;
-//! # fn fitness(_: &PopulationGenes) -> PopulationFitness { todo!() }
-//! # fn constraints(_: &PopulationGenes) -> PopulationConstraints { todo!() }
+//! # fn fitness(_: &Array2<f64>) -> Array2<f64> { todo!() }
+//! # fn constraints(_: &Array2<f64>) -> Array2<f64> { todo!() }
 //!
 //! fn main() -> Result<(), MultiObjectiveAlgorithmError> {
 //!     let mut algorithm = Nsga2Builder::default()
@@ -96,7 +95,7 @@
 
 use std::marker::PhantomData;
 
-use ndarray::{Axis, concatenate};
+use ndarray::{Array2, Axis, concatenate};
 
 use crate::{
     algorithms::helpers::{
@@ -105,11 +104,11 @@ use crate::{
         validators::{validate_bounds, validate_positive, validate_probability},
     },
     duplicates::PopulationCleaner,
-    evaluator::Evaluator,
-    genetic::{Population, PopulationConstraints, PopulationFitness, PopulationGenes},
+    evaluator::EvaluatorMOO,
+    genetic::{Constraints, D01, D12, PopulationMOO},
     helpers::printer::print_minimum_objectives,
     operators::{
-        CrossoverOperator, Evolve, EvolveError, MutationOperator, SamplingOperator,
+        CrossoverOperator, EvolveError, EvolveMOO, MutationOperator, SamplingOperator,
         SelectionOperator, SurvivalOperator,
     },
     random::MOORandomGenerator,
@@ -126,7 +125,7 @@ macro_rules! delegate_algorithm_methods {
         pub fn population(
             &self,
         ) -> Result<
-            &crate::genetic::Population,
+            &crate::genetic::PopulationMOO<ConstrDim>,
             crate::algorithms::helpers::error::MultiObjectiveAlgorithmError,
         > {
             match &self.inner.population {
@@ -160,38 +159,42 @@ pub use rnsga2::{Rnsga2, Rnsga2Builder};
 pub use spea2::{Spea2, Spea2Builder};
 
 #[derive(Debug)]
-pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
+pub struct MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC, ConstrDim>
 where
     S: SamplingOperator,
     Sel: SelectionOperator,
     Sur: SurvivalOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
+    F: Fn(&Array2<f64>) -> Array2<f64>,
+    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
     DC: PopulationCleaner,
+    ConstrDim: D12,
 {
-    pub population: Option<Population>,
+    pub population: Option<PopulationMOO<ConstrDim>>,
     sampler: S,
     survivor: Sur,
-    evolve: Evolve<Sel, Cross, Mut, DC>,
-    evaluator: Evaluator<F, G>,
+    evolve: EvolveMOO<Sel, Cross, Mut, DC>,
+    evaluator: EvaluatorMOO<ConstrDim, F, G>,
     pub context: AlgorithmContext,
     verbose: bool,
     rng: MOORandomGenerator,
     phantom: PhantomData<S>,
 }
 
-impl<S, Sel, Sur, Cross, Mut, F, G, DC> MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
+impl<S, Sel, Sur, Cross, Mut, F, G, DC, ConstrDim>
+    MultiObjectiveAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC, ConstrDim>
 where
     S: SamplingOperator,
     Sel: SelectionOperator,
     Sur: SurvivalOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
+    F: Fn(&Array2<f64>) -> Array2<f64>,
+    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
     DC: PopulationCleaner,
+    ConstrDim: D12,
+    <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -244,7 +247,7 @@ where
             lower_bound,
         );
         // Create the evaluator
-        let evaluator = Evaluator::new(
+        let evaluator = EvaluatorMOO::new(
             fitness_fn,
             constraints_fn,
             keep_infeasible,
@@ -253,7 +256,7 @@ where
         );
 
         // Create the evolution operator.
-        let evolve = Evolve::new(
+        let evolve = EvolveMOO::new(
             selector,
             crossover,
             mutation,
@@ -279,7 +282,7 @@ where
     }
 
     fn next(&mut self) -> Result<(), MultiObjectiveAlgorithmError> {
-        let ref_pop: &Population = self.population.as_ref().unwrap();
+        let ref_pop = self.population.as_ref().unwrap();
         // Obtain offspring genes.
         let offspring_genes = self
             .evolve
@@ -299,7 +302,7 @@ where
         let combined_genes = concatenate(Axis(0), &[ref_pop.genes.view(), offspring_genes.view()])
             .expect("Failed to concatenate current population genes with offspring genes");
         // Evaluate the fitness and constraints and create Population
-        let evaluated_population: Population = self.evaluator.evaluate(combined_genes)?;
+        let evaluated_population = self.evaluator.evaluate(combined_genes)?;
 
         // Select survivors to the next iteration population
         let survivors = self.survivor.operate(
@@ -332,7 +335,7 @@ where
                 Ok(()) => {
                     if self.verbose {
                         print_minimum_objectives(
-                            &self.population.as_ref().unwrap(),
+                            &self.population.as_ref().unwrap().fitness,
                             current_iter + 1,
                         );
                     }

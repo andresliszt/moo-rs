@@ -1,6 +1,4 @@
-use ndarray::Axis;
-
-use crate::genetic::Population;
+use ndarray::{Array2, Axis};
 
 /// Prints the minimum objectives in a formatted table.
 ///
@@ -8,9 +6,9 @@ use crate::genetic::Population;
 ///
 /// * `population` - Reference to the population containing the fitness matrix.
 /// * `iteration_number` - The current iteration number.
-pub fn print_minimum_objectives(population: &Population, iteration_number: usize) {
+pub fn print_minimum_objectives(fitness: &Array2<f64>, iteration_number: usize) {
     // Calculate the minimum values for each column (objective)
-    let min_values = population.fitness.map_axis(Axis(0), |col| {
+    let min_values = fitness.map_axis(Axis(0), |col| {
         col.iter().copied().fold(f64::INFINITY, |a, b| a.min(b))
     });
 
