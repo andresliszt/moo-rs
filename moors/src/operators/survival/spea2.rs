@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use ndarray::{Array1, Array2, Axis};
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{D12, NoConstr, PopulationMOO};
+use crate::genetic::{D12, PopulationMOO};
 use crate::helpers::linalg::cross_euclidean_distances_as_array;
 use crate::non_dominated_sorting::fast_non_dominated_sorting;
 use crate::operators::{GeneticOperator, SurvivalOperator};
@@ -280,7 +280,7 @@ mod tests {
 
     /// Helper: build a Population from raw fitness only.
     /// We use a dummy 1-column gene matrix and no constraints nor rank.
-    fn make_population(fitness: Array2<f64>) -> PopulationMOO<NoConstr> {
+    fn make_population(fitness: Array2<f64>) -> PopulationMOO {
         let n = fitness.nrows();
         // 1 variable per individual, value zero—genes are never used by survival
         let genes = Array2::<f64>::zeros((n, 1));

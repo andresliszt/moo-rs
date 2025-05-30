@@ -53,15 +53,13 @@ use std::fmt::Debug;
 
 use ndarray::Array2;
 
-use crate::genetic::PopulationGenes;
-
 /// A trait for removing duplicates (exact or close) from a population.
 ///
 /// The `remove` method accepts an optional reference population.
 /// If `None`, duplicates are computed within the population;
 /// if provided, duplicates are determined by comparing each row in the population to all rows in the reference.
 pub trait PopulationCleaner: Debug {
-    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> PopulationGenes;
+    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64>;
 }
 
 /// A no-op cleaner for the “default” case:
@@ -69,11 +67,7 @@ pub trait PopulationCleaner: Debug {
 pub struct NoDuplicatesCleaner;
 
 impl PopulationCleaner for NoDuplicatesCleaner {
-    fn remove(
-        &self,
-        _population: &Array2<f64>,
-        _reference: Option<&Array2<f64>>,
-    ) -> PopulationGenes {
+    fn remove(&self, _population: &Array2<f64>, _reference: Option<&Array2<f64>>) -> Array2<f64> {
         unimplemented!(
             "This is just for annotation when the duplicates cleaner is not set. See moors_macros::algorithm_builder"
         )

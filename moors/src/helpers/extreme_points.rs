@@ -1,6 +1,4 @@
-use ndarray::{Array1, Axis};
-
-use crate::genetic::PopulationFitness;
+use ndarray::{Array1, Array2, Axis};
 
 // ---------------------------------------------------------------------------
 // Auxiliary Functions for Distance and Ranking Computations
@@ -8,13 +6,13 @@ use crate::genetic::PopulationFitness;
 
 /// Computes the ideal point from a fitness matrix.
 /// Each element of the returned array is the minimum value along the corresponding column.
-pub fn get_ideal(population_fitness: &PopulationFitness) -> Array1<f64> {
+pub fn get_ideal(population_fitness: &Array2<f64>) -> Array1<f64> {
     population_fitness.fold_axis(Axis(0), f64::INFINITY, |a, &b| a.min(b))
 }
 
 /// Computes the nadir point from a fitness matrix.
 /// Each element of the returned array is the maximum value along the corresponding column.
-pub fn get_nadir(population_fitness: &PopulationFitness) -> Array1<f64> {
+pub fn get_nadir(population_fitness: &Array2<f64>) -> Array1<f64> {
     population_fitness.fold_axis(Axis(0), f64::NEG_INFINITY, |a, &b| a.max(b))
 }
 

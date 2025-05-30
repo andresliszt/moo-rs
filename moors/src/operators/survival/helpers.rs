@@ -3,17 +3,16 @@ use faer::prelude::*;
 use faer_ext::{IntoFaer, IntoNdarray};
 use ndarray::{Array1, Array2, ArrayView1};
 
-use crate::genetic::PopulationFitness;
 use crate::helpers::extreme_points::get_nadir;
 
 pub trait HyperPlaneNormalization {
     /// This corresponds to the Z_max defined in the NSGA3 - AGEMOEA referenced papers
-    fn compute_extreme_points(&self, population_fitness: &PopulationFitness) -> Array2<f64>;
+    fn compute_extreme_points(&self, population_fitness: &Array2<f64>) -> Array2<f64>;
 
     /// Computes the intercepts vector `a` by solving the linear system:
     /// Z_max * b = 1, where 1 is a vector of ones.
     /// then the intercepts in the objective axis are given by a = 1/b
-    fn compute_hyperplane_intercepts(&self, population_fitness: &PopulationFitness) -> Array1<f64> {
+    fn compute_hyperplane_intercepts(&self, population_fitness: &Array2<f64>) -> Array1<f64> {
         let m = population_fitness.ncols();
         // Compute Z_max
         let z_max = self.compute_extreme_points(&population_fitness);
@@ -57,7 +56,7 @@ mod tests {
     struct TestHyperPlaneNormalizerNonSingular;
 
     impl HyperPlaneNormalization for TestHyperPlaneNormalizerNonSingular {
-        fn compute_extreme_points(&self, _population_fitness: &PopulationFitness) -> Array2<f64> {
+        fn compute_extreme_points(&self, _population_fitness: &Array2<f64>) -> Array2<f64> {
             // Return a non-singular (diagonal) matrix:
             // [ [2.0, 0.0],
             //   [0.0, 0.5] ]
@@ -69,7 +68,7 @@ mod tests {
     struct TestHyperPlaneNormalizerSingular;
 
     impl HyperPlaneNormalization for TestHyperPlaneNormalizerSingular {
-        fn compute_extreme_points(&self, _population_fitness: &PopulationFitness) -> Array2<f64> {
+        fn compute_extreme_points(&self, _population_fitness: &Array2<f64>) -> Array2<f64> {
             // Return a singular matrix:
             // [ [1.0, 2.0],
             //   [2.0, 4.0] ]

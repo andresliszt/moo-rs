@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use ndarray::{Array1, Array2, ArrayView1, Axis};
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{D12, Fronts, PopulationFitness};
+use crate::genetic::{D12, Fronts};
 use crate::helpers::extreme_points::{get_ideal, get_nadir};
 use crate::operators::survival::{
     FrontsAndRankingBasedSurvival, GeneticOperator, SurvivalScoringComparison,
@@ -105,7 +105,7 @@ fn weighted_normalized_euclidean_distance(
 }
 
 fn distance_to_reference(
-    front_fitness: &PopulationFitness,
+    front_fitness: &Array2<f64>,
     reference_points: &Array2<f64>,
     weights: &Array1<f64>,
     ideal: &Array1<f64>,
@@ -161,7 +161,7 @@ fn distance_to_reference(
 /// # Returns
 /// A vector of crowding distances (as f64) for each solution.
 fn assign_crowding_distance_to_inner_front(
-    front_fitness: &PopulationFitness,
+    front_fitness: &Array2<f64>,
     reference_points: &Array2<f64>,
     weights: &Array1<f64>,
     nadir: &Array1<f64>,
@@ -171,7 +171,7 @@ fn assign_crowding_distance_to_inner_front(
 }
 
 fn assign_crowding_distance_splitting_front(
-    front_fitness: &PopulationFitness,
+    front_fitness: &Array2<f64>,
     reference_points: &Array2<f64>,
     weights: &Array1<f64>,
     epsilon: f64,

@@ -44,7 +44,6 @@ impl MutationOperator for SwapMutation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::genetic::PopulationGenes;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
 
@@ -83,7 +82,7 @@ mod tests {
     #[test]
     fn test_swap_mutation_controlled() {
         // Create an individual: [0, 1, 2, 3, 4]
-        let mut original: PopulationGenes = array![[0.0, 1.0, 2.0, 3.0, 4.0]];
+        let mut original = array![[0.0, 1.0, 2.0, 3.0, 4.0]];
         let original_row = original.row(0).to_owned();
 
         // Create a SwapMutation operator.

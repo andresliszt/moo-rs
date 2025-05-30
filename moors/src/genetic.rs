@@ -18,8 +18,8 @@
 //! | `Fronts` & `FrontsExt`     | `Vec<Population>` | Convenience for non‑dominated sorting (`fronts.to_population()`). |
 //!
 use ndarray::{
-    Array1, Array2, ArrayBase, ArrayView, ArrayView1, ArrayViewMut1, Axis, Dimension, Ix0, Ix1,
-    Ix2, OwnedRepr, RemoveAxis, concatenate,
+    Array1, Array2, ArrayBase, ArrayView, ArrayView1, Axis, Dimension, Ix0, Ix1, Ix2, OwnedRepr,
+    RemoveAxis, concatenate,
 };
 
 pub type Constraints<D> = ArrayBase<OwnedRepr<f64>, D>;
@@ -111,11 +111,6 @@ where
     }
 }
 
-/// Type aliases to work with populations.
-pub type PopulationGenes = Array2<f64>;
-pub type PopulationFitness = Array2<f64>;
-pub type PopulationConstraints = Array2<f64>;
-
 /// The `Population` struct contains genes, fitness, constraints (if any),
 /// rank (optional), and optionally a survival score vector.
 #[derive(Debug, Clone)]
@@ -124,7 +119,7 @@ where
     FDim: D12,
     ConstrDim: D12,
 {
-    pub genes: PopulationGenes,
+    pub genes: Array2<f64>,
     pub fitness: Fitness<FDim>,
     pub constraints: Option<Constraints<ConstrDim>>,
     pub rank: Option<Array1<usize>>,
@@ -139,7 +134,7 @@ where
     /// Creates a new `Population` instance with the given genes, fitness, constraints, and rank.
     /// The `survival_score` field is set to `None` by default.
     pub fn new(
-        genes: PopulationGenes,
+        genes: Array2<f64>,
         fitness: Fitness<FDim>,
         constraints: Constraints<ConstrDim>,
     ) -> Self {
@@ -301,7 +296,7 @@ impl<FDim> Population<FDim, NoConstr>
 where
     FDim: D12,
 {
-    pub fn new_unconstrained(genes: PopulationGenes, fitness: Fitness<FDim>) -> Self {
+    pub fn new_unconstrained(genes: Array2<f64>, fitness: Fitness<FDim>) -> Self {
         Self {
             genes,
             fitness,

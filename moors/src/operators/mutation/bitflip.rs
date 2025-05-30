@@ -37,7 +37,6 @@ impl MutationOperator for BitFlipMutation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::genetic::PopulationGenes;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
 
@@ -70,7 +69,7 @@ mod tests {
         // Create a population with two individuals:
         // - The first individual is all zeros.
         // - The second individual is all ones.
-        let mut pop: PopulationGenes = array![[0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0]];
+        let mut pop = array![[0.0, 0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0, 1.0]];
 
         // Create a BitFlipMutation operator with a gene mutation rate of 1.0,
         // so every gene should be considered for mutation.
@@ -87,8 +86,7 @@ mod tests {
         // After mutation, every bit should be flipped:
         // - The first individual (originally all 0.0) becomes all 1.0.
         // - The second individual (originally all 1.0) becomes all 0.0.
-        let expected_pop: PopulationGenes =
-            array![[1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0]];
+        let expected_pop = array![[1.0, 1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0, 0.0]];
         assert_eq!(expected_pop, pop);
     }
 }

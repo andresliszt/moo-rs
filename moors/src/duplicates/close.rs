@@ -3,7 +3,6 @@ use std::fmt::Debug;
 use ndarray::Array2;
 
 use crate::duplicates::PopulationCleaner;
-use crate::genetic::PopulationGenes;
 use crate::helpers::linalg::cross_euclidean_distances;
 
 #[derive(Debug, Clone)]
@@ -24,7 +23,7 @@ impl CloseDuplicatesCleaner {
 }
 
 impl PopulationCleaner for CloseDuplicatesCleaner {
-    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> PopulationGenes {
+    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64> {
         let ref_array = reference.unwrap_or(population);
         let n = population.nrows();
         let num_cols = population.ncols();
@@ -62,7 +61,7 @@ impl PopulationCleaner for CloseDuplicatesCleaner {
             .filter_map(|(i, row)| if keep[i] { Some(row.to_owned()) } else { None })
             .collect();
         let data_flat: Vec<f64> = kept_rows.into_iter().flatten().collect();
-        PopulationGenes::from_shape_vec((data_flat.len() / num_cols, num_cols), data_flat)
+        Array2::<f64>::from_shape_vec((data_flat.len() / num_cols, num_cols), data_flat)
             .expect("Failed to create deduplicated Array2")
     }
 }
