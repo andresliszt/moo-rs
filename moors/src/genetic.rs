@@ -282,9 +282,8 @@ where
     }
 }
 
-pub type NoConstr = Ix1;
-
-impl<FDim> Population<FDim, NoConstr>
+/// When no constraints are set, type it as Ix1 for simplicity and avoid turbofish
+impl<FDim> Population<FDim, Ix1>
 where
     FDim: D12,
 {
@@ -517,7 +516,7 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Mismatched population constraints: one is set and the other is None"
+        expected = "Mismatched population constraints: one has constraints and the other does not"
     )]
     fn test_population_moo_merge_mismatched_constraints() {
         let genes1 = array![[1.0, 2.0]];
