@@ -1,7 +1,8 @@
 use std::fmt::Debug;
 
+use ndarray::Array1;
+
 use crate::{
-    genetic::IndividualGenes,
     operators::{GeneticOperator, SamplingOperator},
     random::RandomGenerator,
 };
@@ -26,11 +27,7 @@ impl GeneticOperator for RandomSamplingInt {
 }
 
 impl SamplingOperator for RandomSamplingInt {
-    fn sample_individual(
-        &self,
-        num_vars: usize,
-        rng: &mut impl RandomGenerator,
-    ) -> IndividualGenes {
+    fn sample_individual(&self, num_vars: usize, rng: &mut impl RandomGenerator) -> Array1<f64> {
         (0..num_vars)
             .map(|_| rng.gen_range_f64(self.min as f64, self.max as f64))
             .collect()

@@ -1,16 +1,17 @@
 use std::fmt::Debug;
 
+use ndarray::Array2;
 use thiserror::Error;
 
 use crate::{
     duplicates::PopulationCleaner,
-    genetic::{Population, PopulationGenes},
+    genetic::{D01, D12, PopulationMOO},
     operators::{CrossoverOperator, MutationOperator, SelectionOperator},
     random::RandomGenerator,
 };
 
 #[derive(Debug, Clone)]
-pub struct Evolve<Sel, Cross, Mut, DC>
+pub struct EvolveMOO<Sel, Cross, Mut, DC>
 where
     Sel: SelectionOperator,
     Cross: CrossoverOperator,
@@ -33,7 +34,7 @@ pub enum EvolveError {
     EmptyMatingResult,
 }
 
-impl<Sel, Cross, Mut, DC> Evolve<Sel, Cross, Mut, DC>
+impl<Sel, Cross, Mut, DC> EvolveMOO<Sel, Cross, Mut, DC>
 where
     Sel: SelectionOperator,
     Cross: CrossoverOperator,
@@ -68,10 +69,10 @@ where
     /// to the specified lower and upper bounds (if provided).
     fn mating_batch(
         &self,
-        parents_a: &PopulationGenes,
-        parents_b: &PopulationGenes,
+        parents_a: &Array2<f64>,
+        parents_b: &Array2<f64>,
         rng: &mut impl RandomGenerator,
-    ) -> PopulationGenes {
+    ) -> Array2<f64> {
         // 1) Perform crossover in one batch.
         let mut offsprings = self
             .crossover
@@ -97,9 +98,9 @@ where
     /// If no duplicates_cleaner is provided, returns the genes unchanged.
     pub fn clean_duplicates(
         &self,
-        genes: PopulationGenes,
-        reference: Option<&PopulationGenes>,
-    ) -> PopulationGenes {
+        genes: Array2<f64>,
+        reference: Option<&Array2<f64>>,
+    ) -> Array2<f64> {
         if let Some(ref cleaner) = self.duplicates_cleaner {
             cleaner.remove(&genes, reference)
         } else {
@@ -117,13 +118,17 @@ where
     /// 5) Clean duplicates between the new offspring and the already accumulated offspring.
     /// 6) Append the new unique offspring to the accumulator.
     /// 7) Repeat until the desired number is reached.
-    pub fn evolve(
+    pub fn evolve<ConstrDim>(
         &self,
-        population: &Population,
+        population: &PopulationMOO<ConstrDim>,
         num_offsprings: usize,
         max_iter: usize,
         rng: &mut impl RandomGenerator,
-    ) -> Result<PopulationGenes, EvolveError> {
+    ) -> Result<Array2<f64>, EvolveError>
+    where
+        ConstrDim: D12,
+        <ConstrDim as ndarray::Dimension>::Smaller: D01,
+    {
         // Accumulate offspring rows in a Vec<Vec<f64>>
         let mut all_offsprings: Vec<Vec<f64>> = Vec::with_capacity(num_offsprings);
         let num_genes = population.genes.ncols();
@@ -143,7 +148,7 @@ where
             new_offsprings = self.clean_duplicates(new_offsprings, Some(&population.genes));
             // If we have already accumulated offspring, clean new offspring against them.
             if !all_offsprings.is_empty() {
-                let acc_array = PopulationGenes::from_shape_vec(
+                let acc_array = Array2::<f64>::from_shape_vec(
                     (all_offsprings.len(), num_genes),
                     all_offsprings.iter().flatten().cloned().collect(),
                 )
@@ -168,7 +173,7 @@ where
         let all_offsprings_len = all_offsprings.len();
         let offspring_data: Vec<f64> = all_offsprings.into_iter().flatten().collect();
         let offspring_array =
-            PopulationGenes::from_shape_vec((all_offsprings_len, num_genes), offspring_data)
+            Array2::<f64>::from_shape_vec((all_offsprings_len, num_genes), offspring_data)
                 .expect("Failed to create offspring array from the accumulated data");
 
         if offspring_array.nrows() < num_offsprings {

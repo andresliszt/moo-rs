@@ -3,12 +3,12 @@ extern crate moors;
 use std::time::Duration;
 
 use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion_main};
-use ndarray::{Axis, stack};
+use ndarray::{Array2, Axis, stack};
 
 use moors::{
     algorithms::Nsga3Builder,
     duplicates::CloseDuplicatesCleaner,
-    genetic::{FitnessFn, NoConstraintsFn, PopulationFitness, PopulationGenes},
+    evaluator::NoConstraintsFnPointer,
     operators::{
         crossover::SimulatedBinaryCrossover,
         mutation::GaussianMutation,
@@ -22,7 +22,7 @@ use moors::{
 /// f1 = cos(π/2 ⋅ x0) ⋅ cos(π/2 ⋅ x1)
 /// f2 = cos(π/2 ⋅ x0) ⋅ sin(π/2 ⋅ x1)
 /// f3 = sin(π/2 ⋅ x0)
-fn fitness_dtlz2_3obj(pop: &PopulationGenes) -> PopulationFitness {
+fn fitness_dtlz2_3obj(pop: &Array2<f64>) -> Array2<f64> {
     let half_pi = std::f64::consts::PI / 2.0;
     let x0 = pop.column(0).mapv(|v| v * half_pi);
     let x1 = pop.column(1).mapv(|v| v * half_pi);
@@ -47,13 +47,13 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
     c.bench_function("nsga3_dtlz2_3obj", |b| {
         b.iter(|| {
             // build the NSGA3 algorithm exactly as in your test
-            let mut algorithm = Nsga3Builder::<_, _, _, _, NoConstraintsFn, _>::default()
+            let mut algorithm = Nsga3Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
                 .reference_points(nsga3_rp.clone())
                 .sampler(RandomSamplingFloat::new(0.0, 1.0))
                 .crossover(SimulatedBinaryCrossover::new(20.0))
                 .mutation(GaussianMutation::new(0.05, 0.1))
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
-                .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
+                .fitness_fn(fitness_dtlz2_3obj)
                 .num_vars(2)
                 .num_objectives(3)
                 .population_size(1000)

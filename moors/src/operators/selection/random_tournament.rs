@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::genetic::Individual;
+use crate::genetic::{D01, IndividualMOO};
 use crate::operators::selection::{DuelResult, GeneticOperator, SelectionOperator};
 use crate::random::RandomGenerator;
 
@@ -20,12 +20,15 @@ impl GeneticOperator for RandomSelection {
 }
 
 impl SelectionOperator for RandomSelection {
-    fn tournament_duel(
+    fn tournament_duel<'a, ConstrDim>(
         &self,
-        p1: &Individual,
-        p2: &Individual,
+        p1: &IndividualMOO<'a, ConstrDim>,
+        p2: &IndividualMOO<'a, ConstrDim>,
         rng: &mut impl RandomGenerator,
-    ) -> DuelResult {
+    ) -> DuelResult
+    where
+        ConstrDim: D01,
+    {
         let p1_feasible = p1.is_feasible();
         let p2_feasible = p2.is_feasible();
 
@@ -49,7 +52,7 @@ impl SelectionOperator for RandomSelection {
 mod tests {
     use super::*;
     use crate::random::{RandomGenerator, TestDummyRng};
-    use ndarray::array;
+    use ndarray::{arr0, array};
     use rstest::rstest;
 
     // A fake random generator to control the outcome of gen_bool.
@@ -87,7 +90,7 @@ mod tests {
         case(1.0, 1.0, true, DuelResult::LeftWins),  // both infeasible, RNG true => left wins
         case(1.0, 1.0, false, DuelResult::RightWins) // both infeasible, RNG false => right wins
     )]
-    fn test_tournament_duel_parametrized_rstest(
+    fn test_tournament_duel(
         p1_constraint: f64,
         p2_constraint: f64,
         rng_value: bool,
@@ -95,16 +98,13 @@ mod tests {
     ) {
         // Define genes and fitness as arrays of f64.
         let genes = array![1.0, 2.0, 3.0];
-        let fitness = array![0.5];
+        let fitness = array![0.5, 1.0];
+        let p1_constraint_arr0 = arr0(p1_constraint);
+        let p2_constraint_arr0 = arr0(p2_constraint);
 
-        let p1 = Individual::new(
-            genes.clone(),
-            fitness.clone(),
-            Some(array![p1_constraint]),
-            None,
-            None,
-        );
-        let p2 = Individual::new(genes, fitness, Some(array![p2_constraint]), None, None);
+        let p1: IndividualMOO<'_, ndarray::Ix0> =
+            IndividualMOO::new(genes.view(), fitness.view(), p1_constraint_arr0.view());
+        let p2 = IndividualMOO::new(genes.view(), fitness.view(), p2_constraint_arr0.view());
 
         let selector = RandomSelection::new();
         assert_eq!(selector.name(), "RandomSelection");

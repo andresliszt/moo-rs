@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use ndarray::{Array1, Array2};
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::Population;
+use crate::genetic::{D12, PopulationMOO};
 use crate::helpers::extreme_points::{get_ideal, get_nadir};
 use crate::helpers::linalg::{faer_dot_and_norms, faer_dot_from_array};
 use crate::operators::{GeneticOperator, survival::SurvivalOperator};
@@ -39,13 +39,16 @@ impl ReveaReferencePointsSurvival {
 }
 
 impl SurvivalOperator for ReveaReferencePointsSurvival {
-    fn operate(
+    fn operate<ConstrDim>(
         &mut self,
-        population: Population,
+        population: PopulationMOO<ConstrDim>,
         _n_survive: usize,
         _rng: &mut impl RandomGenerator,
         algorithm_context: &AlgorithmContext,
-    ) -> Population {
+    ) -> PopulationMOO<ConstrDim>
+    where
+        ConstrDim: D12,
+    {
         let z_min = get_ideal(&population.fitness);
         let z_max = get_nadir(&population.fitness);
         let translated = &population.fitness - &z_min;

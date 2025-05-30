@@ -1,7 +1,6 @@
-use ndarray::{Array1, Axis, concatenate, s};
+use ndarray::{Array1, ArrayViewMut1, Axis, concatenate, s};
 
 use crate::{
-    genetic::IndividualGenesMut,
     operators::{GeneticOperator, MutationOperator},
     random::RandomGenerator,
 };
@@ -24,7 +23,7 @@ impl GeneticOperator for DisplacementMutation {
 }
 
 impl MutationOperator for DisplacementMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: ArrayViewMut1<'a, f64>, rng: &mut impl RandomGenerator) {
         let n = individual.len();
 
         // Select two random indices to define the segment boundaries.

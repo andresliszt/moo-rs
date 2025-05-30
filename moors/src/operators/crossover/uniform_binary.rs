@@ -1,4 +1,5 @@
-use crate::genetic::IndividualGenes;
+use ndarray::Array1;
+
 use crate::operators::{CrossoverOperator, GeneticOperator};
 use crate::random::RandomGenerator;
 
@@ -21,10 +22,10 @@ impl GeneticOperator for UniformBinaryCrossover {
 impl CrossoverOperator for UniformBinaryCrossover {
     fn crossover(
         &self,
-        parent_a: &IndividualGenes,
-        parent_b: &IndividualGenes,
+        parent_a: &Array1<f64>,
+        parent_b: &Array1<f64>,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> (Array1<f64>, Array1<f64>) {
         assert_eq!(
             parent_a.len(),
             parent_b.len(),
@@ -32,8 +33,8 @@ impl CrossoverOperator for UniformBinaryCrossover {
         );
 
         let num_genes = parent_a.len();
-        let mut offspring_a = IndividualGenes::zeros(num_genes);
-        let mut offspring_b = IndividualGenes::zeros(num_genes);
+        let mut offspring_a = Array1::<f64>::zeros(num_genes);
+        let mut offspring_b = Array1::<f64>::zeros(num_genes);
 
         for i in 0..num_genes {
             if rng.gen_proability() < 0.5 {

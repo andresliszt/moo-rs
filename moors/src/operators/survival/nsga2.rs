@@ -1,10 +1,10 @@
 use std::f64::INFINITY;
 use std::fmt::Debug;
 
-use ndarray::Array1;
+use ndarray::{Array1, Array2};
 
 use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{Fronts, PopulationFitness};
+use crate::genetic::{D12, Fronts};
 use crate::operators::{GeneticOperator, survival::FrontsAndRankingBasedSurvival};
 use crate::random::RandomGenerator;
 
@@ -24,17 +24,17 @@ impl Nsga2RankCrowdingSurvival {
 }
 
 impl FrontsAndRankingBasedSurvival for Nsga2RankCrowdingSurvival {
-    fn set_front_survival_score(
+    fn set_front_survival_score<ConstrDim>(
         &self,
-        fronts: &mut Fronts,
+        fronts: &mut Fronts<ConstrDim>,
         _rng: &mut impl RandomGenerator,
         _algorithm_context: &AlgorithmContext,
-    ) {
+    ) where
+        ConstrDim: D12,
+    {
         for front in fronts.iter_mut() {
             let crowding_distance = crowding_distance(&front.fitness);
-            front
-                .set_survival_score(crowding_distance)
-                .expect("Failed to set survival score in Nsga2");
+            front.set_survival_score(crowding_distance);
         }
     }
 }
@@ -46,7 +46,7 @@ impl FrontsAndRankingBasedSurvival for Nsga2RankCrowdingSurvival {
 ///
 /// # Returns:
 /// - A 1D array of crowding distances for each individual in the population_fitness.
-fn crowding_distance(population_fitness: &PopulationFitness) -> Array1<f64> {
+fn crowding_distance(population_fitness: &Array2<f64>) -> Array1<f64> {
     let num_individuals = population_fitness.shape()[0];
     let num_objectives = population_fitness.shape()[1];
 
@@ -105,7 +105,7 @@ mod tests {
     use super::*;
     use ndarray::{Array2, Axis, array, concatenate};
 
-    use crate::genetic::Population;
+    use crate::genetic::PopulationMOO;
     use crate::random::NoopRandomGenerator;
 
     #[test]
@@ -193,14 +193,10 @@ mod tests {
         let fitness: Array2<f64> = array![[1.0, 2.0], [2.0, 1.0], [1.5, 1.5], [3.0, 3.0]];
         let genes: Array2<f64> = array![[0.0, 1.0], [2.0, 3.0], [4.0, 5.0], [6.0, 7.0]];
         let rank: Array1<usize> = array![0_usize, 0_usize, 0_usize, 0_usize];
-        let population = Population {
-            genes,
-            fitness,
-            constraints: None,
-            rank: Some(rank),
-            survival_score: None,
-        };
-        let mut fronts: Vec<Population> = vec![population];
+        let mut population = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
+        population.set_rank(rank);
+
+        let mut fronts = vec![population];
 
         let selector = Nsga2RankCrowdingSurvival::new();
         let mut rng = NoopRandomGenerator::new();
@@ -223,7 +219,7 @@ mod tests {
         // All individuals belong to a single front (rank 0) and num_survive equals the population size.
         let genes: Array2<f64> = array![[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]];
         let fitness: Array2<f64> = array![[0.1, 0.9], [0.2, 0.8], [0.3, 0.7]];
-        let population = Population::new(genes.clone(), fitness.clone(), None, None);
+        let population = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
         let num_survive = 3;
         let mut selector = Nsga2RankCrowdingSurvival;
         assert_eq!(selector.name(), "Nsga2RankCrowdingSurvival");
@@ -268,7 +264,7 @@ mod tests {
         let genes = concatenate![Axis(0), front1_genes, front2_genes];
         let fitness = concatenate![Axis(0), front1_fitness, front2_fitness];
         // Create the population using the new constructor (rank is computed internally).
-        let population = Population::new(genes.clone(), fitness.clone(), None, None);
+        let population = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
         let num_survive = 4;
 
         let mut selector = Nsga2RankCrowdingSurvival;

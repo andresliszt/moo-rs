@@ -1,9 +1,10 @@
-use ndarray::{Axis, stack};
+use ndarray::{Array2, Axis, stack};
 
 use moors::{
     algorithms::{Nsga3Builder, ReveaBuilder},
     duplicates::CloseDuplicatesCleaner,
-    genetic::{FitnessFn, NoConstraintsFn, Population, PopulationFitness, PopulationGenes},
+    evaluator::NoConstraintsFnPointer,
+    genetic::PopulationMOO,
     operators::{
         crossover::SimulatedBinaryCrossover,
         mutation::GaussianMutation,
@@ -19,7 +20,7 @@ use moors::{
 /// f1 = cos(π/2 ⋅ x0) ⋅ cos(π/2 ⋅ x1)
 /// f2 = cos(π/2 ⋅ x0) ⋅ sin(π/2 ⋅ x1)
 /// f3 = sin(π/2 ⋅ x0)
-fn fitness_dtlz2_3obj(pop: &PopulationGenes) -> PopulationFitness {
+fn fitness_dtlz2_3obj(pop: &Array2<f64>) -> Array2<f64> {
     let half_pi = std::f64::consts::PI / 2.0;
     let x0 = pop.column(0).mapv(|v| v * half_pi);
     let x1 = pop.column(1).mapv(|v| v * half_pi);
@@ -38,7 +39,7 @@ fn fitness_dtlz2_3obj(pop: &PopulationGenes) -> PopulationFitness {
 
 /// Common assertion: the Pareto front must include the entire population
 /// and each objective vector must lie on the unit sphere f1² + f2² + f3² = 1
-fn assert_full_unit_sphere(pop: &Population) {
+fn assert_full_unit_sphere(pop: &PopulationMOO) {
     let front = pop.best();
     assert_eq!(
         front.len(),
@@ -66,13 +67,13 @@ fn test_nsga3_dtlz2_three_objectives() {
     let nsga3_rp = Nsga3ReferencePoints::new(rp, false);
 
     // 2) instantiate via builder
-    let mut algorithm = Nsga3Builder::<_, _, _, _, NoConstraintsFn, _>::default()
+    let mut algorithm = Nsga3Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
         .reference_points(nsga3_rp)
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(20.0))
         .mutation(GaussianMutation::new(0.05, 0.1))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
-        .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
+        .fitness_fn(fitness_dtlz2_3obj)
         .num_vars(2)
         .num_objectives(3)
         .population_size(100)
@@ -102,7 +103,7 @@ fn test_revea_dtlz2_three_objectives() {
     let rp = DanAndDenisReferencePoints::new(100, 3).generate();
 
     // 2) instantiate via builder
-    let mut algorithm = ReveaBuilder::<_, _, _, _, NoConstraintsFn, _>::default()
+    let mut algorithm = ReveaBuilder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
         .reference_points(rp)
         .alpha(2.5)
         .frequency(0.2)
@@ -110,7 +111,7 @@ fn test_revea_dtlz2_three_objectives() {
         .crossover(SimulatedBinaryCrossover::new(20.0))
         .mutation(GaussianMutation::new(0.05, 0.1))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
-        .fitness_fn(fitness_dtlz2_3obj as FitnessFn)
+        .fitness_fn(fitness_dtlz2_3obj)
         .num_vars(2)
         .num_objectives(3)
         .population_size(100)

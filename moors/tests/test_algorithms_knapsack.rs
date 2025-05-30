@@ -1,13 +1,10 @@
-use ndarray::{Array1, Axis, stack};
+use ndarray::{Array1, Array2, Axis, stack};
 use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
     algorithms::Nsga2Builder,
     duplicates::ExactDuplicatesCleaner,
-    genetic::{
-        ConstraintsFn, FitnessFn, PopulationConstraints, PopulationFitness, PopulationGenes,
-    },
     operators::{
         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
         sampling::RandomSamplingBinary,
@@ -21,7 +18,7 @@ const CAPACITY: f64 = 15.0;
 
 /// Compute multi-objective fitness [–total_value, total_weight]
 /// Returns an Array2<f64> of shape (population_size, 2)
-fn fitness_knapsack(population_genes: &PopulationGenes) -> PopulationFitness {
+fn fitness_knapsack(population_genes: &Array2<f64>) -> Array2<f64> {
     // lift our fixed arrays into Array1 for dot products
     let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
     let values_arr = Array1::from_vec(VALUES.to_vec());
@@ -33,21 +30,21 @@ fn fitness_knapsack(population_genes: &PopulationGenes) -> PopulationFitness {
     stack(Axis(1), &[(-&total_values).view(), total_weights.view()]).expect("stack failed")
 }
 
-fn constraints_knapsack(population_genes: &PopulationGenes) -> PopulationConstraints {
+fn constraints_knapsack(population_genes: &Array2<f64>) -> Array1<f64> {
     // build a 1-D array of weights in one shot
     let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
 
     // dot → Array1<f64>, subtract capacity → Array1<f64>,
     // then promote to 2-D (n×1) with insert_axis
-    (population_genes.dot(&weights_arr) - CAPACITY).insert_axis(Axis(1))
+    population_genes.dot(&weights_arr) - CAPACITY
 }
 
 #[test]
 fn test_knapsack_nsga2_small_binary() {
     // build and run the NSGA-II algorithm
     let mut algorithm = Nsga2Builder::default()
-        .fitness_fn(fitness_knapsack as FitnessFn)
-        .constraints_fn(constraints_knapsack as ConstraintsFn)
+        .fitness_fn(fitness_knapsack)
+        .constraints_fn(constraints_knapsack)
         .sampler(RandomSamplingBinary::new())
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))

@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use ndarray::Array2;
+
 use crate::duplicates::PopulationCleaner;
 use crate::genetic::PopulationGenes;
 use crate::helpers::linalg::cross_euclidean_distances;
@@ -22,11 +24,7 @@ impl CloseDuplicatesCleaner {
 }
 
 impl PopulationCleaner for CloseDuplicatesCleaner {
-    fn remove(
-        &self,
-        population: &PopulationGenes,
-        reference: Option<&PopulationGenes>,
-    ) -> PopulationGenes {
+    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> PopulationGenes {
         let ref_array = reference.unwrap_or(population);
         let n = population.nrows();
         let num_cols = population.ncols();

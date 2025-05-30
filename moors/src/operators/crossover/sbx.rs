@@ -1,6 +1,5 @@
 use ndarray::Array1;
 
-use crate::genetic::IndividualGenes;
 use crate::operators::{CrossoverOperator, GeneticOperator};
 use crate::random::RandomGenerator;
 
@@ -113,10 +112,10 @@ impl GeneticOperator for SimulatedBinaryCrossover {
 impl CrossoverOperator for SimulatedBinaryCrossover {
     fn crossover(
         &self,
-        parent_a: &IndividualGenes,
-        parent_b: &IndividualGenes,
+        parent_a: &Array1<f64>,
+        parent_b: &Array1<f64>,
         rng: &mut impl RandomGenerator,
-    ) -> (IndividualGenes, IndividualGenes) {
+    ) -> (((Array1<f64>, Array1<f64>))) {
         // TODO: Enable prob_exchange
         sbx_crossover_array(parent_a, parent_b, self.distribution_index, 0.0, rng)
     }
@@ -125,7 +124,6 @@ impl CrossoverOperator for SimulatedBinaryCrossover {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::genetic::IndividualGenes;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
 
@@ -165,8 +163,8 @@ mod tests {
         // Define two parent genes as IndividualGenes.
         // For gene 0: p1 = 1.0, p2 = 3.0 (SBX is applied).
         // For gene 1: p1 = 5.0, p2 = 5.0 (no crossover is applied).
-        let parent_a: IndividualGenes = array![1.0, 5.0];
-        let parent_b: IndividualGenes = array![3.0, 5.0];
+        let parent_a = array![1.0, 5.0];
+        let parent_b = array![3.0, 5.0];
 
         // Create the SBX operator with distribution_index = 2.0.
         let operator = SimulatedBinaryCrossover::new(2.0);

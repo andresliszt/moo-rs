@@ -1,7 +1,6 @@
-use ndarray::s;
+use ndarray::{ArrayViewMut1, s};
 
 use crate::{
-    genetic::IndividualGenesMut,
     operators::{GeneticOperator, MutationOperator},
     random::RandomGenerator,
 };
@@ -23,7 +22,7 @@ impl GeneticOperator for ScrambleMutation {
 }
 
 impl MutationOperator for ScrambleMutation {
-    fn mutate<'a>(&self, mut individual: IndividualGenesMut<'a>, rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(&self, mut individual: ArrayViewMut1<'a, f64>, rng: &mut impl RandomGenerator) {
         let n = individual.len();
         // Select two random indices to define the segment.
         let idx1 = rng.gen_range_usize(0, n);

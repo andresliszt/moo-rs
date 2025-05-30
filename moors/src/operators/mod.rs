@@ -46,7 +46,7 @@
 //! impl MutationOperator for MyMutation {
 //!     fn mutate<'a>(
 //!         &self,
-//!         mut individual: IndividualGenesMut<'a>,
+//!         mut individual:ArrayViewMut1<'a, f64>,
 //!         rng: &mut impl RandomGenerator,
 //!     ) {
 //!         for gene in individual.iter_mut() {
@@ -86,7 +86,7 @@ pub mod selection;
 pub mod survival;
 
 pub use crossover::CrossoverOperator;
-pub use evolve::{Evolve, EvolveError};
+pub use evolve::{EvolveError, EvolveMOO};
 pub use mutation::MutationOperator;
 pub use sampling::SamplingOperator;
 pub use selection::SelectionOperator;

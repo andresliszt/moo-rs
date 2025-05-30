@@ -33,7 +33,7 @@ use ndarray::Array2;
 use crate::{
     algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
     duplicates::PopulationCleaner,
-    genetic::{PopulationConstraints, PopulationFitness, PopulationGenes},
+    genetic::{Constraints, D01, D12},
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
         selection::random_tournament::RandomSelection,
@@ -56,14 +56,16 @@ use moors_macros::algorithm_builder;
 /// [`Revea::new`], then call `run()` and `population()` to obtain the final
 /// Pareto approximation.
 #[derive(Debug)]
-pub struct Revea<S, Cross, Mut, F, G, DC>
+pub struct Revea<ConstrDim, S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
+    F: Fn(&Array2<f64>) -> Array2<f64>,
+    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
     DC: PopulationCleaner,
+    ConstrDim: D12,
+    <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
     pub inner: MultiObjectiveAlgorithm<
         S,
@@ -74,18 +76,21 @@ where
         F,
         G,
         DC,
+        ConstrDim,
     >,
 }
 
 #[algorithm_builder]
-impl<S, Cross, Mut, F, G, DC> Revea<S, Cross, Mut, F, G, DC>
+impl<ConstrDim, S, Cross, Mut, F, G, DC> Revea<ConstrDim, S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&PopulationGenes) -> PopulationFitness,
-    G: Fn(&PopulationGenes) -> PopulationConstraints,
+    F: Fn(&Array2<f64>) -> Array2<f64>,
+    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
     DC: PopulationCleaner,
+    ConstrDim: D12,
+    <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn new(

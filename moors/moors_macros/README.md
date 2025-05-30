@@ -41,7 +41,7 @@ const CAPACITY: f64 = 15.0;
 
 /// Compute multi-objective fitness [–total_value, total_weight]
 /// Returns an Array2<f64> of shape (population_size, 2)
-fn fitness_knapsack(population_genes: &PopulationGenes) -> PopulationFitness {
+fn fitness_knapsack(population_genes: &Array2<f64>) -> PopulationFitness {
     // lift our fixed arrays into Array1 for dot products
     let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
     let values_arr = Array1::from_vec(VALUES.to_vec());
@@ -53,7 +53,7 @@ fn fitness_knapsack(population_genes: &PopulationGenes) -> PopulationFitness {
     stack(Axis(1), &[(-&total_values).view(), total_weights.view()]).expect("stack failed")
 }
 
-fn constraints_knapsack(population_genes: &PopulationGenes) -> PopulationConstraints {
+fn constraints_knapsack(population_genes: &Array2<f64>) -> PopulationConstraints {
     // build a 1-D array of weights in one shot
     let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
 

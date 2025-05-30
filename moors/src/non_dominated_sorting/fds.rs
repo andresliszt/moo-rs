@@ -1,10 +1,10 @@
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use ndarray::{Array1, ArrayView1, Axis};
+use ndarray::{Array1, Array2, ArrayView1, Axis};
 use rayon::prelude::*;
 
-use crate::genetic::{Fronts, Population, PopulationFitness};
+use crate::genetic::{D12, Fronts, PopulationMOO};
 
 /// Inlines the check for "does f1 dominate f2?" to reduce call overhead.
 #[inline]
@@ -28,7 +28,7 @@ fn dominates(f1: &ArrayView1<f64>, f2: &ArrayView1<f64>) -> bool {
 /// `min_survivors`, the entire last front is included (even if it causes the total to exceed `min_survivors`)
 /// and no further fronts are added.
 pub fn fast_non_dominated_sorting(
-    population_fitness: &PopulationFitness,
+    population_fitness: &Array2<f64>,
     min_survivors: usize,
 ) -> Vec<Vec<usize>> {
     let population_size = population_fitness.shape()[0];
@@ -131,26 +131,20 @@ pub fn fast_non_dominated_sorting(
 }
 
 /// Builds the fronts from the population.
-pub fn build_fronts(population: Population, num_survive: usize) -> Fronts {
+pub fn build_fronts<ConstrDim>(
+    population: PopulationMOO<ConstrDim>,
+    num_survive: usize,
+) -> Fronts<ConstrDim>
+where
+    ConstrDim: D12,
+{
     let sorted_fronts = fast_non_dominated_sorting(&population.fitness, num_survive);
-    let mut results: Fronts = Vec::new();
-
+    let mut results: Fronts<ConstrDim> = Vec::new();
     // For each front (with rank = front_index), extract the sub-population.
     for (front_index, indices) in sorted_fronts.iter().enumerate() {
-        let front_genes = population.genes.select(Axis(0), &indices[..]);
-        let front_fitness = population.fitness.select(Axis(0), &indices[..]);
-        let front_constraints = population
-            .constraints
-            .as_ref()
-            .map(|c| c.select(Axis(0), &indices[..]));
-
-        // Create a rank Array1 (one rank value per individual in the front).
-        let rank_arr = Some(Array1::from_elem(indices.len(), front_index));
-
-        // Build a `Population` representing this entire front.
-        let population_front =
-            Population::new(front_genes, front_fitness, front_constraints, rank_arr);
-
+        let mut population_front = population.selected(&indices);
+        let rank_arr = Array1::from_elem(indices.len(), front_index);
+        population_front.set_rank(rank_arr);
         results.push(population_front);
     }
     results
@@ -286,10 +280,9 @@ mod tests {
             [3.0, 3.0]  // Individual 5
         ];
         let fitness = genes.clone();
-        let constraints = Some(Array2::from_elem((5, 2), -1.0));
-
+        let constraints = Array2::from_elem((5, 2), -1.0);
         // Build the Population (with rank set to None initially).
-        let population = Population::new(genes, fitness, constraints, None);
+        let population = PopulationMOO::new(genes, fitness, constraints);
 
         // Call build_fronts with num_survive = 5.
         let fronts = build_fronts(population, 5);

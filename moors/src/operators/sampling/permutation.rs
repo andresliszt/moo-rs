@@ -3,7 +3,6 @@ use std::fmt::Debug;
 use ndarray::Array1;
 
 use crate::{
-    genetic::IndividualGenes,
     operators::{GeneticOperator, SamplingOperator},
     random::RandomGenerator,
 };
@@ -27,11 +26,7 @@ impl GeneticOperator for PermutationSampling {
 impl SamplingOperator for PermutationSampling {
     /// Generates a single individual of length `num_vars` where the genes
     /// are a shuffled permutation of the integers [0, 1, 2, ..., num_vars - 1].
-    fn sample_individual(
-        &self,
-        num_vars: usize,
-        rng: &mut impl RandomGenerator,
-    ) -> IndividualGenes {
+    fn sample_individual(&self, num_vars: usize, rng: &mut impl RandomGenerator) -> Array1<f64> {
         // 1) Create a vector of indices [0, 1, 2, ..., num_vars - 1]
         let mut indices: Vec<f64> = (0..num_vars).map(|i| i as f64).collect();
 

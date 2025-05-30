@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::fmt::Debug;
 
+use ndarray::Array2;
 use ordered_float::OrderedFloat;
 
 use crate::duplicates::PopulationCleaner;
@@ -17,11 +18,7 @@ impl ExactDuplicatesCleaner {
 }
 
 impl PopulationCleaner for ExactDuplicatesCleaner {
-    fn remove(
-        &self,
-        population: &PopulationGenes,
-        reference: Option<&PopulationGenes>,
-    ) -> PopulationGenes {
+    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> PopulationGenes {
         let ncols = population.ncols();
         let mut unique_rows: Vec<Vec<f64>> = Vec::new();
         // A HashSet to hold the hashable representation of rows.
