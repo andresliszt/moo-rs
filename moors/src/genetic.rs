@@ -332,7 +332,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::array;
+    use ndarray::{arr0, array};
 
     #[test]
     fn test_individual_moo_is_feasible() {
@@ -521,7 +521,7 @@ mod tests {
     fn test_population_moo_merge_mismatched_constraints() {
         let genes1 = array![[1.0, 2.0]];
         let fitness1 = array![[0.5, 1.0]];
-        let constraints1 = array![[-1.0, 0.0]];
+        let constraints1 = array![-1.0]; // Single constraints;
         let pop1 = PopulationMOO::new(genes1, fitness1, constraints1);
 
         let genes2 = array![[3.0, 4.0]];
@@ -554,5 +554,32 @@ mod tests {
         let pop2 = PopulationMOO::new_unconstrained(genes2, fitness2);
 
         Population::merge(&pop1, &pop2);
+    }
+
+    #[test]
+    fn test_individual_soo_with_and_without_constraints() {
+        // Unconstrained individual: fitness is 0-D
+        let genes = array![0.1, 0.2, 0.3];
+        let fitness = arr0(42.0);
+        let ind_unconstrained = IndividualSOO::new_unconstrained(genes.view(), fitness.view());
+        // Should have no constraints
+        assert!(ind_unconstrained.constraints.is_none());
+        assert!(ind_unconstrained.is_feasible());
+        assert_eq!(ind_unconstrained.rank, None);
+        assert_eq!(ind_unconstrained.survival_score, None);
+
+        // Constrained individual with a scalar constraint ≤ 0
+        let constraint_ok = arr0(-0.5);
+        let ind_ok = IndividualSOO::new(genes.view(), fitness.view(), constraint_ok.view());
+        let c_ok = ind_ok.constraints.unwrap().into_scalar();
+        assert_eq!(*c_ok, -0.5);
+        assert!(ind_ok.is_feasible());
+
+        // Constrained individual with a scalar constraint > 0
+        let constraint_fail = arr0(1.5);
+        let ind_fail = IndividualSOO::new(genes.view(), fitness.view(), constraint_fail.view());
+        let c_fail = ind_fail.constraints.unwrap().into_scalar();
+        assert_eq!(*c_fail, 1.5);
+        assert!(!ind_fail.is_feasible());
     }
 }
