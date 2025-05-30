@@ -334,7 +334,6 @@ where
 mod tests {
     use super::*;
     use ndarray::array;
-    use rand::rng;
 
     #[test]
     fn test_individual_moo_is_feasible() {
