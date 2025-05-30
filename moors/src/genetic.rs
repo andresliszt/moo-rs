@@ -62,21 +62,6 @@ where
         }
     }
 
-    /// Creates a new `Individual` with given genes, fitness and without constraints.
-    /// `rank` and `survival_score` are initialized to `None`.
-    pub fn new_unconstrained(
-        genes: ArrayView1<'a, f64>,
-        fitness: ArrayView<'a, f64, FDim>,
-    ) -> Self {
-        Self {
-            genes,
-            fitness,
-            constraints: None,
-            rank: None,
-            survival_score: None,
-        }
-    }
-
     /// Checks if the individual is feasible.
     /// If `constraints` is `None`, it's always feasible.
     /// Otherwise, all constraint values must be ≤ 0.0.
@@ -95,6 +80,26 @@ where
     /// Sets the survival score of the individual.
     pub fn set_survival_score(&mut self, survival_score: f64) {
         self.survival_score = Some(survival_score);
+    }
+}
+
+impl<'a, FDim> Individual<'a, FDim, ndarray::Ix0>
+where
+    FDim: D01,
+{
+    /// Creates a new `Individual` with given genes, fitness and without constraints.
+    /// `rank` and `survival_score` are initialized to `None`.
+    pub fn new_unconstrained(
+        genes: ArrayView1<'a, f64>,
+        fitness: ArrayView<'a, f64, FDim>,
+    ) -> Self {
+        Self {
+            genes,
+            fitness,
+            constraints: None,
+            rank: None,
+            survival_score: None,
+        }
     }
 }
 
@@ -325,236 +330,231 @@ where
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use ndarray::array;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ndarray::array;
+    use rand::rng;
 
-//     #[test]
-//     fn test_individual_is_feasible() {
-//         // Individual with no constraints should be feasible.
-//         let ind1 = Individual::new(array![1.0, 2.0], array![0.5, 1.0], None, Some(0), None);
-//         assert!(
-//             ind1.is_feasible(),
-//             "Individual with no constraints should be feasible"
-//         );
+    #[test]
+    fn test_individual_moo_is_feasible() {
+        // Individual with no constraints should be feasible.
+        let genes_ind1 = array![1.0, 2.0];
+        let fitness_ind1 = array![0.5, 1.0];
+        let ind1 = IndividualMOO::new_unconstrained(genes_ind1.view(), fitness_ind1.view());
+        assert!(
+            ind1.is_feasible(),
+            "Individual with no constraints should be feasible"
+        );
 
-//         // Individual with constraints summing to <= 0 is feasible.
-//         let ind2 = Individual::new(
-//             array![1.0, 2.0],
-//             array![0.5, 1.0],
-//             Some(array![-1.0, 0.0]),
-//             Some(0),
-//             None,
-//         );
-//         assert!(
-//             ind2.is_feasible(),
-//             "Constraints sum -1.0 should be feasible"
-//         );
+        // Individual with constraints summing to <= 0 is feasible.
+        let genes_ind2 = array![1.0, 2.0];
+        let fitness_ind2 = array![0.5, 1.0];
+        let constraints_ind2 = array![-1.0, 0.0];
+        let ind2 = IndividualMOO::new(
+            genes_ind2.view(),
+            fitness_ind2.view(),
+            constraints_ind2.view(),
+        );
+        assert!(
+            ind2.is_feasible(),
+            "Constraints sum -1.0 should be feasible"
+        );
 
-//         // Individual with constraints summing to > 0 is not feasible.
-//         let ind3 = Individual::new(
-//             array![1.0, 2.0],
-//             array![0.5, 1.0],
-//             Some(array![1.0, 0.1]),
-//             Some(0),
-//             None,
-//         );
-//         assert!(
-//             !ind3.is_feasible(),
-//             "Constraints sum 1.1 should not be feasible"
-//         );
-//     }
+        // Individual with constraints summing to > 0 is not feasible.
+        let genes_ind3 = array![1.0, 2.0];
+        let fitness_ind3 = array![0.5, 1.0];
+        let constraints_ind3 = array![1.0, 0.1];
+        let ind3 = Individual::new(
+            genes_ind3.view(),
+            fitness_ind3.view(),
+            constraints_ind3.view(),
+        );
+        assert!(
+            !ind3.is_feasible(),
+            "Constraints sum 1.1 should not be feasible"
+        );
+    }
 
-//     #[test]
-//     fn test_population_new_get_selected_len() {
-//         // Create a population with two individuals.
-//         let genes = array![[1.0, 2.0], [3.0, 4.0]];
-//         let fitness = array![[0.5, 1.0], [1.5, 2.0]];
-//         // Using a rank array here.
-//         let rank = Some(array![0, 1]);
-//         let pop = Population::new(genes.clone(), fitness.clone(), None, rank);
+    #[test]
+    fn test_population_moo_new_get_selected_len() {
+        // Create a population with two individuals.
+        let genes = array![[1.0, 2.0], [3.0, 4.0]];
+        let fitness = array![[0.5, 1.0], [1.5, 2.0]];
+        // Using a rank array here.
+        let rank = array![0, 1];
+        let mut pop = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
+        pop.set_rank(rank);
 
-//         // Test len()
-//         assert_eq!(pop.len(), 2, "Population should have 2 individuals");
+        // Test len()
+        assert_eq!(pop.len(), 2, "Population should have 2 individuals");
 
-//         // Test get()
-//         let ind0 = pop.get(0);
-//         assert_eq!(ind0.genes, genes.row(0).to_owned());
-//         assert_eq!(ind0.fitness, fitness.row(0).to_owned());
-//         assert_eq!(ind0.rank, Some(0));
+        // Test get()
+        let ind0 = pop.get(0);
+        assert_eq!(ind0.genes, genes.row(0).to_owned());
+        assert_eq!(ind0.fitness, fitness.row(0).to_owned());
+        assert_eq!(ind0.rank, Some(0));
 
-//         // Test selected()
-//         let selected = pop.selected(&[1]);
-//         assert_eq!(
-//             selected.len(),
-//             1,
-//             "Selected population should have 1 individual"
-//         );
-//         let ind_selected = selected.get(0);
-//         assert_eq!(ind_selected.genes, array![3.0, 4.0]);
-//         assert_eq!(ind_selected.fitness, array![1.5, 2.0]);
-//         assert_eq!(ind_selected.rank, Some(1));
-//     }
+        // Test selected()
+        let selected = pop.selected(&[1]);
+        assert_eq!(
+            selected.len(),
+            1,
+            "Selected population should have 1 individual"
+        );
+        let ind_selected = selected.get(0);
+        assert_eq!(ind_selected.genes, array![3.0, 4.0]);
+        assert_eq!(ind_selected.fitness, array![1.5, 2.0]);
+        assert_eq!(ind_selected.rank, Some(1));
+    }
 
-//     #[test]
-//     fn test_population_best_with_rank() {
-//         // Create a population with three individuals and varying ranks.
-//         let genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
-//         let fitness = array![[0.5, 1.0], [1.5, 2.0], [2.5, 3.0]];
-//         // First and third individuals have rank 0, second has rank 1.
-//         let rank = Some(array![0, 1, 0]);
-//         let pop = Population::new(genes, fitness, None, rank);
-//         let best = pop.best();
-//         // Expect best population to contain only individuals with rank 0.
-//         assert_eq!(best.len(), 2, "Best population should have 2 individuals");
-//         for i in 0..best.len() {
-//             let ind = best.get(i);
-//             assert_eq!(
-//                 ind.rank,
-//                 Some(0),
-//                 "All individuals in best population should have rank 0"
-//             );
-//         }
-//     }
+    #[test]
+    fn test_population_moo_best_with_rank() {
+        // Create a population with three individuals and varying ranks.
+        let genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
+        let fitness = array![[0.5, 1.0], [1.5, 2.0], [2.5, 3.0]];
+        // First and third individuals have rank 0, second has rank 1.
+        let rank = array![0, 1, 0];
+        let mut pop = PopulationMOO::new_unconstrained(genes, fitness);
+        pop.set_rank(rank);
+        let best = pop.best();
+        // Expect best population to contain only individuals with rank 0.
+        assert_eq!(best.len(), 2, "Best population should have 2 individuals");
+        for i in 0..best.len() {
+            let ind = best.get(i);
+            assert_eq!(
+                ind.rank,
+                Some(0),
+                "All individuals in best population should have rank 0"
+            );
+        }
+    }
 
-//     #[test]
-//     fn test_population_best_without_rank() {
-//         // Create a population without rank information.
-//         let genes = array![[1.0, 2.0], [3.0, 4.0]];
-//         let fitness = array![[0.5, 1.0], [1.5, 2.0]];
-//         let pop = Population::new(genes.clone(), fitness.clone(), None, None);
-//         // Since there is no rank, best() should return the whole population.
-//         let best = pop.best();
-//         assert_eq!(
-//             best.len(),
-//             pop.len(),
-//             "Best population should equal the original population when rank is None"
-//         );
-//     }
+    #[test]
+    fn test_population_moo_best_without_rank() {
+        // Create a population without rank information.
+        let genes = array![[1.0, 2.0], [3.0, 4.0]];
+        let fitness = array![[0.5, 1.0], [1.5, 2.0]];
+        let pop = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
+        // Since there is no rank, best() should return the whole population.
+        let best = pop.best();
+        assert_eq!(
+            best.len(),
+            pop.len(),
+            "Best population should equal the original population when rank is None"
+        );
+    }
 
-//     #[test]
-//     fn test_set_survival_score() {
-//         // Create a population with two individuals.
-//         let genes = array![[1.0, 2.0], [3.0, 4.0]];
-//         let fitness = array![[0.5, 1.0], [1.5, 2.0]];
-//         let rank = Some(array![0, 1]);
-//         let mut pop = Population::new(genes, fitness, None, rank);
-//         // Set a survival score vector with correct length.
-//         let score = array![0.1, 0.2];
-//         assert!(pop.set_survival_score(score.clone()).is_ok());
-//         assert_eq!(pop.survival_score.unwrap(), score);
-//     }
+    #[test]
+    fn test_set_survival_score() {
+        // Create a population with two individuals.
+        let genes = array![[1.0, 2.0], [3.0, 4.0]];
+        let fitness = array![[0.5, 1.0], [1.5, 2.0]];
+        let mut pop = PopulationMOO::new_unconstrained(genes, fitness);
+        // Set a survival score vector with correct length.
+        let score = array![0.1, 0.2];
+        pop.set_survival_score(score.clone());
+        assert_eq!(pop.survival_score.unwrap(), score);
+    }
 
-//     #[test]
-//     fn test_set_survival_score_err() {
-//         // Create a population with two individuals.
-//         let genes = array![[1.0, 2.0], [3.0, 4.0]];
-//         let fitness = array![[0.5, 1.0], [1.5, 2.0]];
-//         let rank = Some(array![0, 1]);
-//         let mut pop = Population::new(genes, fitness, None, rank);
+    #[test]
+    fn test_population_moo_merge() {
+        // Create two populations with rank information.
+        let genes1 = array![[1.0, 2.0], [3.0, 4.0]];
+        let fitness1 = array![[0.5, 1.0], [1.5, 2.0]];
+        let rank1 = array![0, 0];
+        let mut pop1 = PopulationMOO::new_unconstrained(genes1, fitness1);
+        pop1.set_rank(rank1);
 
-//         // Setting a survival score vector with incorrect length should error.
-//         let wrong_score = array![0.1];
-//         assert!(pop.set_survival_score(wrong_score).is_err());
-//     }
+        let genes2 = array![[5.0, 6.0], [7.0, 8.0]];
+        let fitness2 = array![[2.5, 3.0], [3.5, 4.0]];
+        let rank2 = array![1, 1];
+        let mut pop2 = PopulationMOO::new_unconstrained(genes2, fitness2);
+        pop2.set_rank(rank2);
 
-//     #[test]
-//     fn test_population_merge() {
-//         // Create two populations with rank information.
-//         let genes1 = array![[1.0, 2.0], [3.0, 4.0]];
-//         let fitness1 = array![[0.5, 1.0], [1.5, 2.0]];
-//         let rank1 = Some(array![0, 0]);
-//         let pop1 = Population::new(genes1, fitness1, None, rank1);
+        let merged = PopulationMOO::merge(&pop1, &pop2);
+        assert_eq!(
+            merged.len(),
+            4,
+            "Merged population should have 4 individuals"
+        );
 
-//         let genes2 = array![[5.0, 6.0], [7.0, 8.0]];
-//         let fitness2 = array![[2.5, 3.0], [3.5, 4.0]];
-//         let rank2 = Some(array![1, 1]);
-//         let pop2 = Population::new(genes2, fitness2, None, rank2);
+        let expected_genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]];
+        assert_eq!(merged.genes, expected_genes, "Merged genes do not match");
 
-//         let merged = Population::merge(&pop1, &pop2);
-//         assert_eq!(
-//             merged.len(),
-//             4,
-//             "Merged population should have 4 individuals"
-//         );
+        let expected_fitness = array![[0.5, 1.0], [1.5, 2.0], [2.5, 3.0], [3.5, 4.0]];
+        assert_eq!(
+            merged.fitness, expected_fitness,
+            "Merged fitness does not match"
+        );
 
-//         let expected_genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]];
-//         assert_eq!(merged.genes, expected_genes, "Merged genes do not match");
+        let expected_rank = Some(array![0, 0, 1, 1]);
+        assert_eq!(merged.rank, expected_rank, "Merged rank does not match");
+    }
 
-//         let expected_fitness = array![[0.5, 1.0], [1.5, 2.0], [2.5, 3.0], [3.5, 4.0]];
-//         assert_eq!(
-//             merged.fitness, expected_fitness,
-//             "Merged fitness does not match"
-//         );
+    #[test]
+    fn test_fronts_ext_to_population_moo() {
+        // Create two fronts.
+        let genes1 = array![[1.0, 2.0], [3.0, 4.0]];
+        let fitness1 = array![[0.5, 1.0], [1.5, 2.0]];
+        let pop1 = PopulationMOO::new_unconstrained(genes1, fitness1);
 
-//         let expected_rank = Some(array![0, 0, 1, 1]);
-//         assert_eq!(merged.rank, expected_rank, "Merged rank does not match");
-//     }
+        let genes2 = array![[5.0, 6.0], [7.0, 8.0]];
+        let fitness2 = array![[2.5, 3.0], [3.5, 4.0]];
+        let pop2 = PopulationMOO::new_unconstrained(genes2, fitness2);
 
-//     #[test]
-//     fn test_fronts_ext_to_population() {
-//         // Create two fronts.
-//         let genes1 = array![[1.0, 2.0], [3.0, 4.0]];
-//         let fitness1 = array![[0.5, 1.0], [1.5, 2.0]];
-//         let rank1 = Some(array![0, 0]);
-//         let pop1 = Population::new(genes1, fitness1, None, rank1);
+        let fronts = vec![pop1.clone(), pop2.clone()];
+        let merged = fronts.to_population();
 
-//         let genes2 = array![[5.0, 6.0], [7.0, 8.0]];
-//         let fitness2 = array![[2.5, 3.0], [3.5, 4.0]];
-//         let rank2 = Some(array![1, 1]);
-//         let pop2 = Population::new(genes2, fitness2, None, rank2);
+        assert_eq!(
+            merged.len(),
+            4,
+            "Flattened population should have 4 individuals"
+        );
 
-//         let fronts: Vec<Population> = vec![pop1.clone(), pop2.clone()];
-//         let merged = fronts.to_population();
+        let expected_genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]];
+        assert_eq!(merged.genes, expected_genes, "Flattened genes do not match");
+    }
 
-//         assert_eq!(
-//             merged.len(),
-//             4,
-//             "Flattened population should have 4 individuals"
-//         );
+    #[test]
+    #[should_panic(
+        expected = "Mismatched population constraints: one is set and the other is None"
+    )]
+    fn test_population_moo_merge_mismatched_constraints() {
+        let genes1 = array![[1.0, 2.0]];
+        let fitness1 = array![[0.5, 1.0]];
+        let constraints1 = array![[-1.0, 0.0]];
+        let pop1 = PopulationMOO::new(genes1, fitness1, constraints1);
 
-//         let expected_genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]];
-//         assert_eq!(merged.genes, expected_genes, "Flattened genes do not match");
-//     }
+        let genes2 = array![[3.0, 4.0]];
+        let fitness2 = array![[1.5, 2.0]];
+        // pop2 without constraints.
+        let pop2 = PopulationMOO {
+            genes: genes2,
+            fitness: fitness2,
+            constraints: None,
+            rank: None,
+            survival_score: None,
+        };
 
-//     #[test]
-//     #[should_panic(
-//         expected = "Mismatched population constraints: one is set and the other is None"
-//     )]
-//     fn test_population_merge_mismatched_constraints() {
-//         // Crear dos poblaciones con constraints incompatibles: una con Some y otra sin.
-//         let genes1 = array![[1.0, 2.0]];
-//         let fitness1 = array![[0.5, 1.0]];
-//         let constraints1 = Some(array![[-1.0, 0.0]]);
-//         let pop1 = Population::new(genes1, fitness1, constraints1, None);
+        PopulationMOO::merge(&pop1, &pop2);
+    }
 
-//         let genes2 = array![[3.0, 4.0]];
-//         let fitness2 = array![[1.5, 2.0]];
-//         // pop2 sin constraints.
-//         let pop2 = Population::new(genes2, fitness2, None, None);
+    #[test]
+    #[should_panic(
+        expected = "Mismatched population survival scores: one is set and the other is None"
+    )]
+    fn test_population_moo_merge_mismatched_survival_score() {
+        let genes1 = array![[1.0, 2.0]];
+        let fitness1 = array![[0.5, 1.0]];
+        let mut pop1 = PopulationMOO::new_unconstrained(genes1, fitness1);
+        let score1 = array![0.1];
+        pop1.set_survival_score(score1);
 
-//         Population::merge(&pop1, &pop2);
-//     }
+        let genes2 = array![[3.0, 4.0]];
+        let fitness2 = array![[1.5, 2.0]];
+        let pop2 = PopulationMOO::new_unconstrained(genes2, fitness2);
 
-//     #[test]
-//     #[should_panic(
-//         expected = "Mismatched population survival scores: one is set and the other is None"
-//     )]
-//     fn test_population_merge_mismatched_survival_score() {
-//         // Crear dos poblaciones con survival_score incompatibles: una con Some y otra sin.
-//         let genes1 = array![[1.0, 2.0]];
-//         let fitness1 = array![[0.5, 1.0]];
-//         let mut pop1 = Population::new(genes1, fitness1, None, None);
-//         // Asignar survival_score a pop1.
-//         let score1 = array![0.1];
-//         pop1.set_survival_score(score1).unwrap();
-
-//         let genes2 = array![[3.0, 4.0]];
-//         let fitness2 = array![[1.5, 2.0]];
-//         // pop2 sin survival_score.
-//         let pop2 = Population::new(genes2, fitness2, None, None);
-
-//         Population::merge(&pop1, &pop2);
-//     }
-// }
+        Population::merge(&pop1, &pop2);
+    }
+}
