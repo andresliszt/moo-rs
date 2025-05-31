@@ -66,8 +66,6 @@
 //! isolation or swap them at runtime to benchmark different evolutionary
 //! dynamics without touching your problem‑specific code or algorithm builder.
 
-use std::fmt::Debug;
-
 pub mod crossover;
 pub mod evolve;
 pub mod mutation;

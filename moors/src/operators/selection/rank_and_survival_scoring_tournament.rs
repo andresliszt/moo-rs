@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use crate::genetic::{D01, IndividualMOO};
 use crate::operators::{
     SelectionOperator, selection::DuelResult, survival::SurvivalScoringComparison,

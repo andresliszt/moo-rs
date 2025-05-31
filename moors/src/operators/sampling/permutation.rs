@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use ndarray::Array1;
 
 use crate::{operators::SamplingOperator, random::RandomGenerator};

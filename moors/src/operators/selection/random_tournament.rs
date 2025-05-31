@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use crate::genetic::{D01, IndividualMOO};
 use crate::operators::selection::{DuelResult, SelectionOperator};
 use crate::random::RandomGenerator;

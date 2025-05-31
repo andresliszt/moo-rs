@@ -49,8 +49,6 @@ pub mod exact;
 pub use close::CloseDuplicatesCleaner;
 pub use exact::ExactDuplicatesCleaner;
 
-use std::fmt::Debug;
-
 use ndarray::Array2;
 
 /// A trait for removing duplicates (exact or close) from a population.
