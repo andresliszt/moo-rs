@@ -1,11 +1,6 @@
-use std::fmt::Debug;
-
 use ndarray::Array1;
 
-use crate::{
-    operators::{GeneticOperator, SamplingOperator},
-    random::RandomGenerator,
-};
+use crate::{operators::SamplingOperator, random::RandomGenerator};
 
 #[derive(Debug, Clone)]
 /// Sampling operator for permutation-based variables.
@@ -14,12 +9,6 @@ pub struct PermutationSampling;
 impl PermutationSampling {
     pub fn new() -> Self {
         Self
-    }
-}
-
-impl GeneticOperator for PermutationSampling {
-    fn name(&self) -> String {
-        "PermutationSampling".to_string()
     }
 }
 
@@ -72,7 +61,6 @@ mod tests {
     fn test_permutation_sampling_controlled() {
         // Create the sampling operator.
         let sampler = PermutationSampling;
-        assert_eq!(sampler.name(), "PermutationSampling");
         // Use our fake RNG.
         let mut rng = FakeRandomGenerator::new();
 

@@ -6,7 +6,7 @@ use moors::{
     algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
     duplicates::CloseDuplicatesCleaner,
     operators::{
-        CrossoverOperator, GeneticOperator, MutationOperator, crossover::SimulatedBinaryCrossover,
+        CrossoverOperator, MutationOperator, crossover::SimulatedBinaryCrossover,
         mutation::GaussianMutation, sampling::RandomSamplingFloat,
     },
     random::RandomGenerator,
@@ -25,12 +25,6 @@ fn dummy_constraints(genes: &Array2<f64>) -> Array2<f64> {
 #[derive(Debug)]
 struct NoMutation;
 
-impl GeneticOperator for NoMutation {
-    fn name(&self) -> String {
-        "NoMutation".into()
-    }
-}
-
 impl MutationOperator for NoMutation {
     fn mutate<'a>(&self, _individual: ArrayViewMut1<'a, f64>, _rng: &mut impl RandomGenerator) {
         // do nothing
@@ -39,12 +33,6 @@ impl MutationOperator for NoMutation {
 
 #[derive(Debug)]
 struct NoCrossOver;
-
-impl GeneticOperator for NoCrossOver {
-    fn name(&self) -> String {
-        "NoCrossOver".into()
-    }
-}
 
 impl CrossoverOperator for NoCrossOver {
     fn crossover(

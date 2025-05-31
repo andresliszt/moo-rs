@@ -1,15 +1,14 @@
 use std::cmp::Ordering;
-use std::fmt::Debug;
 
 use ndarray::{Array1, Array2, ArrayView1, Axis};
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{D12, Fronts};
-use crate::helpers::extreme_points::{get_ideal, get_nadir};
-use crate::operators::survival::{
-    FrontsAndRankingBasedSurvival, GeneticOperator, SurvivalScoringComparison,
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{D12, Fronts},
+    helpers::extreme_points::{get_ideal, get_nadir},
+    operators::survival::{FrontsAndRankingBasedSurvival, SurvivalScoringComparison},
+    random::RandomGenerator,
 };
-use crate::random::RandomGenerator;
 
 /// Implementation of the survival operator for the R-NSGA2 algorithm presented in the paper
 /// Reference Point Based Multi-Objective Optimization Using Evolutionary Algorithms
@@ -18,12 +17,6 @@ use crate::random::RandomGenerator;
 pub struct Rnsga2ReferencePointsSurvival {
     reference_points: Array2<f64>,
     epsilon: f64,
-}
-
-impl GeneticOperator for Rnsga2ReferencePointsSurvival {
-    fn name(&self) -> String {
-        "Rnsga2ReferencePointsSurvival".to_string()
-    }
 }
 
 impl Rnsga2ReferencePointsSurvival {

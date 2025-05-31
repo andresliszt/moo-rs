@@ -1,10 +1,6 @@
-use std::fmt::Debug;
-
 use crate::genetic::{D01, IndividualMOO};
 use crate::operators::{
-    selection::DuelResult,
-    survival::SurvivalScoringComparison,
-    {GeneticOperator, SelectionOperator},
+    SelectionOperator, selection::DuelResult, survival::SurvivalScoringComparison,
 };
 use crate::random::RandomGenerator;
 
@@ -46,12 +42,6 @@ impl Default for RankAndScoringSelection {
     /// Default = use both criteria; maximize survival score.
     fn default() -> Self {
         Self::new(true, true, SurvivalScoringComparison::Maximize)
-    }
-}
-
-impl GeneticOperator for RankAndScoringSelection {
-    fn name(&self) -> String {
-        "RankAndScoringSelection".to_owned()
     }
 }
 
@@ -302,7 +292,6 @@ mod tests {
         // After splitting: pop_a = 50 winners, pop_b = 50 winners.
         let n_crossovers = 50;
         let selector = RankAndScoringSelection::default();
-        assert_eq!(selector.name(), "RankAndScoringSelection");
         let (pop_a, pop_b) = selector.operate(&population, n_crossovers, &mut rng);
 
         assert_eq!(pop_a.len(), 50);

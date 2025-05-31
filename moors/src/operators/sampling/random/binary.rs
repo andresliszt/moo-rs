@@ -1,11 +1,6 @@
-use std::fmt::Debug;
-
 use ndarray::Array1;
 
-use crate::{
-    operators::{GeneticOperator, SamplingOperator},
-    random::RandomGenerator,
-};
+use crate::{operators::SamplingOperator, random::RandomGenerator};
 
 /// Sampling operator for binary variables.
 #[derive(Debug, Clone)]
@@ -14,12 +9,6 @@ pub struct RandomSamplingBinary;
 impl RandomSamplingBinary {
     pub fn new() -> Self {
         Self
-    }
-}
-
-impl GeneticOperator for RandomSamplingBinary {
-    fn name(&self) -> String {
-        "RandomSamplingBinary".to_string()
     }
 }
 

@@ -2,7 +2,6 @@ use crate::{
     algorithms::helpers::context::AlgorithmContext,
     genetic::{D12, Fronts, FrontsExt, PopulationMOO},
     non_dominated_sorting::build_fronts,
-    operators::GeneticOperator,
     random::RandomGenerator,
 };
 
@@ -36,7 +35,7 @@ pub enum SurvivalScoringComparison {
 /// returns the `num_survive` individuals that will move on to the next generation.
 /// Algorithms that need custom survival logic (e.g. NSGA3’s reference-point logic)
 /// implement this trait directly.
-pub trait SurvivalOperator: GeneticOperator {
+pub trait SurvivalOperator {
     /// Selects the individuals that will survive to the next generation.
     fn operate<ConstrDim>(
         &mut self,

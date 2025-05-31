@@ -3,13 +3,14 @@ use std::borrow::Cow;
 use ndarray::{Array1, Array2, Axis, s};
 use ndarray_stats::QuantileExt;
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{D12, PopulationMOO};
-use crate::helpers::extreme_points::get_ideal;
-use crate::non_dominated_sorting::build_fronts;
-use crate::operators::survival::helpers::HyperPlaneNormalization;
-use crate::operators::{GeneticOperator, survival::SurvivalOperator};
-use crate::random::RandomGenerator;
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{D12, PopulationMOO},
+    helpers::extreme_points::get_ideal,
+    non_dominated_sorting::build_fronts,
+    operators::survival::{SurvivalOperator, helpers::HyperPlaneNormalization},
+    random::RandomGenerator,
+};
 
 /// Implementation of the survival operator for the NSGA3 algorithm presented in the paper
 /// An Evolutionary Many-Objective Optimization Algorithm Using Reference-point Based Non-dominated Sorting Approach
@@ -77,12 +78,6 @@ impl HyperPlaneNormalization for Nsga3HyperPlaneNormalization {
 #[derive(Debug, Clone)]
 pub struct Nsga3ReferencePointsSurvival {
     reference_points: Nsga3ReferencePoints, // Each row is a reference point
-}
-
-impl GeneticOperator for Nsga3ReferencePointsSurvival {
-    fn name(&self) -> String {
-        "Nsga3ReferencePointsSurvival".to_string()
-    }
 }
 
 impl Nsga3ReferencePointsSurvival {

@@ -1,7 +1,5 @@
-use std::fmt::Debug;
-
 use crate::genetic::{D01, IndividualMOO};
-use crate::operators::selection::{DuelResult, GeneticOperator, SelectionOperator};
+use crate::operators::selection::{DuelResult, SelectionOperator};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -10,12 +8,6 @@ pub struct RandomSelection {}
 impl RandomSelection {
     pub fn new() -> Self {
         Self {}
-    }
-}
-
-impl GeneticOperator for RandomSelection {
-    fn name(&self) -> String {
-        "RandomSelection".to_string()
     }
 }
 
@@ -107,7 +99,6 @@ mod tests {
         let p2 = IndividualMOO::new(genes.view(), fitness.view(), p2_constraint_arr0.view());
 
         let selector = RandomSelection::new();
-        assert_eq!(selector.name(), "RandomSelection");
         let mut rng = FakeRandomGenerator::new(rng_value);
         let result = selector.tournament_duel(&p1, &p2, &mut rng);
         assert_eq!(result, expected);

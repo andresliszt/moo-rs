@@ -1,10 +1,7 @@
 use ndarray::ArrayViewMut1;
 use rand_distr::{Distribution, Normal};
 
-use crate::{
-    operators::{GeneticOperator, MutationOperator},
-    random::RandomGenerator,
-};
+use crate::{operators::MutationOperator, random::RandomGenerator};
 
 /// Mutation operator that adds Gaussian noise to float variables.
 #[derive(Debug, Clone)]
@@ -19,12 +16,6 @@ impl GaussianMutation {
             gene_mutation_rate,
             sigma,
         }
-    }
-}
-
-impl GeneticOperator for GaussianMutation {
-    fn name(&self) -> String {
-        "GaussianMutation".to_string()
     }
 }
 
@@ -61,7 +52,6 @@ mod tests {
 
         // Create operator with 100% chance each gene is mutated, sigma=0.1
         let mutation_operator = GaussianMutation::new(1.0, 0.1);
-        assert_eq!(mutation_operator.name(), "GaussianMutation");
 
         let mut rng = MOORandomGenerator::new(StdRng::seed_from_u64(42));
 

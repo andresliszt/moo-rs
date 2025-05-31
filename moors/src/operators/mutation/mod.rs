@@ -1,6 +1,6 @@
 use ndarray::{Array2, ArrayViewMut1, Axis};
 
-use crate::{operators::GeneticOperator, random::RandomGenerator};
+use crate::random::RandomGenerator;
 
 pub mod bitflip;
 pub mod displacement;
@@ -15,7 +15,7 @@ pub use scramble::ScrambleMutation;
 pub use swap::SwapMutation;
 
 /// MutationOperator defines an in-place mutation where the individual is modified directly.
-pub trait MutationOperator: GeneticOperator {
+pub trait MutationOperator {
     /// Mutates a single individual in place.
     ///
     /// # Arguments

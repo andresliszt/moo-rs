@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::fmt::Debug;
 
 use ndarray::Array2;
 use ordered_float::OrderedFloat;

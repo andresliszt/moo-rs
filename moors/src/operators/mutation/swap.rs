@@ -1,9 +1,6 @@
 use ndarray::ArrayViewMut1;
 
-use crate::{
-    operators::{GeneticOperator, MutationOperator},
-    random::RandomGenerator,
-};
+use crate::{operators::MutationOperator, random::RandomGenerator};
 
 #[derive(Debug, Clone)]
 /// Mutation operator that swaps two genes in a permutation-based individual.
@@ -12,12 +9,6 @@ pub struct SwapMutation;
 impl SwapMutation {
     pub fn new() -> Self {
         Self
-    }
-}
-
-impl GeneticOperator for SwapMutation {
-    fn name(&self) -> String {
-        "SwapMutation".to_string()
     }
 }
 
@@ -87,8 +78,6 @@ mod tests {
 
         // Create a SwapMutation operator.
         let mutation_operator = SwapMutation::new();
-        assert_eq!(mutation_operator.name(), "SwapMutation");
-
         // Create a controlled fake RNG that returns 1 on the first call and 3 on the second call.
         // This means idx1 will be 1 and idx2 will be 3.
         let mut rng = ControlledFakeRandomGenerator::new(vec![1, 3]);

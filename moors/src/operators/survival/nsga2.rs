@@ -1,21 +1,15 @@
 use std::f64::INFINITY;
-use std::fmt::Debug;
 
 use ndarray::{Array1, Array2};
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{D12, Fronts};
-use crate::operators::{GeneticOperator, survival::FrontsAndRankingBasedSurvival};
-use crate::random::RandomGenerator;
-
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{D12, Fronts},
+    operators::survival::FrontsAndRankingBasedSurvival,
+    random::RandomGenerator,
+};
 #[derive(Debug, Clone)]
 pub struct Nsga2RankCrowdingSurvival;
-
-impl GeneticOperator for Nsga2RankCrowdingSurvival {
-    fn name(&self) -> String {
-        "Nsga2RankCrowdingSurvival".to_string()
-    }
-}
 
 impl Nsga2RankCrowdingSurvival {
     pub fn new() -> Self {
@@ -222,7 +216,6 @@ mod tests {
         let population = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
         let num_survive = 3;
         let mut selector = Nsga2RankCrowdingSurvival;
-        assert_eq!(selector.name(), "Nsga2RankCrowdingSurvival");
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
         let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);

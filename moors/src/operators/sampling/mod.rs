@@ -1,6 +1,6 @@
 use ndarray::{Array1, Array2};
 
-use crate::{operators::GeneticOperator, random::RandomGenerator};
+use crate::random::RandomGenerator;
 
 mod permutation;
 mod random;
@@ -8,7 +8,7 @@ mod random;
 pub use permutation::PermutationSampling;
 pub use random::{RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt};
 
-pub trait SamplingOperator: GeneticOperator {
+pub trait SamplingOperator {
     /// Samples a single individual.
     fn sample_individual(&self, num_vars: usize, rng: &mut impl RandomGenerator) -> Array1<f64>;
 

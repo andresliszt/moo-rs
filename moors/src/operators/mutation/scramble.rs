@@ -1,9 +1,6 @@
 use ndarray::{ArrayViewMut1, s};
 
-use crate::{
-    operators::{GeneticOperator, MutationOperator},
-    random::RandomGenerator,
-};
+use crate::{operators::MutationOperator, random::RandomGenerator};
 
 #[derive(Debug, Clone)]
 /// Scramble Mutation operator that selects a subset of the chromosome and randomly reorders it.
@@ -12,12 +9,6 @@ pub struct ScrambleMutation {}
 impl ScrambleMutation {
     pub fn new() -> Self {
         Self {}
-    }
-}
-
-impl GeneticOperator for ScrambleMutation {
-    fn name(&self) -> String {
-        "ScrambleMutation".to_string()
     }
 }
 
@@ -100,7 +91,6 @@ mod tests {
         let mut individual: Array1<f64> = array![0.0, 1.0, 2.0, 3.0, 4.0, 5.0];
         let mut rng = FakeRandomGeneratorScramble::new(rng_boundaries);
         let mutation_operator = ScrambleMutation::new();
-        assert_eq!(mutation_operator.name(), "ScrambleMutation");
         {
             let view = individual.view_mut();
             mutation_operator.mutate(view, &mut rng);

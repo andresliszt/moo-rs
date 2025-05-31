@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use ndarray::Array2;
 
 use crate::duplicates::PopulationCleaner;

@@ -1,6 +1,6 @@
 use ndarray::Array1;
 
-use crate::operators::{CrossoverOperator, GeneticOperator};
+use crate::operators::CrossoverOperator;
 use crate::random::RandomGenerator;
 
 /// Simulated Binary Crossover (SBX) operator for real-coded genetic algorithms.
@@ -98,15 +98,6 @@ pub fn sbx_crossover_array(
     }
 
     (offspring1, offspring2)
-}
-
-impl GeneticOperator for SimulatedBinaryCrossover {
-    fn name(&self) -> String {
-        format!(
-            "SimulatedBinaryCrossover(distribution_index={})",
-            self.distribution_index
-        )
-    }
 }
 
 impl CrossoverOperator for SimulatedBinaryCrossover {

@@ -1,6 +1,6 @@
 use ndarray::{Array1, Axis, concatenate, s};
 
-use crate::operators::{CrossoverOperator, GeneticOperator};
+use crate::operators::CrossoverOperator;
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -10,12 +10,6 @@ pub struct SinglePointBinaryCrossover;
 impl SinglePointBinaryCrossover {
     pub fn new() -> Self {
         Self {}
-    }
-}
-
-impl GeneticOperator for SinglePointBinaryCrossover {
-    fn name(&self) -> String {
-        "SinglePointBinaryCrossover".to_string()
     }
 }
 
@@ -102,8 +96,6 @@ mod tests {
 
         // Create the SinglePointBinaryCrossover operator.
         let crossover_operator = SinglePointBinaryCrossover::new();
-        assert_eq!(crossover_operator.name(), "SinglePointBinaryCrossover");
-
         // Use a controlled fake RNG that always returns 3 as the crossover point.
         // The call to `gen_range_usize(1, num_genes)` will return 3.
         let mut fake_rng = ControlledFakeRandomGenerator::new(vec![3]);
