@@ -2,12 +2,16 @@ use std::collections::HashMap;
 
 use ndarray::{Array1, Array2};
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{D12, PopulationMOO};
-use crate::helpers::extreme_points::{get_ideal, get_nadir};
-use crate::helpers::linalg::{faer_dot_and_norms, faer_dot_from_array};
-use crate::operators::{GeneticOperator, survival::SurvivalOperator};
-use crate::random::RandomGenerator;
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{D12, PopulationMOO},
+    helpers::{
+        extreme_points::{get_ideal, get_nadir},
+        linalg::{faer_dot_and_norms, faer_dot_from_array},
+    },
+    operators::survival::SurvivalOperator,
+    random::RandomGenerator,
+};
 
 /// Implementation of the survival operator for the REVEA algorithm presented in the paper
 /// A Reference Vector Guided Evolutionary Algorithm for Many-objective Optimization
@@ -18,12 +22,6 @@ pub struct ReveaReferencePointsSurvival {
     initial_reference_points: Array2<f64>,
     alpha: f64,
     frequency: f64,
-}
-
-impl GeneticOperator for ReveaReferencePointsSurvival {
-    fn name(&self) -> String {
-        "ReveaReferencePointsSurvival".to_string()
-    }
 }
 
 impl ReveaReferencePointsSurvival {

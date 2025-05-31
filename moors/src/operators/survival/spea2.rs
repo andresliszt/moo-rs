@@ -2,21 +2,17 @@ use std::cmp::Ordering;
 
 use ndarray::{Array1, Array2, Axis};
 
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{D12, PopulationMOO};
-use crate::helpers::linalg::cross_euclidean_distances_as_array;
-use crate::non_dominated_sorting::fast_non_dominated_sorting;
-use crate::operators::{GeneticOperator, SurvivalOperator};
-use crate::random::RandomGenerator;
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{D12, PopulationMOO},
+    helpers::linalg::cross_euclidean_distances_as_array,
+    non_dominated_sorting::fast_non_dominated_sorting,
+    operators::SurvivalOperator,
+    random::RandomGenerator,
+};
 
 #[derive(Debug, Clone)]
 pub struct Spea2KnnSurvival;
-
-impl GeneticOperator for Spea2KnnSurvival {
-    fn name(&self) -> String {
-        "Spea2KnnSurvival".into()
-    }
-}
 
 impl Spea2KnnSurvival {
     pub fn new() -> Self {

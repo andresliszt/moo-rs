@@ -1,6 +1,6 @@
 use ndarray::Array1;
 
-use crate::operators::{CrossoverOperator, GeneticOperator};
+use crate::operators::CrossoverOperator;
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -14,15 +14,6 @@ impl ExponentialCrossover {
         Self {
             exponential_crossover_rate,
         }
-    }
-}
-
-impl GeneticOperator for ExponentialCrossover {
-    fn name(&self) -> String {
-        format!(
-            "ExponentialCrossover(exponential_crossover_rate={})",
-            self.exponential_crossover_rate
-        )
     }
 }
 
@@ -133,11 +124,6 @@ mod tests {
 
         // Create the ExponentialCrossover operator with a crossover rate of 0.5.
         let operator = ExponentialCrossover::new(0.5);
-        assert_eq!(
-            operator.name(),
-            "ExponentialCrossover(exponential_crossover_rate=0.5)"
-        );
-
         // Set up the fake random generator:
         // - For child_a, gen_range_usize returns 1 (start index = 1) and then
         //   gen_proability returns 0.7 (>= 0.5) so the loop stops after one replacement.

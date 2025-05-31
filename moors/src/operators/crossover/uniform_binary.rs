@@ -1,6 +1,6 @@
 use ndarray::Array1;
 
-use crate::operators::{CrossoverOperator, GeneticOperator};
+use crate::operators::CrossoverOperator;
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -10,12 +10,6 @@ pub struct UniformBinaryCrossover;
 impl UniformBinaryCrossover {
     pub fn new() -> Self {
         Self {}
-    }
-}
-
-impl GeneticOperator for UniformBinaryCrossover {
-    fn name(&self) -> String {
-        "UniformBinaryCrossover".to_string()
     }
 }
 
@@ -98,8 +92,6 @@ mod tests {
         let parent_b: Array1<f64> = array![1.0, 0.0, 0.0, 1.0, 0.0];
 
         let crossover_operator = UniformBinaryCrossover::new();
-        assert_eq!(crossover_operator.name(), "UniformBinaryCrossover");
-
         // Create a controlled fake RNG with predetermined probability values.
         // For each gene index, the decision is made by comparing the generated probability with 0.5:
         // Index 0: 0.6 (>= 0.5 → no swap)

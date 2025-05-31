@@ -1,9 +1,6 @@
 use ndarray::ArrayViewMut1;
 
-use crate::{
-    operators::{GeneticOperator, MutationOperator},
-    random::RandomGenerator,
-};
+use crate::{operators::MutationOperator, random::RandomGenerator};
 
 #[derive(Debug, Clone)]
 /// Mutation operator that flips bits in a binary individual with a specified mutation rate
@@ -15,12 +12,6 @@ impl BitFlipMutation {
     #[allow(dead_code)]
     pub fn new(gene_mutation_rate: f64) -> Self {
         Self { gene_mutation_rate }
-    }
-}
-
-impl GeneticOperator for BitFlipMutation {
-    fn name(&self) -> String {
-        "BitFlipMutation".to_string()
     }
 }
 
@@ -74,8 +65,6 @@ mod tests {
         // Create a BitFlipMutation operator with a gene mutation rate of 1.0,
         // so every gene should be considered for mutation.
         let mutation_operator = BitFlipMutation::new(1.0);
-        assert_eq!(mutation_operator.name(), "BitFlipMutation");
-
         // Use our controlled fake RNG which always returns true for gen_bool.
         let mut rng = FakeRandomGeneratorTrue::new();
 

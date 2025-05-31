@@ -1,9 +1,6 @@
 use ndarray::{Array1, ArrayViewMut1, Axis, concatenate, s};
 
-use crate::{
-    operators::{GeneticOperator, MutationOperator},
-    random::RandomGenerator,
-};
+use crate::{operators::MutationOperator, random::RandomGenerator};
 
 #[derive(Debug, Clone)]
 /// Displacement Mutation operator that extracts a segment from the chromosome
@@ -13,12 +10,6 @@ pub struct DisplacementMutation {}
 impl DisplacementMutation {
     pub fn new() -> Self {
         Self {}
-    }
-}
-
-impl GeneticOperator for DisplacementMutation {
-    fn name(&self) -> String {
-        "DisplacementMutation".to_string()
     }
 }
 
@@ -112,7 +103,6 @@ mod tests {
             let mut rng = FakeRandomGeneratorDisplacement::new(rng_values);
 
             let mutation_operator = DisplacementMutation::new();
-            assert_eq!(mutation_operator.name(), "DisplacementMutation");
             mutation_operator.mutate(view, &mut rng);
         }
 

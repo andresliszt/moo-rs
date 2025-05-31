@@ -1,6 +1,5 @@
 use crate::{
     genetic::{D01, D12, IndividualMOO, PopulationMOO},
-    operators::GeneticOperator,
     random::RandomGenerator,
 };
 use ndarray::Dimension;
@@ -19,7 +18,7 @@ pub enum DuelResult {
     Tie,
 }
 
-pub trait SelectionOperator: GeneticOperator {
+pub trait SelectionOperator {
     fn pressure(&self) -> usize {
         2
     }

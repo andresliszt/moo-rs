@@ -1,17 +1,17 @@
-use std::collections::HashSet;
-use std::fmt::Debug;
+use std::{collections::HashSet, fmt::Debug};
 
+use crate::{
+    algorithms::helpers::context::AlgorithmContext,
+    genetic::{D12, Fronts},
+    helpers::{
+        extreme_points::get_ideal,
+        linalg::{cross_p_distances, lp_norm_arrayview},
+    },
+    operators::{FrontsAndRankingBasedSurvival, survival::helpers::HyperPlaneNormalization},
+    random::RandomGenerator,
+};
 use ndarray::{Array1, Array2, ArrayView1, Axis, stack};
 use ndarray_stats::QuantileExt;
-
-use crate::algorithms::helpers::context::AlgorithmContext;
-use crate::genetic::{D12, Fronts};
-use crate::helpers::extreme_points::get_ideal;
-use crate::helpers::linalg::{cross_p_distances, lp_norm_arrayview};
-use crate::operators::{GeneticOperator, survival::helpers::HyperPlaneNormalization};
-use crate::random::RandomGenerator;
-
-use super::FrontsAndRankingBasedSurvival;
 
 struct AgeMoeaHyperPlaneNormalization;
 
@@ -44,12 +44,6 @@ impl HyperPlaneNormalization for AgeMoeaHyperPlaneNormalization {
 
 #[derive(Debug, Clone)]
 pub struct AgeMoeaSurvival;
-
-impl GeneticOperator for AgeMoeaSurvival {
-    fn name(&self) -> String {
-        "AgeoMoeaSurvival".to_string()
-    }
-}
 
 impl AgeMoeaSurvival {
     pub fn new() -> Self {

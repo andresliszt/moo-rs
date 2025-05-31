@@ -2,10 +2,7 @@ use std::fmt::Debug;
 
 use ndarray::Array1;
 
-use crate::{
-    operators::{GeneticOperator, SamplingOperator},
-    random::RandomGenerator,
-};
+use crate::{operators::SamplingOperator, random::RandomGenerator};
 
 #[derive(Debug, Clone)]
 /// Sampling operator for integer variables using uniform random distribution.
@@ -17,12 +14,6 @@ pub struct RandomSamplingInt {
 impl RandomSamplingInt {
     pub fn new(min: i32, max: i32) -> Self {
         Self { min, max }
-    }
-}
-
-impl GeneticOperator for RandomSamplingInt {
-    fn name(&self) -> String {
-        "RandomSamplingInt".to_string()
     }
 }
 

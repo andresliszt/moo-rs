@@ -1,6 +1,5 @@
 use ndarray::{Array1, Array2};
 
-use crate::operators::GeneticOperator;
 use crate::random::RandomGenerator;
 
 pub mod exponential;
@@ -15,7 +14,7 @@ pub use sbx::SimulatedBinaryCrossover;
 pub use single_point::SinglePointBinaryCrossover;
 pub use uniform_binary::UniformBinaryCrossover;
 
-pub trait CrossoverOperator: GeneticOperator {
+pub trait CrossoverOperator {
     fn n_offsprings_per_crossover(&self) -> usize {
         2
     }

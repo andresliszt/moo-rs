@@ -5,11 +5,6 @@
 //! the evolutionary cycle—sampling an initial population, creating offspring,
 //! selecting parents, evaluating diversity, and so on.
 //!
-//! The common super‑trait [`GeneticOperator`] provides a tiny reflection hook
-//! (`name()`) so algorithms and loggers can identify each concrete operator at
-//! runtime.  Beyond that, each sub‑trait defines the behaviour expected for its
-//! stage:
-//!
 //! | Trait | Purpose | Typical Implementations |
 //! |-------|---------|-------------------------|
 //! | [`SamplingOperator`]   | Generate an initial population of genomes. | `RandomSamplingBinary`, `RandomSamplingFloat`, … |
@@ -22,7 +17,7 @@
 //! use ndarray::ArrayViewMut1;
 //!
 //! use moors::{
-//!     operators::{GeneticOperator, MutationOperator},
+//!     operators::MutationOperator,
 //!     random::RandomGenerator,
 //! };
 //!
@@ -35,12 +30,6 @@
 //! impl MyMutation {
 //!     pub fn new(rate: f64) -> Self {
 //!         Self { gene_mutation_rate: rate }
-//!     }
-//! }
-//!
-//! impl GeneticOperator for MyMutation {
-//!     fn name(&self) -> String {
-//!         "MyMutation".into()
 //!     }
 //! }
 //!
@@ -92,7 +81,3 @@ pub use mutation::MutationOperator;
 pub use sampling::SamplingOperator;
 pub use selection::SelectionOperator;
 pub use survival::{FrontsAndRankingBasedSurvival, SurvivalOperator};
-
-pub trait GeneticOperator: Debug {
-    fn name(&self) -> String;
-}
