@@ -56,7 +56,7 @@ use ndarray::Array2;
 /// The `remove` method accepts an optional reference population.
 /// If `None`, duplicates are computed within the population;
 /// if provided, duplicates are determined by comparing each row in the population to all rows in the reference.
-pub trait PopulationCleaner: Debug {
+pub trait PopulationCleaner {
     fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64>;
 }
 
