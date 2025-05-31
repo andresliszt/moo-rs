@@ -1,4 +1,4 @@
-use std::{f64::INFINITY, fmt::Debug};
+use std::f64::INFINITY;
 
 use ndarray::{Array1, Array2};
 
