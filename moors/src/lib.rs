@@ -30,7 +30,7 @@
 //! use ndarray::{Array1, Array2, Axis, stack};
 //!
 //! use moors::{
-//!     algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
+//!     algorithms::{AlgorithmError, Nsga2Builder},
 //!     duplicates::ExactDuplicatesCleaner,
 //!     operators::{
 //!         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
@@ -58,7 +58,7 @@
 //!     pop_genes.dot(&w) - CAPACITY
 //! }
 //!
-//! fn main() -> Result<(), MultiObjectiveAlgorithmError> {
+//! fn main() -> Result<(), AlgorithmError> {
 //!     let mut algo = Nsga2Builder::default()
 //!         .fitness_fn(fitness)
 //!         .constraints_fn(constraints)
@@ -97,9 +97,32 @@ extern crate core;
 
 pub mod algorithms;
 pub mod duplicates;
-pub mod evaluator;
+pub(crate) mod evaluator;
 pub mod genetic;
 pub(crate) mod helpers;
 pub mod non_dominated_sorting;
 pub mod operators;
+mod private;
 pub mod random;
+
+pub use algorithms::{
+    AgeMoea, AgeMoeaBuilder, AlgorithmError, GeneticAlgorithmMOO, GeneticAlgorithmMOOBuilder,
+    GeneticAlgorithmSOO, GeneticAlgorithmSOOBuilder, InitializationError, Nsga2, Nsga2Builder,
+    Nsga3, Nsga3Builder, Revea, ReveaBuilder, Rnsga2, Rnsga2Builder, Spea2, Spea2Builder,
+};
+pub use duplicates::{CloseDuplicatesCleaner, ExactDuplicatesCleaner, PopulationCleaner};
+pub use evaluator::{ConstraintsFnPointer, EvaluatorError, NoConstraintsFnPointer};
+pub use genetic::{
+    Individual, IndividualMOO, IndividualSOO, Population, PopulationMOO, PopulationSOO,
+};
+pub use operators::selection;
+pub use operators::survival;
+pub use operators::{
+    BitFlipMutation, CrossoverOperator, DisplacementMutation, ExponentialCrossover,
+    FrontsAndRankingBasedSurvival, GaussianMutation, MutationOperator, OrderCrossover,
+    PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
+    SamplingOperator, ScrambleMutation, SelectionOperator, SimulatedBinaryCrossover,
+    SinglePointBinaryCrossover, SurvivalOperator, SwapMutation, UniformBinaryCrossover,
+    evolve::EvolveError,
+};
+pub use random::{MOORandomGenerator, NoopRandomGenerator, RandomGenerator, TestDummyRng};

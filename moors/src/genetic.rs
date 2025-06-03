@@ -9,10 +9,12 @@ use ndarray::{
     RemoveAxis, concatenate,
 };
 
+use crate::private::{SealedD01, SealedD12};
+
 pub type Constraints<D> = ArrayBase<OwnedRepr<f64>, D>;
 pub type Fitness<D> = ArrayBase<OwnedRepr<f64>, D>;
 
-pub trait D01: Dimension {}
+pub trait D01: SealedD01 + Dimension {}
 
 impl D01 for Ix0 {} // for Array0<T>  (scalar)
 impl D01 for Ix1 {} // for Array1<T>  (vector)
@@ -21,7 +23,7 @@ impl D01 for Ix1 {} // for Array1<T>  (vector)
 /// (Single Objective Optimization) or 2D (Multi Objective Optimizations), in this
 /// case each column represents an objective. In both, each row is an individual. We
 /// restrict the implementors to this traits to ndarray::Ix1 and ndarray:Ix2 only.
-pub trait D12: Dimension + RemoveAxis {}
+pub trait D12: SealedD12 + Dimension + RemoveAxis {}
 
 impl D12 for Ix1 {}
 impl D12 for Ix2 {}
@@ -311,7 +313,7 @@ pub type Fronts<ConstrDim> = Vec<PopulationMOO<ConstrDim>>;
 
 /// An extension trait for `Fronts` that adds a `.to_population()` method
 /// which flattens multiple fronts into a single `Population`.
-pub trait FrontsExt<ConstrDim>
+pub(crate) trait FrontsExt<ConstrDim>
 where
     ConstrDim: D12,
 {

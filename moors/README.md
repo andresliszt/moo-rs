@@ -29,12 +29,9 @@ moors = "0.1.1"
 use ndarray::{Array1, Array2, Axis, stack};
 
 use moors::{
-    algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
+    algorithms::{AlgorithmError, Nsga2Builder},
     duplicates::ExactDuplicatesCleaner,
-    operators::{
-        crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
-        sampling::RandomSamplingBinary,
-    },
+    operators::{SinglePointBinaryCrossover, BitFlipMutation, RandomSamplingBinary},
 };
 
 // problem data
@@ -60,7 +57,7 @@ fn constraints_knapsack(population_genes: &Array2<f64>) -> Array1<f64> {
     population_genes.dot(&weights_arr) - CAPACITY
 }
 
-fn main() -> Result<(), MultiObjectiveAlgorithmError> {
+fn main() -> Result<(), AlgorithmError> {
     // build the NSGA-II algorithm
     let mut algorithm = Nsga2Builder::default()
         .fitness_fn(fitness_knapsack)

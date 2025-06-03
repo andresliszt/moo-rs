@@ -22,13 +22,12 @@
 use ndarray::Array2;
 
 use crate::{
-    algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
+    algorithms::moo::{AlgorithmError, GeneticAlgorithmMOO},
     duplicates::PopulationCleaner,
     genetic::{Constraints, D01, D12},
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
-        selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
-        survival::nsga2::Nsga2RankCrowdingSurvival,
+        selection::moo::RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival,
     },
 };
 
@@ -36,15 +35,15 @@ use moors_macros::algorithm_builder;
 
 /// NSGA‑II algorithm wrapper.
 ///
-/// This struct is a thin façade over [`MultiObjectiveAlgorithm`] preset with
+/// This struct is a thin façade over [`GeneticAlgorithmMOO`] preset with
 /// the NSGA‑II survival and selection strategy.
 ///
 /// * **Selection:** [`RankAndScoringSelection`]
 /// * **Survival:**  [`Nsga2RankCrowdingSurvival`] (elitist, crowding‑distance)
 ///
 /// Construct it with [`Nsga2Builder`](crate::algorithms::Nsga2Builder) or
-/// directly via [`Nsga2::new`].  After building, call [`run`](MultiObjectiveAlgorithm::run)
-/// and then [`population`](MultiObjectiveAlgorithm::population) to retrieve the
+/// directly via [`Nsga2::new`].  After building, call [`run`](GeneticAlgorithmMOO::run)
+/// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
 /// final non‑dominated set.
 ///
 /// For algorithmic details, see:
@@ -62,7 +61,7 @@ where
     ConstrDim: D12,
     <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
-    pub inner: MultiObjectiveAlgorithm<
+    pub inner: GeneticAlgorithmMOO<
         S,
         RankAndScoringSelection,
         Nsga2RankCrowdingSurvival,
@@ -109,12 +108,12 @@ where
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
         seed: Option<u64>,
-    ) -> Result<Self, MultiObjectiveAlgorithmError> {
+    ) -> Result<Self, AlgorithmError> {
         // Define NSGA2 selector and survivor
         let survivor = Nsga2RankCrowdingSurvival::new();
         let selector = RankAndScoringSelection::default();
         // Define inner algorithm
-        let algorithm = MultiObjectiveAlgorithm::new(
+        let algorithm = GeneticAlgorithmMOO::new(
             sampler,
             selector,
             survivor,

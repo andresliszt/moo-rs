@@ -2,11 +2,11 @@ use ndarray::{Array1, Array2};
 
 use crate::random::RandomGenerator;
 
-pub mod exponential;
-pub mod order;
-pub mod sbx;
-pub mod single_point;
-pub mod uniform_binary;
+mod exponential;
+mod order;
+mod sbx;
+mod single_point;
+mod uniform_binary;
 
 pub use exponential::ExponentialCrossover;
 pub use order::OrderCrossover;

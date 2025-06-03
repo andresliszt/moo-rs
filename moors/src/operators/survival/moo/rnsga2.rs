@@ -3,10 +3,10 @@ use std::cmp::Ordering;
 use ndarray::{Array1, Array2, ArrayView1, Axis};
 
 use crate::{
-    algorithms::helpers::context::AlgorithmContext,
+    algorithms::AlgorithmContext,
     genetic::{D12, Fronts},
     helpers::extreme_points::{get_ideal, get_nadir},
-    operators::survival::{FrontsAndRankingBasedSurvival, SurvivalScoringComparison},
+    operators::survival::moo::{FrontsAndRankingBasedSurvival, SurvivalScoringComparison},
     random::RandomGenerator,
 };
 

@@ -31,13 +31,12 @@
 use ndarray::Array2;
 
 use crate::{
-    algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
+    algorithms::moo::{AlgorithmError, GeneticAlgorithmMOO},
     duplicates::PopulationCleaner,
     genetic::{Constraints, D01, D12},
     operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator,
-        selection::random_tournament::RandomSelection,
-        survival::revea::ReveaReferencePointsSurvival,
+        CrossoverOperator, MutationOperator, SamplingOperator, selection::moo::RandomSelection,
+        survival::moo::ReveaReferencePointsSurvival,
     },
 };
 
@@ -45,7 +44,7 @@ use moors_macros::algorithm_builder;
 
 /// REVEA algorithm wrapper.
 ///
-/// Thin façade around [`MultiObjectiveAlgorithm`] pre‑configured with
+/// Thin façade around [`GeneticAlgorithmMOO`] pre‑configured with
 /// reference‑vector survival and random parent selection.
 ///
 /// * **Selection:** [`RandomSelection`]
@@ -67,7 +66,7 @@ where
     ConstrDim: D12,
     <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
-    pub inner: MultiObjectiveAlgorithm<
+    pub inner: GeneticAlgorithmMOO<
         S,
         RandomSelection,
         ReveaReferencePointsSurvival,
@@ -117,12 +116,12 @@ where
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
         seed: Option<u64>,
-    ) -> Result<Self, MultiObjectiveAlgorithmError> {
+    ) -> Result<Self, AlgorithmError> {
         // Define REVEA selector and survivor
         let survivor = ReveaReferencePointsSurvival::new(reference_points, alpha, frequency);
         let selector = RandomSelection::new();
         // Define inner algorithm
-        let algorithm = MultiObjectiveAlgorithm::new(
+        let algorithm = GeneticAlgorithmMOO::new(
             sampler,
             selector,
             survivor,

@@ -66,16 +66,25 @@
 //! isolation or swap them at runtime to benchmark different evolutionary
 //! dynamics without touching your problem‑specific code or algorithm builder.
 
-pub mod crossover;
-pub mod evolve;
-pub mod mutation;
-pub mod sampling;
+pub(crate) mod crossover;
+pub(crate) mod evolve;
+pub(crate) mod mutation;
+pub(crate) mod sampling;
 pub mod selection;
 pub mod survival;
 
-pub use crossover::CrossoverOperator;
-pub use evolve::{EvolveError, EvolveMOO};
-pub use mutation::MutationOperator;
-pub use sampling::SamplingOperator;
+pub use crossover::{
+    CrossoverOperator, ExponentialCrossover, OrderCrossover, SimulatedBinaryCrossover,
+    SinglePointBinaryCrossover, UniformBinaryCrossover,
+};
+pub use evolve::{Evolve, EvolveError};
+pub use mutation::{
+    BitFlipMutation, DisplacementMutation, GaussianMutation, MutationOperator, ScrambleMutation,
+    SwapMutation,
+};
+pub use sampling::{
+    PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
+    SamplingOperator,
+};
 pub use selection::SelectionOperator;
-pub use survival::{FrontsAndRankingBasedSurvival, SurvivalOperator};
+pub use survival::{SurvivalOperator, moo::FrontsAndRankingBasedSurvival};

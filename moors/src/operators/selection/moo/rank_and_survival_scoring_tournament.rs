@@ -1,6 +1,7 @@
 use crate::genetic::{D01, IndividualMOO};
 use crate::operators::{
-    SelectionOperator, selection::DuelResult, survival::SurvivalScoringComparison,
+    selection::{DuelResult, SelectionOperator},
+    survival::moo::SurvivalScoringComparison,
 };
 use crate::random::RandomGenerator;
 
@@ -46,8 +47,9 @@ impl Default for RankAndScoringSelection {
 }
 
 impl SelectionOperator for RankAndScoringSelection {
+    type FDim = ndarray::Ix2;
     /// Runs tournament selection on the given population and returns the duel result.
-    /// This example assumes binary tournaments (pressure = 2).
+    /// This assumes binary tournaments (pressure = 2).
     fn tournament_duel<'a, ConstrDim>(
         &self,
         p1: &IndividualMOO<'a, ConstrDim>,
@@ -57,7 +59,7 @@ impl SelectionOperator for RankAndScoringSelection {
     where
         ConstrDim: D01,
     {
-        /* 1. Feasibility dominates everything */
+        // Feasibility dominates everything
         match (p1.is_feasible(), p2.is_feasible()) {
             (true, false) => return DuelResult::LeftWins,
             (false, true) => return DuelResult::RightWins,
@@ -101,7 +103,6 @@ mod tests {
     use ndarray::{Array1, Array2, arr0, array};
 
     use crate::genetic::PopulationMOO;
-    use crate::operators::selection::{DuelResult, SelectionOperator};
     use crate::random::{RandomGenerator, TestDummyRng};
 
     // A fake random generator to control the outcome of gen_bool.

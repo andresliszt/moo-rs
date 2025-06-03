@@ -3,21 +3,10 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    algorithms::{
-        AgeMoeaBuilder, Nsga2Builder, Nsga3Builder, ReveaBuilder, Rnsga2Builder, Spea2Builder,
-    },
-    duplicates::CloseDuplicatesCleaner,
-    evaluator::NoConstraintsFnPointer,
-    genetic::PopulationMOO,
-    operators::{
-        crossover::SimulatedBinaryCrossover,
-        mutation::GaussianMutation,
-        sampling::RandomSamplingFloat,
-        survival::{
-            nsga3::Nsga3ReferencePoints,
-            reference_points::{DanAndDenisReferencePoints, StructuredReferencePoints},
-        },
-    },
+    AgeMoeaBuilder, CloseDuplicatesCleaner, GaussianMutation, NoConstraintsFnPointer, Nsga2Builder,
+    Nsga3Builder, PopulationMOO, RandomSamplingFloat, ReveaBuilder, Rnsga2Builder,
+    SimulatedBinaryCrossover, Spea2Builder,
+    survival::moo::{DanAndDenisReferencePoints, Nsga3ReferencePoints, StructuredReferencePoints},
 };
 
 /// Bi-objective fitness:

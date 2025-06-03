@@ -1,4 +1,4 @@
-use crate::genetic::{D01, IndividualMOO};
+use crate::genetic::{D01, IndividualSOO};
 use crate::operators::selection::{DuelResult, SelectionOperator};
 use crate::random::RandomGenerator;
 
@@ -12,10 +12,12 @@ impl RandomSelection {
 }
 
 impl SelectionOperator for RandomSelection {
+    type FDim = ndarray::Ix1;
+
     fn tournament_duel<'a, ConstrDim>(
         &self,
-        p1: &IndividualMOO<'a, ConstrDim>,
-        p2: &IndividualMOO<'a, ConstrDim>,
+        p1: &IndividualSOO<'a, ConstrDim>,
+        p2: &IndividualSOO<'a, ConstrDim>,
         rng: &mut impl RandomGenerator,
     ) -> DuelResult
     where
@@ -90,13 +92,13 @@ mod tests {
     ) {
         // Define genes and fitness as arrays of f64.
         let genes = array![1.0, 2.0, 3.0];
-        let fitness = array![0.5, 1.0];
+        let fitness = arr0(0.5);
         let p1_constraint_arr0 = arr0(p1_constraint);
         let p2_constraint_arr0 = arr0(p2_constraint);
 
-        let p1: IndividualMOO<'_, ndarray::Ix0> =
-            IndividualMOO::new(genes.view(), fitness.view(), p1_constraint_arr0.view());
-        let p2 = IndividualMOO::new(genes.view(), fitness.view(), p2_constraint_arr0.view());
+        let p1: IndividualSOO<ndarray::Ix0> =
+            IndividualSOO::new(genes.view(), fitness.view(), p1_constraint_arr0.view());
+        let p2 = IndividualSOO::new(genes.view(), fitness.view(), p2_constraint_arr0.view());
 
         let selector = RandomSelection::new();
         let mut rng = FakeRandomGenerator::new(rng_value);

@@ -1,14 +1,11 @@
 use crate::{
-    genetic::{D01, D12, IndividualMOO, PopulationMOO},
+    genetic::{D01, D12, Individual, Population},
     random::RandomGenerator,
 };
 use ndarray::Dimension;
 
-pub mod random_tournament;
-pub mod rank_and_survival_scoring_tournament;
-
-pub use random_tournament::RandomSelection;
-pub use rank_and_survival_scoring_tournament::RankAndScoringSelection;
+pub mod moo;
+pub mod soo;
 
 // Enum to represent the result of a tournament duel.
 #[derive(Debug, PartialEq, Eq)]
@@ -19,6 +16,8 @@ pub enum DuelResult {
 }
 
 pub trait SelectionOperator {
+    type FDim: D12;
+
     fn pressure(&self) -> usize {
         2
     }
@@ -62,22 +61,27 @@ pub trait SelectionOperator {
     /// Tournament between 2 individuals.
     fn tournament_duel<'a, ConstrDim>(
         &self,
-        p1: &IndividualMOO<'a, ConstrDim>,
-        p2: &IndividualMOO<'a, ConstrDim>,
+        p1: &Individual<'a, <Self::FDim as Dimension>::Smaller, ConstrDim>,
+        p2: &Individual<'a, <Self::FDim as Dimension>::Smaller, ConstrDim>,
         rng: &mut impl RandomGenerator,
     ) -> DuelResult
     where
+        <Self::FDim as Dimension>::Smaller: D01,
         ConstrDim: D01;
 
     fn operate<ConstrDim>(
         &self,
-        population: &PopulationMOO<ConstrDim>,
+        population: &Population<Self::FDim, ConstrDim>,
         n_crossovers: usize,
         rng: &mut impl RandomGenerator,
-    ) -> (PopulationMOO<ConstrDim>, PopulationMOO<ConstrDim>)
+    ) -> (
+        Population<Self::FDim, ConstrDim>,
+        Population<Self::FDim, ConstrDim>,
+    )
     where
         ConstrDim: D12,
         <ConstrDim as Dimension>::Smaller: D01,
+        <Self::FDim as Dimension>::Smaller: D01,
     {
         let population_size = population.len();
         let participants = self.select_participants(population_size, n_crossovers, rng);

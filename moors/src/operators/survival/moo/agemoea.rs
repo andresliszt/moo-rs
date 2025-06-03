@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 
 use crate::{
-    algorithms::helpers::context::AlgorithmContext,
+    algorithms::AlgorithmContext,
     genetic::{D12, Fronts},
     helpers::{
         extreme_points::get_ideal,
         linalg::{cross_p_distances, lp_norm_arrayview},
     },
-    operators::{FrontsAndRankingBasedSurvival, survival::helpers::HyperPlaneNormalization},
+    operators::survival::moo::{FrontsAndRankingBasedSurvival, helpers::HyperPlaneNormalization},
     random::RandomGenerator,
 };
 use ndarray::{Array1, Array2, ArrayView1, Axis, stack};
@@ -309,7 +309,7 @@ pub fn assign_survival_scores_higher_front(
 mod tests {
     use super::*;
     use crate::genetic::PopulationMOO;
-    use crate::operators::survival::helpers::HyperPlaneNormalization;
+    use crate::operators::survival::moo::helpers::HyperPlaneNormalization;
     use crate::random::NoopRandomGenerator;
     use ndarray::{Array1, Array2, array};
 

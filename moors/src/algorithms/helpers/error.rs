@@ -20,7 +20,7 @@ pub enum InitializationError {
 }
 
 #[derive(Debug, Error)]
-pub enum MultiObjectiveAlgorithmError {
+pub enum AlgorithmError {
     #[error("Error during evolution: {0}")]
     Evolve(#[from] EvolveError),
     #[error("Error during evaluation: {0}")]

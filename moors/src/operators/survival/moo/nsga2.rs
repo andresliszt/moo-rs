@@ -3,9 +3,9 @@ use std::f64::INFINITY;
 use ndarray::{Array1, Array2};
 
 use crate::{
-    algorithms::helpers::context::AlgorithmContext,
+    algorithms::AlgorithmContext,
     genetic::{D12, Fronts},
-    operators::survival::FrontsAndRankingBasedSurvival,
+    operators::survival::moo::FrontsAndRankingBasedSurvival,
     random::RandomGenerator,
 };
 #[derive(Debug, Clone)]

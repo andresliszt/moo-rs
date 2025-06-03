@@ -28,13 +28,13 @@
 use ndarray::Array2;
 
 use crate::{
-    algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
+    algorithms::moo::{AlgorithmError, GeneticAlgorithmMOO},
     duplicates::PopulationCleaner,
     genetic::{Constraints, D01, D12},
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
-        selection::rank_and_survival_scoring_tournament::RankAndScoringSelection,
-        survival::{SurvivalScoringComparison, rnsga2::Rnsga2ReferencePointsSurvival},
+        selection::moo::RankAndScoringSelection,
+        survival::moo::{Rnsga2ReferencePointsSurvival, SurvivalScoringComparison},
     },
 };
 
@@ -42,7 +42,7 @@ use moors_macros::algorithm_builder;
 
 /// R‑NSGA‑II algorithm wrapper.
 ///
-/// Thin façade around [`MultiObjectiveAlgorithm`] pre‑configured with
+/// Thin façade around [`GeneticAlgorithmMOO`] pre‑configured with
 /// reference‑distance survival and a minimise‑the‑score selector.
 ///
 /// * **Selection:** [`RankAndScoringSelection`] (`SurvivalScoringComparison::Minimize`)
@@ -64,7 +64,7 @@ where
     ConstrDim: D12,
     <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
-    pub inner: MultiObjectiveAlgorithm<
+    pub inner: GeneticAlgorithmMOO<
         S,
         RankAndScoringSelection,
         Rnsga2ReferencePointsSurvival,
@@ -113,14 +113,14 @@ where
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
         seed: Option<u64>,
-    ) -> Result<Self, MultiObjectiveAlgorithmError> {
+    ) -> Result<Self, AlgorithmError> {
         // Define RNSGA2 selector and survivor
         let survivor = Rnsga2ReferencePointsSurvival::new(reference_points, epsilon);
         // RNSGA2 minimizes its scoring survival
         let selector =
             RankAndScoringSelection::new(true, true, SurvivalScoringComparison::Minimize);
         // Define inner algorithm
-        let algorithm = MultiObjectiveAlgorithm::new(
+        let algorithm = GeneticAlgorithmMOO::new(
             sampler,
             selector,
             survivor,

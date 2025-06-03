@@ -6,13 +6,10 @@ use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion
 use ndarray::{Array2, Axis, stack};
 
 use moors::{
+    NoConstraintsFnPointer,
     algorithms::Nsga2Builder,
     duplicates::CloseDuplicatesCleaner,
-    evaluator::NoConstraintsFnPointer,
-    operators::{
-        crossover::SimulatedBinaryCrossover, mutation::GaussianMutation,
-        sampling::RandomSamplingFloat,
-    },
+    operators::{GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover},
 };
 
 /// ZDT1 test function:

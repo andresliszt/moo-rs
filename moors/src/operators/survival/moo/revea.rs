@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use ndarray::{Array1, Array2};
 
 use crate::{
-    algorithms::helpers::context::AlgorithmContext,
+    algorithms::AlgorithmContext,
     genetic::{D12, PopulationMOO},
     helpers::{
         extreme_points::{get_ideal, get_nadir},
@@ -37,6 +37,8 @@ impl ReveaReferencePointsSurvival {
 }
 
 impl SurvivalOperator for ReveaReferencePointsSurvival {
+    type FDim = ndarray::Ix2;
+
     fn operate<ConstrDim>(
         &mut self,
         population: PopulationMOO<ConstrDim>,

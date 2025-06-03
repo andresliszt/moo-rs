@@ -3,13 +3,13 @@ use thiserror::Error;
 
 use crate::{
     duplicates::PopulationCleaner,
-    genetic::{D01, D12, PopulationMOO},
+    genetic::{D01, D12, Population},
     operators::{CrossoverOperator, MutationOperator, SelectionOperator},
     random::RandomGenerator,
 };
 
 #[derive(Debug, Clone)]
-pub struct EvolveMOO<Sel, Cross, Mut, DC>
+pub struct Evolve<Sel, Cross, Mut, DC>
 where
     Sel: SelectionOperator,
     Cross: CrossoverOperator,
@@ -32,7 +32,7 @@ pub enum EvolveError {
     EmptyMatingResult,
 }
 
-impl<Sel, Cross, Mut, DC> EvolveMOO<Sel, Cross, Mut, DC>
+impl<Sel, Cross, Mut, DC> Evolve<Sel, Cross, Mut, DC>
 where
     Sel: SelectionOperator,
     Cross: CrossoverOperator,
@@ -118,13 +118,14 @@ where
     /// 7) Repeat until the desired number is reached.
     pub fn evolve<ConstrDim>(
         &self,
-        population: &PopulationMOO<ConstrDim>,
+        population: &Population<Sel::FDim, ConstrDim>,
         num_offsprings: usize,
         max_iter: usize,
         rng: &mut impl RandomGenerator,
     ) -> Result<Array2<f64>, EvolveError>
     where
         ConstrDim: D12,
+        <Sel::FDim as ndarray::Dimension>::Smaller: D01,
         <ConstrDim as ndarray::Dimension>::Smaller: D01,
     {
         // Accumulate offspring rows in a Vec<Vec<f64>>

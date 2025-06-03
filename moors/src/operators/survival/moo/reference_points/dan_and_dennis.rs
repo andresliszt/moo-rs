@@ -1,6 +1,6 @@
 use ndarray::Array2;
 
-use crate::operators::survival::reference_points::StructuredReferencePoints;
+use crate::operators::survival::moo::reference_points::StructuredReferencePoints;
 
 #[derive(Debug, Clone)]
 pub struct DanAndDenisReferencePoints {

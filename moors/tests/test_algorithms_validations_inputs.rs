@@ -2,13 +2,10 @@
 use ndarray::Array2;
 
 use moors::{
-    algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
+    NoConstraintsFnPointer,
+    algorithms::{AlgorithmError, Nsga2Builder},
     duplicates::NoDuplicatesCleaner,
-    evaluator::NoConstraintsFnPointer,
-    operators::{
-        crossover::SimulatedBinaryCrossover, mutation::GaussianMutation,
-        sampling::RandomSamplingFloat,
-    },
+    operators::{GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover},
 };
 use rstest::rstest;
 
@@ -41,7 +38,7 @@ fn test_invalid_mutation_rate(#[case] invalid: f64) {
         };
 
     assert!(
-        matches!(err, MultiObjectiveAlgorithmError::InvalidParameter(_)),
+        matches!(err, AlgorithmError::InvalidParameter(_)),
         "got wrong error: {:?}",
         err
     );
@@ -77,7 +74,7 @@ fn test_invalid_crossover_rate(#[case] invalid: f64) {
         };
 
     assert!(
-        matches!(err, MultiObjectiveAlgorithmError::InvalidParameter(_)),
+        matches!(err, AlgorithmError::InvalidParameter(_)),
         "got wrong error: {:?}",
         err
     );

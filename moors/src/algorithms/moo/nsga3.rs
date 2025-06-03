@@ -22,13 +22,13 @@
 //! the algorithm handles association and niche preservation automatically.
 
 use crate::{
-    algorithms::{MultiObjectiveAlgorithm, MultiObjectiveAlgorithmError},
+    algorithms::moo::{AlgorithmError, GeneticAlgorithmMOO},
     duplicates::PopulationCleaner,
     genetic::{Constraints, D01, D12},
     operators::{
         CrossoverOperator, MutationOperator, SamplingOperator,
-        selection::random_tournament::RandomSelection,
-        survival::nsga3::{Nsga3ReferencePoints, Nsga3ReferencePointsSurvival},
+        selection::moo::RandomSelection,
+        survival::moo::{Nsga3ReferencePoints, Nsga3ReferencePointsSurvival},
     },
 };
 
@@ -37,7 +37,7 @@ use ndarray::Array2;
 
 /// NSGA‑III algorithm wrapper.
 ///
-/// Thin façade around [`MultiObjectiveAlgorithm`] pre‑configured with
+/// Thin façade around [`GeneticAlgorithmMOO`] pre‑configured with
 /// *reference‑point* survival and random parent selection.
 ///
 /// * **Selection:** [`RandomSelection`]
@@ -59,7 +59,7 @@ where
     ConstrDim: D12,
     <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
-    pub inner: MultiObjectiveAlgorithm<
+    pub inner: GeneticAlgorithmMOO<
         S,
         RandomSelection,
         Nsga3ReferencePointsSurvival,
@@ -105,13 +105,13 @@ where
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
         seed: Option<u64>,
-    ) -> Result<Self, MultiObjectiveAlgorithmError> {
+    ) -> Result<Self, AlgorithmError> {
         // Define NSGA3 selector and survivor
         let selector = RandomSelection::new();
         let survivor = Nsga3ReferencePointsSurvival::new(reference_points);
 
         // Build the algorithm.
-        let inner = MultiObjectiveAlgorithm::new(
+        let inner = GeneticAlgorithmMOO::new(
             sampler,
             selector,
             survivor,

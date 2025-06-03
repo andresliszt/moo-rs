@@ -5,10 +5,7 @@ use std::collections::HashSet;
 use moors::{
     algorithms::Nsga2Builder,
     duplicates::ExactDuplicatesCleaner,
-    operators::{
-        crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
-        sampling::RandomSamplingBinary,
-    },
+    operators::{BitFlipMutation, RandomSamplingBinary, SinglePointBinaryCrossover},
 };
 
 // problem data

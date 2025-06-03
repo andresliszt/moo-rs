@@ -3,13 +3,13 @@ use std::cell::Cell;
 use ndarray::{Array1, Array2, ArrayViewMut1};
 
 use moors::{
-    algorithms::{MultiObjectiveAlgorithmError, Nsga2Builder},
+    RandomGenerator,
+    algorithms::{AlgorithmError, Nsga2Builder},
     duplicates::CloseDuplicatesCleaner,
     operators::{
-        CrossoverOperator, MutationOperator, crossover::SimulatedBinaryCrossover,
-        mutation::GaussianMutation, sampling::RandomSamplingFloat,
+        CrossoverOperator, GaussianMutation, MutationOperator, RandomSamplingFloat,
+        SimulatedBinaryCrossover,
     },
-    random::RandomGenerator,
 };
 
 fn dummy_fitness(genes: &Array2<f64>) -> Array2<f64> {
@@ -114,7 +114,7 @@ fn test_no_feasible_in_evaluation() {
         Err(e) => e,
     };
     match err {
-        MultiObjectiveAlgorithmError::Evaluator(inner) => {
+        AlgorithmError::Evaluator(inner) => {
             let msg = inner.to_string();
             assert_eq!(msg, "No feasible individuals found in the population.",);
         }
@@ -150,7 +150,7 @@ fn test_no_feasible_in_initialization() {
         Err(e) => e,
     };
     match err {
-        MultiObjectiveAlgorithmError::Initialization(inner) => {
+        AlgorithmError::Initialization(inner) => {
             let msg = inner.to_string();
             assert_eq!(
                 msg,
@@ -183,7 +183,7 @@ fn test_invalid_params() {
         Err(e) => e,
     };
     match err {
-        MultiObjectiveAlgorithmError::InvalidParameter(inner) => {
+        AlgorithmError::InvalidParameter(inner) => {
             let msg = inner.to_string();
             assert_eq!(msg, "Crossover rate must be between 0 and 1, got -1",);
         }
@@ -214,7 +214,7 @@ fn test_invalid_algorithm_not_initialized() {
         Err(e) => e,
     };
     match err {
-        MultiObjectiveAlgorithmError::Initialization(inner) => {
+        AlgorithmError::Initialization(inner) => {
             let msg = inner.to_string();
             assert_eq!(
                 msg,

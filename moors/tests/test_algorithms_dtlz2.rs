@@ -1,17 +1,14 @@
 use ndarray::{Array2, Axis, stack};
 
 use moors::{
+    NoConstraintsFnPointer,
     algorithms::{Nsga3Builder, ReveaBuilder},
     duplicates::CloseDuplicatesCleaner,
-    evaluator::NoConstraintsFnPointer,
     genetic::PopulationMOO,
     operators::{
-        crossover::SimulatedBinaryCrossover,
-        mutation::GaussianMutation,
-        sampling::RandomSamplingFloat,
-        survival::{
-            nsga3::Nsga3ReferencePoints,
-            reference_points::{DanAndDenisReferencePoints, StructuredReferencePoints},
+        GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
+        survival::moo::{
+            DanAndDenisReferencePoints, Nsga3ReferencePoints, StructuredReferencePoints,
         },
     },
 };

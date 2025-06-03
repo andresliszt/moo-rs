@@ -3,11 +3,11 @@ use std::cmp::Ordering;
 use ndarray::{Array1, Array2, Axis};
 
 use crate::{
-    algorithms::helpers::context::AlgorithmContext,
+    algorithms::AlgorithmContext,
     genetic::{D12, PopulationMOO},
     helpers::linalg::cross_euclidean_distances_as_array,
     non_dominated_sorting::fast_non_dominated_sorting,
-    operators::SurvivalOperator,
+    operators::survival::SurvivalOperator,
     random::RandomGenerator,
 };
 
@@ -21,6 +21,8 @@ impl Spea2KnnSurvival {
 }
 
 impl SurvivalOperator for Spea2KnnSurvival {
+    type FDim = ndarray::Ix2;
+
     fn operate<ConstrDim>(
         &mut self,
         population: PopulationMOO<ConstrDim>,

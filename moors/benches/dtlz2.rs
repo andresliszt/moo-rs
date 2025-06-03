@@ -6,15 +6,13 @@ use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion
 use ndarray::{Array2, Axis, stack};
 
 use moors::{
+    NoConstraintsFnPointer,
     algorithms::Nsga3Builder,
     duplicates::CloseDuplicatesCleaner,
-    evaluator::NoConstraintsFnPointer,
     operators::{
-        crossover::SimulatedBinaryCrossover,
-        mutation::GaussianMutation,
-        sampling::RandomSamplingFloat,
-        survival::nsga3::Nsga3ReferencePoints,
-        survival::reference_points::{DanAndDenisReferencePoints, StructuredReferencePoints},
+        GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
+        survival::moo::Nsga3ReferencePoints,
+        survival::moo::{DanAndDenisReferencePoints, StructuredReferencePoints},
     },
 };
 

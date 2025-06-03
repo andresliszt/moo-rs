@@ -4,11 +4,11 @@ use ndarray::{Array1, Array2, Axis, s};
 use ndarray_stats::QuantileExt;
 
 use crate::{
-    algorithms::helpers::context::AlgorithmContext,
+    algorithms::AlgorithmContext,
     genetic::{D12, PopulationMOO},
     helpers::extreme_points::get_ideal,
     non_dominated_sorting::build_fronts,
-    operators::survival::{SurvivalOperator, helpers::HyperPlaneNormalization},
+    operators::survival::{SurvivalOperator, moo::helpers::HyperPlaneNormalization},
     random::RandomGenerator,
 };
 
@@ -87,6 +87,8 @@ impl Nsga3ReferencePointsSurvival {
 }
 
 impl SurvivalOperator for Nsga3ReferencePointsSurvival {
+    type FDim = ndarray::Ix2;
+
     fn operate<ConstrDim>(
         &mut self,
         population: PopulationMOO<ConstrDim>,

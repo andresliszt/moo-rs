@@ -1,11 +1,8 @@
 use moors::{
-    algorithms::{InitializationError, MultiObjectiveAlgorithmError, Nsga2, Nsga2Builder},
+    EvaluatorError, NoConstraintsFnPointer,
+    algorithms::{AlgorithmError, InitializationError, Nsga2, Nsga2Builder},
     duplicates::{ExactDuplicatesCleaner, NoDuplicatesCleaner},
-    evaluator::{EvaluatorError, NoConstraintsFnPointer},
-    operators::{
-        crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
-        sampling::RandomSamplingBinary,
-    },
+    operators::{BitFlipMutation, RandomSamplingBinary, SinglePointBinaryCrossover},
 };
 use ndarray::{Array1, Array2, Axis, stack};
 
@@ -106,7 +103,7 @@ fn test_keep_infeasible_false() {
 
     assert!(matches!(
         err,
-        MultiObjectiveAlgorithmError::Initialization(InitializationError::Evaluator(
+        AlgorithmError::Initialization(InitializationError::Evaluator(
             EvaluatorError::NoFeasibleIndividuals
         ))
     ));

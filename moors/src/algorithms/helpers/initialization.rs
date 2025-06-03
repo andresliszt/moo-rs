@@ -1,10 +1,10 @@
-use ndarray::{Array2, ArrayBase, ArrayView, ArrayView1, OwnedRepr};
+use ndarray::{Array2, ArrayBase, ArrayView, OwnedRepr};
 
 use crate::{
     algorithms::helpers::{context::AlgorithmContext, error::InitializationError},
     duplicates::PopulationCleaner,
-    evaluator::EvaluatorMOO,
-    genetic::{D01, D12, PopulationMOO},
+    evaluator::Evaluator,
+    genetic::{D01, D12, Population},
     operators::{SamplingOperator, SurvivalOperator},
     random::RandomGenerator,
 };
@@ -13,21 +13,23 @@ pub struct Initialization;
 
 impl Initialization {
     /// Sample, clean duplicates, evaluate, and rank the initial population.
-    pub fn initialize<S, Sur, DC, ConstrDim, F, G>(
+    pub fn initialize<S, Sur, DC, FDim, ConstrDim, F, G>(
         sampler: &S,
         survivor: &mut Sur,
-        evaluator: &EvaluatorMOO<ConstrDim, F, G>,
+        evaluator: &Evaluator<FDim, ConstrDim, F, G>,
         duplicates_cleaner: &Option<DC>,
         rng: &mut impl RandomGenerator,
         context: &AlgorithmContext,
-    ) -> Result<PopulationMOO<ConstrDim>, InitializationError>
+    ) -> Result<Population<FDim, ConstrDim>, InitializationError>
     where
         S: SamplingOperator,
-        Sur: SurvivalOperator,
+        Sur: SurvivalOperator<FDim = FDim>,
         DC: PopulationCleaner,
-        F: Fn(&Array2<f64>) -> Array2<f64>,
+        F: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, FDim>,
         G: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, ConstrDim>,
+        FDim: D12,
         ConstrDim: D12,
+        <FDim as ndarray::Dimension>::Smaller: D01,
         <ConstrDim as ndarray::Dimension>::Smaller: D01,
     {
         // Get the initial genes
@@ -53,10 +55,13 @@ impl Initialization {
     }
 
     /// Validates that the fitness array length matches expected objectives.
-    fn check_fitness(
-        fitness: &ArrayView1<f64>,
+    fn check_fitness<FDim>(
+        fitness: &ArrayView<f64, FDim>,
         context: &AlgorithmContext,
-    ) -> Result<(), InitializationError> {
+    ) -> Result<(), InitializationError>
+    where
+        FDim: D01,
+    {
         let expected = context.num_objectives;
         let actual = fitness.len();
 
@@ -99,9 +104,9 @@ mod tests {
     use super::*;
     use crate::algorithms::helpers::context::AlgorithmContext;
     use crate::duplicates::ExactDuplicatesCleaner;
-    use crate::evaluator::NoConstraintsFnPointer;
+    use crate::evaluator::{EvaluatorMOO, NoConstraintsFnPointer};
     use crate::operators::{
-        sampling::RandomSamplingBinary, survival::nsga2::Nsga2RankCrowdingSurvival,
+        sampling::RandomSamplingBinary, survival::moo::nsga2::Nsga2RankCrowdingSurvival,
     };
     use crate::random::MOORandomGenerator;
     use ndarray::Array2;
