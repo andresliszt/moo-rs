@@ -40,7 +40,8 @@ impl SurvivalOperator for FitnessSurvival {
         let survive_count = num_survive.min(pop_size);
         let selected_indices = &indices[..survive_count];
         let mut selected_population = population.selected(selected_indices);
-        selected_population.set_rank(Array1::from_vec(selected_indices.to_vec()));
+        // Population is already sorted by fitness
+        selected_population.set_rank(Array1::from_iter(0..survive_count));
         selected_population
     }
 }
@@ -124,7 +125,6 @@ mod tests {
         assert_eq!(survived.fitness.len(), 3);
         let expected_fitness = array![0.1, 0.2, 0.3];
         assert_eq!(survived.fitness, expected_fitness);
-
         // Expected ranks: [0, 1, 2]
         let expected_ranks = array![0, 1, 2];
         assert_eq!(survived.rank.unwrap(), expected_ranks);

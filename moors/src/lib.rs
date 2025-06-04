@@ -32,10 +32,7 @@
 //! use moors::{
 //!     algorithms::{AlgorithmError, Nsga2Builder},
 //!     duplicates::ExactDuplicatesCleaner,
-//!     operators::{
-//!         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
-//!         sampling::RandomSamplingBinary,
-//!     },
+//!     operators::{SinglePointBinaryCrossover, BitFlipMutation, RandomSamplingBinary},
 //! };
 //!
 //! // ----- problem data (0/1 knapsack) -------------------------------------
