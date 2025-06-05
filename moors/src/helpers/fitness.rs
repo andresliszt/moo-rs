@@ -41,6 +41,7 @@
 ///
 /// ```rust
 /// use ndarray::{array, Array1, Array2, Axis};
+/// use moors::fitness_fn;
 ///
 /// // Simple objectives
 /// fn sphere(genes: &Array2<f64>) -> Array1<f64> {
