@@ -133,6 +133,8 @@ macro_rules! constraints_fn {
 mod tests {
     use ndarray::{Array1, Array2, Axis, array};
 
+    use crate::constraints_fn;
+
     /* ───────────────── helper constraint fns ───────────────── */
 
     /// g1(x,y) = x + y – 1  ≤ 0
