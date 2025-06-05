@@ -8,7 +8,7 @@
 ///
 /// # Syntax
 ///
-/// ```ignore
+/// ```rust, ignore
 /// // Two objectives
 /// let fitness = fitness_fn!(f1, f2);
 ///
@@ -18,13 +18,13 @@
 ///
 /// Each identifier (`f1`, `f2`, …) **must** implement the signature
 ///
-/// ```rust
+/// ```rust, ignore
 /// fn(&ndarray::Array2<f64>) -> ndarray::Array1<f64>
 /// ```
 ///
 /// The macro expands to a *closure*
 ///
-/// ```rust
+/// ```rust, ignore
 /// |genes: &Array2<f64>| -> Array2<f64>
 /// ```
 ///

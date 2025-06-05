@@ -88,7 +88,7 @@ macro_rules! __constraints_helper {
 ///
 /// The macro expands to a **closure**
 ///
-/// ```rust
+/// ```rust, ignore
 /// |genes: &ndarray::Array2<f64>| -> ndarray::Array2<f64>
 /// ```
 ///
@@ -100,6 +100,7 @@ macro_rules! __constraints_helper {
 ///
 /// ```rust
 /// use ndarray::{array, Array1, Array2, Axis};
+/// use moors::constraints_fn;
 ///
 /// fn g1(genes: &Array2<f64>) -> Array1<f64> {
 ///     genes.map_axis(Axis(1), |r| r.sum() - 1.0)        // ≤ 0
@@ -111,7 +112,7 @@ macro_rules! __constraints_helper {
 ///
 /// let my_constraints_clousure = constraints_fn!(g1; eq: h1);
 /// let genes = array![[0.5, 0.5], [1.5, 0.0]];
-/// let mat = eval(&genes);          // shape: (2 × 2)
+/// let mat = my_constraints_clousure(&genes);          // shape: (2 × 2)
 /// ```
 #[macro_export]
 macro_rules! constraints_fn {
