@@ -19,7 +19,7 @@ where
     selection: Sel,
     crossover: Cross,
     mutation: Mut,
-    pub duplicates_cleaner: Option<DC>,
+    pub duplicates_cleaner: DC,
     mutation_rate: f64,
     crossover_rate: f64,
     lower_bound: Option<f64>,
@@ -43,7 +43,7 @@ where
         selection: Sel,
         crossover: Cross,
         mutation: Mut,
-        duplicates_cleaner: Option<DC>,
+        duplicates_cleaner: DC,
         mutation_rate: f64,
         crossover_rate: f64,
         lower_bound: Option<f64>,
@@ -92,20 +92,6 @@ where
         offsprings
     }
 
-    /// Cleans duplicates in `genes`, optionally comparing against a reference population.
-    /// If no duplicates_cleaner is provided, returns the genes unchanged.
-    pub fn clean_duplicates(
-        &self,
-        genes: Array2<f64>,
-        reference: Option<&Array2<f64>>,
-    ) -> Array2<f64> {
-        if let Some(ref cleaner) = self.duplicates_cleaner {
-            cleaner.remove(&genes, reference)
-        } else {
-            genes
-        }
-    }
-
     /// Generates up to `num_offsprings` unique offspring in multiple iterations (up to `max_iter`).
     ///
     /// The logic is as follows:
@@ -142,9 +128,10 @@ where
             // Create offspring from these parents (crossover + mutation)
             let mut new_offsprings = self.mating_batch(&parents_a.genes, &parents_b.genes, rng);
             // Clean duplicates within the new offspring (internal cleaning)
-            new_offsprings = self.clean_duplicates(new_offsprings, None);
+            new_offsprings = (self.duplicates_cleaner).remove(new_offsprings, None);
             // Clean duplicates between new offspring and the current population.
-            new_offsprings = self.clean_duplicates(new_offsprings, Some(&population.genes));
+            new_offsprings =
+                (self.duplicates_cleaner).remove(new_offsprings, Some(&population.genes));
             // If we have already accumulated offspring, clean new offspring against them.
             if !all_offsprings.is_empty() {
                 let acc_array = Array2::<f64>::from_shape_vec(
@@ -152,7 +139,7 @@ where
                     all_offsprings.iter().flatten().cloned().collect(),
                 )
                 .expect("Failed to create accumulator array");
-                new_offsprings = self.clean_duplicates(new_offsprings, Some(&acc_array));
+                new_offsprings = (self.duplicates_cleaner).remove(new_offsprings, Some(&acc_array));
             }
             // Append the new unique offspring to the accumulator.
             for row in new_offsprings.outer_iter() {

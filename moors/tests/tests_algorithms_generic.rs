@@ -3,10 +3,13 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    AgeMoeaBuilder, CloseDuplicatesCleaner, GaussianMutation, NoConstraintsFnPointer, Nsga2Builder,
-    Nsga3Builder, PopulationMOO, RandomSamplingFloat, ReveaBuilder, Rnsga2Builder,
-    SimulatedBinaryCrossover, Spea2Builder,
-    survival::moo::{DanAndDenisReferencePoints, Nsga3ReferencePoints, StructuredReferencePoints},
+    AgeMoeaBuilder, CloseDuplicatesCleaner, GaussianMutation, NoConstraints, Nsga2Builder,
+    Nsga3Builder, Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat, ReveaBuilder,
+    Rnsga2Builder, SimulatedBinaryCrossover, Spea2Builder,
+    survival::moo::{
+        DanAndDenisReferencePoints, Nsga3ReferencePoints, ReveaReferencePointsSurvival,
+        Rnsga2ReferencePointsSurvival, StructuredReferencePoints,
+    },
 };
 
 /// Bi-objective fitness:
@@ -47,12 +50,13 @@ fn assert_small_real_front(pop: &PopulationMOO) {
 
 #[test]
 fn test_nsga2() {
-    let mut algorithm = Nsga2Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
+    let mut algorithm = Nsga2Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
+        .constraints_fn(NoConstraints)
         .num_vars(2)
         .num_objectives(2)
         .population_size(100)
@@ -77,12 +81,13 @@ fn test_nsga2() {
 
 #[test]
 fn test_agemoea() {
-    let mut algorithm = AgeMoeaBuilder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
+    let mut algorithm = AgeMoeaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
+        .constraints_fn(NoConstraints)
         .num_vars(2)
         .num_objectives(2)
         .population_size(100)
@@ -109,13 +114,16 @@ fn test_agemoea() {
 fn test_nsga3() {
     let reference_points = DanAndDenisReferencePoints::new(100, 2);
     let rp = Nsga3ReferencePoints::new(reference_points.generate(), false);
-    let mut algorithm = Nsga3Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
-        .reference_points(rp)
+    let survivor = Nsga3ReferencePointsSurvival::new(rp);
+
+    let mut algorithm = Nsga3Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
+        .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
+        .constraints_fn(NoConstraints)
         .num_vars(2)
         .num_objectives(2)
         .population_size(100)
@@ -140,15 +148,17 @@ fn test_nsga3() {
 
 #[test]
 fn test_rnsga2() {
-    let reference_points: Array2<f64> = array![[0.8, 0.8], [0.9, 0.9]];
-    let mut algorithm = Rnsga2Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
-        .reference_points(reference_points)
-        .epsilon(0.001)
+    let rp: Array2<f64> = array![[0.8, 0.8], [0.9, 0.9]];
+    let epsilon = 0.001;
+    let survivor = Rnsga2ReferencePointsSurvival::new(rp, epsilon);
+    let mut algorithm = Rnsga2Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
+        .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
+        .constraints_fn(NoConstraints)
         .num_vars(2)
         .num_objectives(2)
         .population_size(100)
@@ -173,16 +183,18 @@ fn test_rnsga2() {
 
 #[test]
 fn test_revea() {
-    let reference_points = DanAndDenisReferencePoints::new(100, 2).generate();
-    let mut algorithm = ReveaBuilder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
-        .reference_points(reference_points)
-        .alpha(2.5)
-        .frequency(0.2)
+    let rp = DanAndDenisReferencePoints::new(100, 2).generate();
+    let alpha = 2.5;
+    let frequency = 0.2;
+    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency);
+    let mut algorithm = ReveaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
+        .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
+        .constraints_fn(NoConstraints)
         .num_vars(2)
         .num_objectives(2)
         .population_size(100)
@@ -207,12 +219,13 @@ fn test_revea() {
 #[test]
 #[should_panic] // The algorithm is not reaching the expected performance. Needs investigation
 fn test_spea2() {
-    let mut algorithm = Spea2Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
+    let mut algorithm = Spea2Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
+        .constraints_fn(NoConstraints)
         .num_vars(2)
         .num_objectives(2)
         .population_size(200)

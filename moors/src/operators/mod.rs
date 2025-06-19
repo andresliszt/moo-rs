@@ -86,5 +86,19 @@ pub use sampling::{
     PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
     SamplingOperator,
 };
-pub use selection::SelectionOperator;
-pub use survival::{SurvivalOperator, moo::FrontsAndRankingBasedSurvival};
+pub use selection::{
+    SelectionOperator,
+    moo::{
+        RandomSelection as RandomSelectionMOO,
+        RankAndScoringSelection as RankAndScoringSelectionMOO,
+    },
+};
+pub use survival::{
+    SurvivalOperator,
+    moo::{
+        AgeMoeaSurvival, DanAndDenisReferencePoints, FrontsAndRankingBasedSurvival,
+        Nsga2RankCrowdingSurvival, Nsga3ReferencePoints, Nsga3ReferencePointsSurvival,
+        ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, Spea2KnnSurvival,
+        StructuredReferencePoints,
+    },
+};

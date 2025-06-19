@@ -1,6 +1,6 @@
 use moors::{
-    EvaluatorError, NoConstraintsFnPointer,
-    algorithms::{AlgorithmError, InitializationError, Nsga2, Nsga2Builder},
+    EvaluatorError, NoConstraints,
+    algorithms::{AlgorithmError, InitializationError, Nsga2Builder},
     duplicates::{ExactDuplicatesCleaner, NoDuplicatesCleaner},
     operators::{BitFlipMutation, RandomSamplingBinary, SinglePointBinaryCrossover},
 };
@@ -24,12 +24,13 @@ fn constraints_always_infeasible(genes: &Array2<f64>) -> Array1<f64> {
 
 #[test]
 fn test_keep_infeasible() {
-    let mut algorithm: Nsga2<_, _, _, _, _, _, NoDuplicatesCleaner> = Nsga2Builder::default()
+    let mut algorithm = Nsga2Builder::default()
         .fitness_fn(fitness_binary_biobj)
         .constraints_fn(constraints_always_infeasible)
         .sampler(RandomSamplingBinary::new())
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
+        .duplicates_cleaner(NoDuplicatesCleaner)
         .num_vars(5)
         .num_objectives(2)
         .num_constraints(1)
@@ -50,22 +51,23 @@ fn test_keep_infeasible() {
 }
 #[test]
 fn test_keep_infeasible_out_of_bounds() {
-    let mut algorithm: Nsga2<_, _, _, _, _, NoConstraintsFnPointer, NoDuplicatesCleaner> =
-        Nsga2Builder::default()
-            .fitness_fn(fitness_binary_biobj)
-            .sampler(RandomSamplingBinary::new())
-            .crossover(SinglePointBinaryCrossover::new())
-            .mutation(BitFlipMutation::new(0.5))
-            .num_vars(5)
-            .num_objectives(2)
-            .population_size(100)
-            .num_offsprings(32)
-            .num_iterations(20)
-            .keep_infeasible(true)
-            .lower_bound(2.0)
-            .upper_bound(10.0)
-            .build()
-            .unwrap();
+    let mut algorithm = Nsga2Builder::default()
+        .fitness_fn(fitness_binary_biobj)
+        .constraints_fn(NoConstraints)
+        .sampler(RandomSamplingBinary::new())
+        .crossover(SinglePointBinaryCrossover::new())
+        .mutation(BitFlipMutation::new(0.5))
+        .duplicates_cleaner(NoDuplicatesCleaner)
+        .num_vars(5)
+        .num_objectives(2)
+        .population_size(100)
+        .num_offsprings(32)
+        .num_iterations(20)
+        .keep_infeasible(true)
+        .lower_bound(2.0)
+        .upper_bound(10.0)
+        .build()
+        .unwrap();
 
     algorithm
         .run()

@@ -1,10 +1,10 @@
-use ndarray::{Array2, ArrayBase, ArrayView, OwnedRepr};
+use ndarray::ArrayView;
 
 use crate::{
     algorithms::helpers::{context::AlgorithmContext, error::InitializationError},
     duplicates::PopulationCleaner,
-    evaluator::Evaluator,
-    genetic::{D01, D12, Population},
+    evaluator::{ConstraintsFn, Evaluator, FitnessFn},
+    genetic::{D01, Population},
     operators::{SamplingOperator, SurvivalOperator},
     random::RandomGenerator,
 };
@@ -13,31 +13,25 @@ pub struct Initialization;
 
 impl Initialization {
     /// Sample, clean duplicates, evaluate, and rank the initial population.
-    pub fn initialize<S, Sur, DC, FDim, ConstrDim, F, G>(
+    pub fn initialize<S, Sur, DC, F, G>(
         sampler: &S,
         survivor: &mut Sur,
-        evaluator: &Evaluator<FDim, ConstrDim, F, G>,
-        duplicates_cleaner: &Option<DC>,
+        evaluator: &Evaluator<F, G>,
+        duplicates_cleaner: &DC,
         rng: &mut impl RandomGenerator,
         context: &AlgorithmContext,
-    ) -> Result<Population<FDim, ConstrDim>, InitializationError>
+    ) -> Result<Population<F::Dim, G::Dim>, InitializationError>
     where
         S: SamplingOperator,
-        Sur: SurvivalOperator<FDim = FDim>,
+        Sur: SurvivalOperator<FDim = F::Dim>,
         DC: PopulationCleaner,
-        F: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, FDim>,
-        G: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, ConstrDim>,
-        FDim: D12,
-        ConstrDim: D12,
-        <FDim as ndarray::Dimension>::Smaller: D01,
-        <ConstrDim as ndarray::Dimension>::Smaller: D01,
+        F: FitnessFn,
+        G: ConstraintsFn,
     {
         // Get the initial genes
         let mut genes = sampler.operate(context.population_size, context.num_vars, rng);
         // If duplicates cleaner is passed then clean
-        if let Some(cleaner) = duplicates_cleaner {
-            genes = cleaner.remove(&genes, None);
-        }
+        genes = duplicates_cleaner.remove(genes, None);
         // Do the first evaluation
         let mut population = evaluator
             .evaluate(genes)
@@ -76,24 +70,19 @@ impl Initialization {
 
     /// Validates constraints array length or absence against context.
     fn check_constraints<ConstrDim>(
-        constraints: &Option<ArrayView<f64, ConstrDim>>,
+        constraints: &ArrayView<f64, ConstrDim>,
         context: &AlgorithmContext,
     ) -> Result<(), InitializationError>
     where
         ConstrDim: D01,
     {
         let expected = context.num_constraints;
-        match constraints.as_ref() {
-            Some(constraints) if constraints.len() == expected => Ok(()),
-            Some(constraints) => Err(InitializationError::InvalidConstraints(format!(
+        let actual = constraints.len();
+        match actual == expected {
+            true => Ok(()),
+            false => Err(InitializationError::InvalidConstraints(format!(
                 "Expected {} constraints, got {}",
-                expected,
-                constraints.len()
-            ))),
-            None if expected == 0 => Ok(()),
-            None => Err(InitializationError::InvalidConstraints(format!(
-                "Expected {} constraints, but got none",
-                expected
+                expected, actual
             ))),
         }
     }
@@ -104,12 +93,11 @@ mod tests {
     use super::*;
     use crate::algorithms::helpers::context::AlgorithmContext;
     use crate::duplicates::ExactDuplicatesCleaner;
-    use crate::evaluator::{EvaluatorMOO, NoConstraintsFnPointer};
     use crate::operators::{
         sampling::RandomSamplingBinary, survival::moo::nsga2::Nsga2RankCrowdingSurvival,
     };
     use crate::random::MOORandomGenerator;
-    use ndarray::Array2;
+    use ndarray::{Array1, Array2};
 
     /// A dummy fitness function that returns an array of zeros
     /// with shape `(population_size, num_objectives)`.
@@ -129,6 +117,10 @@ mod tests {
         num_constraints: usize,
     ) -> Array2<f64> {
         Array2::zeros((population_size, num_constraints))
+    }
+
+    fn no_constraints(_genes: &Array2<f64>) -> Array1<f64> {
+        Array1::from(vec![])
     }
 
     #[test]
@@ -154,8 +146,8 @@ mod tests {
         let constraints_fn = |genes: &Array2<f64>| {
             dummy_constraints(genes, context.population_size, context.num_constraints)
         };
-        let evaluator = EvaluatorMOO::new(fitness_fn, Some(constraints_fn), false, None, None);
-        let duplicates_cleaner = Some(ExactDuplicatesCleaner::new());
+        let evaluator = Evaluator::new(fitness_fn, constraints_fn, false, None, None);
+        let duplicates_cleaner = ExactDuplicatesCleaner::new();
 
         let pop = Initialization::initialize(
             &sampler,
@@ -195,14 +187,13 @@ mod tests {
         let bad_fitness = |genes: &Array2<f64>| {
             dummy_fitness(genes, context.population_size, context.num_objectives - 1)
         };
-        let evaluator: EvaluatorMOO<_, _, NoConstraintsFnPointer> =
-            EvaluatorMOO::new(bad_fitness, None, false, None, None);
+        let evaluator = Evaluator::new(bad_fitness, no_constraints, false, None, None);
 
         let err = Initialization::initialize(
             &sampler,
             &mut survivor,
             &evaluator,
-            &Some(duplicates_cleaner),
+            &duplicates_cleaner,
             &mut rng,
             &context,
         )
@@ -232,13 +223,13 @@ mod tests {
         let bad_constraints = |genes: &Array2<f64>| {
             dummy_constraints(genes, context.population_size, context.num_constraints - 1)
         };
-        let evaluator = EvaluatorMOO::new(fitness_fn, Some(bad_constraints), false, None, None);
+        let evaluator = Evaluator::new(fitness_fn, bad_constraints, false, None, None);
 
         let err = Initialization::initialize(
             &sampler,
             &mut survivor,
             &evaluator,
-            &Some(duplicates_cleaner),
+            &duplicates_cleaner,
             &mut rng,
             &context,
         )
@@ -251,7 +242,7 @@ mod tests {
     fn initialize_fails_when_constraints_fn_is_none_but_expected_non_zero() {
         let sampler = RandomSamplingBinary::new();
         let mut survivor = Nsga2RankCrowdingSurvival::new();
-        let duplicates_cleaner = Some(ExactDuplicatesCleaner::new());
+        let duplicates_cleaner = ExactDuplicatesCleaner::new();
         let mut rng = MOORandomGenerator::new_from_seed(Some(42));
 
         let context = AlgorithmContext::new(
@@ -267,8 +258,7 @@ mod tests {
         let fitness_fn = |genes: &Array2<f64>| {
             dummy_fitness(genes, context.population_size, context.num_objectives)
         };
-        let evaluator: EvaluatorMOO<_, _, NoConstraintsFnPointer> =
-            EvaluatorMOO::new(fitness_fn, None, false, None, None);
+        let evaluator = Evaluator::new(fitness_fn, no_constraints, false, None, None);
 
         let err = Initialization::initialize(
             &sampler,

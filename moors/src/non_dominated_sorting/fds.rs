@@ -335,14 +335,9 @@ mod tests {
 
         // Check that all constraints in each front are feasible (≤ 0).
         for front in fronts.iter() {
-            if let Some(constraints_arr) = &front.constraints {
-                for row in constraints_arr.outer_iter() {
-                    for &val in row.iter() {
-                        assert!(
-                            val <= 0.0,
-                            "All constraints values should be feasible (≤ 0)."
-                        );
-                    }
+            for row in front.constraints.outer_iter() {
+                for &val in row.iter() {
+                    assert!(val <= 0.0, "Constraint violation: value = {val} is not ≤ 0");
                 }
             }
         }

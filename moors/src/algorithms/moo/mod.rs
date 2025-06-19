@@ -95,7 +95,8 @@
 
 use std::marker::PhantomData;
 
-use ndarray::{Array2, Axis, concatenate};
+use derive_builder::Builder;
+use ndarray::{Axis, concatenate};
 
 use crate::{
     algorithms::helpers::{
@@ -103,9 +104,9 @@ use crate::{
         initialization::Initialization,
         validators::{validate_bounds, validate_positive, validate_probability},
     },
-    duplicates::PopulationCleaner,
-    evaluator::EvaluatorMOO,
-    genetic::{Constraints, D01, D12, PopulationMOO},
+    duplicates::{NoDuplicatesCleaner, PopulationCleaner},
+    evaluator::{ConstraintsFn, Evaluator, FitnessFn, NoConstraints},
+    genetic::PopulationMOO,
     helpers::printer::print_minimum_moo,
     operators::{
         CrossoverOperator, Evolve, EvolveError, MutationOperator, SamplingOperator,
@@ -114,31 +115,8 @@ use crate::{
     random::MOORandomGenerator,
 };
 
-use moors_macros::algorithm_builder;
-
-macro_rules! delegate_algorithm_methods {
-    () => {
-        /// Delegate `run` to the inner algorithm
-        pub fn run(&mut self) -> Result<(), AlgorithmError> {
-            self.inner.run()
-        }
-
-        /// Delegate `population` to the inner algorithm
-        pub fn population(
-            &self,
-        ) -> Result<&crate::genetic::PopulationMOO<ConstrDim>, crate::algorithms::AlgorithmError> {
-            match &self.inner.population {
-                Some(v) => Ok(v),
-                None => Err(crate::algorithms::AlgorithmError::Initialization(
-                    crate::algorithms::InitializationError::NotInitializated(
-                        "population is not set".into(),
-                    ),
-                )),
-            }
-        }
-    };
-}
-
+#[macro_use]
+mod macros;
 pub(in crate::algorithms) mod agemoea;
 pub(in crate::algorithms) mod nsga2;
 pub(in crate::algorithms) mod nsga3;
@@ -146,130 +124,170 @@ pub(in crate::algorithms) mod revea;
 pub(in crate::algorithms) mod rnsga2;
 pub(in crate::algorithms) mod spea2;
 
-#[derive(Debug)]
-pub struct GeneticAlgorithmMOO<S, Sel, Sur, Cross, Mut, F, G, DC, ConstrDim>
+impl From<AlgorithmError> for AlgorithmMOOBuilderError {
+    fn from(err: AlgorithmError) -> Self {
+        AlgorithmMOOBuilderError::ValidationError(err.to_string())
+    }
+}
+
+#[derive(Builder, Debug)]
+#[builder(
+    pattern = "owned",
+    name = "AlgorithmMOOBuilder",
+    build_fn(name = "build_params", validate = "Self::validate")
+)]
+pub struct GeneticAlgorithmParams<
+    S,
+    Sel,
+    Sur,
+    Cross,
+    Mut,
+    F,
+    G = NoConstraints,
+    DC = NoDuplicatesCleaner,
+> where
+    S: SamplingOperator,
+    Sel: SelectionOperator<FDim = ndarray::Ix2>,
+    Sur: SurvivalOperator<FDim = ndarray::Ix2>,
+    Cross: CrossoverOperator,
+    Mut: MutationOperator,
+    F: FitnessFn<Dim = ndarray::Ix2>,
+    G: ConstraintsFn,
+    DC: PopulationCleaner,
+{
+    sampler: S,
+    selector: Sel,
+    survivor: Sur,
+    crossover: Cross,
+    mutation: Mut,
+    duplicates_cleaner: DC,
+    fitness_fn: F,
+    constraints_fn: G,
+    num_vars: usize,
+    num_objectives: usize,
+    num_constraints: usize,
+    population_size: usize,
+    num_offsprings: usize,
+    num_iterations: usize,
+    mutation_rate: f64,
+    crossover_rate: f64,
+    keep_infeasible: bool,
+    verbose: bool,
+    // Optional lower and upper bounds for each gene.
+    #[builder(setter(strip_option), default)]
+    lower_bound: Option<f64>,
+    #[builder(setter(strip_option), default)]
+    upper_bound: Option<f64>,
+    #[builder(setter(strip_option), default)]
+    seed: Option<u64>,
+}
+
+impl<S, Sel, Sur, Cross, Mut, F, G, DC> AlgorithmMOOBuilder<S, Sel, Sur, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Sel: SelectionOperator<FDim = ndarray::Ix2>,
     Sur: SurvivalOperator<FDim = ndarray::Ix2>,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&Array2<f64>) -> Array2<f64>,
-    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
+    F: FitnessFn<Dim = ndarray::Ix2>,
+    G: ConstraintsFn,
     DC: PopulationCleaner,
-    ConstrDim: D12,
 {
-    pub population: Option<PopulationMOO<ConstrDim>>,
+    /// Pre build validation
+    fn validate(&self) -> Result<(), AlgorithmMOOBuilderError> {
+        validate_positive(self.num_vars.unwrap(), "Number of variables")?;
+        validate_probability(self.crossover_rate.unwrap(), "Crossover rate")?;
+        validate_positive(self.num_offsprings.unwrap(), "Number of offsprings")?;
+        validate_positive(self.num_iterations.unwrap(), "Number of iterations")?;
+        validate_bounds(self.lower_bound.unwrap(), self.upper_bound.unwrap())?;
+        Ok(())
+    }
+
+    pub fn build(
+        self,
+    ) -> Result<GeneticAlgorithmMOO<S, Sel, Sur, Cross, Mut, F, G, DC>, AlgorithmMOOBuilderError>
+    {
+        let params = self.build_params()?;
+
+        let evaluator = Evaluator::new(
+            params.fitness_fn,
+            params.constraints_fn,
+            params.keep_infeasible,
+            params.lower_bound,
+            params.upper_bound,
+        );
+
+        let context: AlgorithmContext = AlgorithmContext::new(
+            params.num_vars,
+            params.population_size,
+            params.num_offsprings,
+            params.num_objectives,
+            params.num_iterations,
+            params.num_constraints,
+            params.upper_bound,
+            params.lower_bound,
+        );
+
+        let evolve = Evolve::new(
+            params.selector,
+            params.crossover,
+            params.mutation,
+            params.duplicates_cleaner,
+            params.mutation_rate,
+            params.crossover_rate,
+            params.lower_bound,
+            params.upper_bound,
+        );
+        let rng = MOORandomGenerator::new_from_seed(params.seed);
+
+        Ok(GeneticAlgorithmMOO {
+            population: None,
+            sampler: params.sampler,
+            survivor: params.survivor,
+            evolve: evolve,
+            evaluator: evaluator,
+            context: context,
+            verbose: params.verbose,
+            rng: rng,
+            phantom: PhantomData,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct GeneticAlgorithmMOO<S, Sel, Sur, Cross, Mut, F, G, DC>
+where
+    S: SamplingOperator,
+    Sel: SelectionOperator<FDim = ndarray::Ix2>,
+    Sur: SurvivalOperator<FDim = ndarray::Ix2>,
+    Cross: CrossoverOperator,
+    Mut: MutationOperator,
+    F: FitnessFn<Dim = ndarray::Ix2>,
+    G: ConstraintsFn,
+    DC: PopulationCleaner,
+{
+    pub population: Option<PopulationMOO<G::Dim>>,
     sampler: S,
     survivor: Sur,
     evolve: Evolve<Sel, Cross, Mut, DC>,
-    evaluator: EvaluatorMOO<ConstrDim, F, G>,
+    evaluator: Evaluator<F, G>,
     pub context: AlgorithmContext,
     verbose: bool,
     rng: MOORandomGenerator,
     phantom: PhantomData<S>,
 }
 
-#[algorithm_builder]
-impl<S, Sel, Sur, Cross, Mut, F, G, DC, ConstrDim>
-    GeneticAlgorithmMOO<S, Sel, Sur, Cross, Mut, F, G, DC, ConstrDim>
+impl<S, Sel, Sur, Cross, Mut, F, G, DC> GeneticAlgorithmMOO<S, Sel, Sur, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Sel: SelectionOperator<FDim = ndarray::Ix2>,
     Sur: SurvivalOperator<FDim = ndarray::Ix2>,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&Array2<f64>) -> Array2<f64>,
-    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
+    F: FitnessFn<Dim = ndarray::Ix2>,
+    G: ConstraintsFn,
     DC: PopulationCleaner,
-    ConstrDim: D12,
-    <ConstrDim as ndarray::Dimension>::Smaller: D01,
 {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        sampler: S,
-        selector: Sel,
-        survivor: Sur,
-        crossover: Cross,
-        mutation: Mut,
-        duplicates_cleaner: Option<DC>,
-        fitness_fn: F,
-        num_vars: usize,
-        num_objectives: usize,
-        num_constraints: usize,
-        population_size: usize,
-        num_offsprings: usize,
-        num_iterations: usize,
-        mutation_rate: f64,
-        crossover_rate: f64,
-        keep_infeasible: bool,
-        verbose: bool,
-        constraints_fn: Option<G>,
-        // Optional lower and upper bounds for each gene.
-        lower_bound: Option<f64>,
-        upper_bound: Option<f64>,
-        seed: Option<u64>,
-    ) -> Result<Self, AlgorithmError> {
-        // Validate probabilities
-        validate_probability(mutation_rate, "Mutation rate")?;
-        validate_probability(crossover_rate, "Crossover rate")?;
-
-        // Validate positive values
-        validate_positive(num_vars, "Number of variables")?;
-        validate_positive(population_size, "Population size")?;
-        validate_positive(num_offsprings, "Number of offsprings")?;
-        validate_positive(num_iterations, "Number of iterations")?;
-
-        // Validate bounds
-        validate_bounds(lower_bound, upper_bound)?;
-
-        let rng = MOORandomGenerator::new_from_seed(seed);
-        // Create the context
-        let context: AlgorithmContext = AlgorithmContext::new(
-            num_vars,
-            population_size,
-            num_offsprings,
-            num_objectives,
-            num_iterations,
-            num_constraints,
-            upper_bound,
-            lower_bound,
-        );
-        // Create the evaluator
-        let evaluator = EvaluatorMOO::new(
-            fitness_fn,
-            constraints_fn,
-            keep_infeasible,
-            lower_bound,
-            upper_bound,
-        );
-
-        // Create the evolution operator.
-        let evolve = Evolve::new(
-            selector,
-            crossover,
-            mutation,
-            duplicates_cleaner,
-            mutation_rate,
-            crossover_rate,
-            lower_bound,
-            upper_bound,
-        );
-        // Population is not set until we call initialization
-        let population = None;
-        Ok(Self {
-            population,
-            sampler,
-            survivor,
-            evolve,
-            evaluator,
-            context,
-            verbose,
-            rng,
-            phantom: PhantomData,
-        })
-    }
-
     fn next(&mut self) -> Result<(), AlgorithmError> {
         let ref_pop = self.population.as_ref().unwrap();
         // Obtain offspring genes.

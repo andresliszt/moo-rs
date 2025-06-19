@@ -21,11 +21,10 @@ impl CloseDuplicatesCleaner {
 }
 
 impl PopulationCleaner for CloseDuplicatesCleaner {
-    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64> {
-        let ref_array = reference.unwrap_or(population);
+    fn remove(&self, population: Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64> {
         let n = population.nrows();
         let num_cols = population.ncols();
-        let dists_sq = cross_euclidean_distances(population, ref_array);
+        let dists_sq = cross_euclidean_distances(&population, &population);
 
         let eps_sq = self.epsilon;
         let mut keep = vec![true; n];
@@ -78,7 +77,7 @@ mod tests {
         ];
         let epsilon = 0.1;
         let cleaner = CloseDuplicatesCleaner::new(epsilon);
-        let cleaned = cleaner.remove(&population, None);
+        let cleaned = cleaner.remove(population, None);
         // Expect rows 0 and 2 remain.
         assert_eq!(cleaned.nrows(), 2);
     }
@@ -91,7 +90,7 @@ mod tests {
         ];
         let epsilon = 0.05;
         let cleaner = CloseDuplicatesCleaner::new(epsilon);
-        let cleaned = cleaner.remove(&population, Some(&reference));
+        let cleaned = cleaner.remove(population, Some(&reference));
         // Row 0 should be removed.
         assert_eq!(cleaned.nrows(), 1);
         assert_eq!(cleaned.row(0).to_vec(), vec![10.0, 10.0, 10.0]);

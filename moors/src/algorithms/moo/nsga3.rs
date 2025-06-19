@@ -21,123 +21,40 @@
 //! [`Nsga3ReferencePoints::from_simplex_lattice`] or a custom constructor—and
 //! the algorithm handles association and niche preservation automatically.
 
-use crate::{
-    algorithms::moo::{AlgorithmError, GeneticAlgorithmMOO},
-    duplicates::PopulationCleaner,
-    genetic::{Constraints, D01, D12},
-    operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator,
-        selection::moo::RandomSelection,
-        survival::moo::{Nsga3ReferencePoints, Nsga3ReferencePointsSurvival},
-    },
-};
+use crate::{selection::moo::RandomSelection, survival::moo::Nsga3ReferencePointsSurvival};
 
-use moors_macros::algorithm_builder;
-use ndarray::Array2;
+create_algorithm!(
+    /// NSGA‑III algorithm wrapper.
+    Nsga3,
+    RandomSelection,
+    Nsga3ReferencePointsSurvival
+);
 
-/// NSGA‑III algorithm wrapper.
-///
-/// Thin façade around [`GeneticAlgorithmMOO`] pre‑configured with
-/// *reference‑point* survival and random parent selection.
-///
-/// * **Selection:** [`RandomSelection`]
-/// * **Survival:**  [`Nsga3ReferencePointsSurvival`]
-/// * **Paper:** Deb & Jain 2014 (*IEEE TEC* 18 (4): 577‑601)
-///
-/// Construct with [`Nsga3Builder`](crate::algorithms::Nsga3Builder) or
-/// directly via [`Nsga3::new`]; then call `run()` and `population()` to
-/// retrieve the final Pareto‑optimal set.
-#[derive(Debug)]
-pub struct Nsga3<ConstrDim, S, Cross, Mut, F, G, DC>
+impl<S, Cross, Mut, F, G, DC> Default for Nsga3Builder<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&Array2<f64>) -> Array2<f64>,
-    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
+    F: FitnessFn<Dim = ndarray::Ix2>,
+    G: ConstraintsFn,
     DC: PopulationCleaner,
-    ConstrDim: D12,
-    <ConstrDim as ndarray::Dimension>::Smaller: D01,
+    AlgorithmMOOBuilder<S, RandomSelection, Nsga3ReferencePointsSurvival, Cross, Mut, F, G, DC>:
+        Default,
 {
-    pub inner: GeneticAlgorithmMOO<
-        S,
-        RandomSelection,
-        Nsga3ReferencePointsSurvival,
-        Cross,
-        Mut,
-        F,
-        G,
-        DC,
-        ConstrDim,
-    >,
-}
-
-#[algorithm_builder]
-impl<ConstrDim, S, Cross, Mut, F, G, DC> Nsga3<ConstrDim, S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: Fn(&Array2<f64>) -> Array2<f64>,
-    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
-    DC: PopulationCleaner,
-    ConstrDim: D12,
-    <ConstrDim as ndarray::Dimension>::Smaller: D01,
-{
-    pub fn new(
-        reference_points: Nsga3ReferencePoints,
-        sampler: S,
-        crossover: Cross,
-        mutation: Mut,
-        duplicates_cleaner: Option<DC>,
-        fitness_fn: F,
-        num_vars: usize,
-        num_objectives: usize,
-        num_constraints: usize,
-        population_size: usize,
-        num_offsprings: usize,
-        num_iterations: usize,
-        mutation_rate: f64,
-        crossover_rate: f64,
-        keep_infeasible: bool,
-        verbose: bool,
-        constraints_fn: Option<G>,
-        lower_bound: Option<f64>,
-        upper_bound: Option<f64>,
-        seed: Option<u64>,
-    ) -> Result<Self, AlgorithmError> {
-        // Define NSGA3 selector and survivor
-        let selector = RandomSelection::new();
-        let survivor = Nsga3ReferencePointsSurvival::new(reference_points);
-
-        // Build the algorithm.
-        let inner = GeneticAlgorithmMOO::new(
-            sampler,
-            selector,
-            survivor,
-            crossover,
-            mutation,
-            duplicates_cleaner,
-            fitness_fn,
-            num_vars,
-            num_objectives,
-            num_constraints,
-            population_size,
-            num_offsprings,
-            num_iterations,
-            mutation_rate,
-            crossover_rate,
-            keep_infeasible,
-            verbose,
-            constraints_fn,
-            lower_bound,
-            upper_bound,
-            seed,
-        )?;
-
-        Ok(Nsga3 { inner })
+    fn default() -> Self {
+        let mut inner: AlgorithmMOOBuilder<
+            S,
+            RandomSelection,
+            Nsga3ReferencePointsSurvival,
+            Cross,
+            Mut,
+            F,
+            G,
+            DC,
+        > = Default::default();
+        inner = inner.selector(RandomSelection);
+        Nsga3Builder {
+            inner_builder: inner,
+        }
     }
-
-    // Delegate methods from inner
-    delegate_algorithm_methods!();
 }

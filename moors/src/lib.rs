@@ -91,6 +91,8 @@
 //! ---
 
 extern crate core;
+#[macro_use]
+extern crate paste;
 
 pub mod algorithms;
 pub mod duplicates;
@@ -103,23 +105,29 @@ mod private;
 pub mod random;
 
 pub use algorithms::{
-    AgeMoea, AgeMoeaBuilder, AlgorithmError, GeneticAlgorithmMOO, GeneticAlgorithmMOOBuilder,
-    GeneticAlgorithmSOO, GeneticAlgorithmSOOBuilder, InitializationError, Nsga2, Nsga2Builder,
-    Nsga3, Nsga3Builder, Revea, ReveaBuilder, Rnsga2, Rnsga2Builder, Spea2, Spea2Builder,
+    AgeMoea, AgeMoeaBuilder, AlgorithmError, AlgorithmMOOBuilder, AlgorithmMOOBuilderError,
+    AlgorithmSOOBuilder, AlgorithmSOOBuilderError, GeneticAlgorithmMOO, GeneticAlgorithmSOO,
+    InitializationError, Nsga2, Nsga2Builder, Nsga3, Nsga3Builder, Revea, ReveaBuilder, Rnsga2,
+    Rnsga2Builder, Spea2, Spea2Builder,
 };
-pub use duplicates::{CloseDuplicatesCleaner, ExactDuplicatesCleaner, PopulationCleaner};
-pub use evaluator::{ConstraintsFnPointer, EvaluatorError, NoConstraintsFnPointer};
+pub use duplicates::{
+    CloseDuplicatesCleaner, ExactDuplicatesCleaner, NoDuplicatesCleaner, PopulationCleaner,
+};
+pub use evaluator::{EvaluatorError, NoConstraints};
 pub use genetic::{
     Individual, IndividualMOO, IndividualSOO, Population, PopulationMOO, PopulationSOO,
 };
 pub use operators::selection;
 pub use operators::survival;
 pub use operators::{
-    BitFlipMutation, CrossoverOperator, DisplacementMutation, ExponentialCrossover,
-    FrontsAndRankingBasedSurvival, GaussianMutation, MutationOperator, OrderCrossover,
-    PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
-    SamplingOperator, ScrambleMutation, SelectionOperator, SimulatedBinaryCrossover,
-    SinglePointBinaryCrossover, SurvivalOperator, SwapMutation, UniformBinaryCrossover,
-    evolve::EvolveError,
+    AgeMoeaSurvival, BitFlipMutation, CrossoverOperator, DanAndDenisReferencePoints,
+    DisplacementMutation, ExponentialCrossover, FrontsAndRankingBasedSurvival, GaussianMutation,
+    MutationOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePoints,
+    Nsga3ReferencePointsSurvival, OrderCrossover, PermutationSampling, RandomSamplingBinary,
+    RandomSamplingFloat, RandomSamplingInt, RandomSelectionMOO, RankAndScoringSelectionMOO,
+    ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, SamplingOperator,
+    ScrambleMutation, SelectionOperator, SimulatedBinaryCrossover, SinglePointBinaryCrossover,
+    Spea2KnnSurvival, StructuredReferencePoints, SurvivalOperator, SwapMutation,
+    UniformBinaryCrossover, evolve::EvolveError,
 };
 pub use random::{MOORandomGenerator, NoopRandomGenerator, RandomGenerator, TestDummyRng};

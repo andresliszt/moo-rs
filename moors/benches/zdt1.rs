@@ -6,10 +6,8 @@ use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion
 use ndarray::{Array2, Axis, stack};
 
 use moors::{
-    NoConstraintsFnPointer,
-    algorithms::Nsga2Builder,
-    duplicates::CloseDuplicatesCleaner,
-    operators::{GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover},
+    CloseDuplicatesCleaner, GaussianMutation, NoConstraints, Nsga2Builder, RandomSamplingFloat,
+    SimulatedBinaryCrossover,
 };
 
 /// ZDT1 test function:
@@ -28,12 +26,13 @@ fn zdt1(pop_genes: &Array2<f64>) -> Array2<f64> {
 fn bench_nsga2_zdt1(c: &mut Criterion) {
     c.bench_function("nsga2_zdt1", |b| {
         b.iter(|| {
-            let mut algorithm = Nsga2Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
+            let mut algorithm = Nsga2Builder::default()
                 .sampler(RandomSamplingFloat::new(0.0, 1.0))
                 .crossover(SimulatedBinaryCrossover::new(15.0))
                 .mutation(GaussianMutation::new(0.5, 0.01))
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
                 .fitness_fn(zdt1)
+                .constraints_fn(NoConstraints)
                 .num_vars(10)
                 .num_objectives(2)
                 .population_size(1000)

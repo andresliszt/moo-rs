@@ -4,7 +4,7 @@ use ndarray::{Array1, Array2, ArrayViewMut1};
 
 use moors::{
     RandomGenerator,
-    algorithms::{AlgorithmError, Nsga2Builder},
+    algorithms::{AlgorithmError, AlgorithmMOOBuilderError, Nsga2Builder},
     duplicates::CloseDuplicatesCleaner,
     operators::{
         CrossoverOperator, GaussianMutation, MutationOperator, RandomSamplingFloat,
@@ -70,7 +70,7 @@ fn test_empty_mating_finish_algorithm_earlier() {
         .build()
         .expect("Failed to Build Nsga2");
 
-    nsga2.run().expect("Failed to run Nsga2");
+    nsga2.inner.run().expect("Failed to run Nsga2");
 
     // Just check the context, current iteration should be set as 0
     assert_eq!(nsga2.inner.context.current_iteration, 0);
@@ -183,7 +183,7 @@ fn test_invalid_params() {
         Err(e) => e,
     };
     match err {
-        AlgorithmError::InvalidParameter(inner) => {
+        AlgorithmMOOBuilderError::ValidationError(inner) => {
             let msg = inner.to_string();
             assert_eq!(msg, "Crossover rate must be between 0 and 1, got -1",);
         }

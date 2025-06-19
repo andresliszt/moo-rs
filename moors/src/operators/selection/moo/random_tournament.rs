@@ -3,7 +3,7 @@ use crate::operators::selection::{DuelResult, SelectionOperator};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
-pub struct RandomSelection {}
+pub struct RandomSelection;
 
 impl RandomSelection {
     pub fn new() -> Self {

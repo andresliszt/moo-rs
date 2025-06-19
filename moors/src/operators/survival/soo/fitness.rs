@@ -79,7 +79,7 @@ mod tests {
 
     /// Helper to create a PopulationSOO from a slice of fitness values.
     /// Genes are dummy zeros (shape (pop_size, 1)), since FitnessSurvival only reads `.fitness`.
-    fn make_population(fitness_values: &[f64]) -> PopulationSOO {
+    fn make_population(fitness_values: &[f64]) -> PopulationSOO<ndarray::Ix1> {
         let pop_size = fitness_values.len();
         let genes = Array2::zeros((pop_size, 1));
         let fitness = Array1::from_iter(fitness_values.iter().cloned());

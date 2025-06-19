@@ -4,24 +4,65 @@
 //! and constraints functions) meets the core data structures of *moors*.  It
 //! takes a 2‑D array of genomes (`PopulationGenes` = `Array2<f64>`) and returns
 //! a fully populated [`Population`] with fitness values and optional constraints
-use ndarray::{Array2, ArrayBase, Axis, OwnedRepr};
+use ndarray::{Array1, Array2, ArrayBase, Axis, Dimension, OwnedRepr};
 use thiserror::Error;
 
-use crate::genetic::{D12, Population};
+use crate::genetic::{D01, D12, Population};
 
-/// Type aliases for functions (Pointers)
-pub type FitnessFnPointer<FDim> = fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, FDim>;
-pub type ConstraintsFnPointer<ConstrDim> = fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, ConstrDim>;
-// this below type is tricky: When any algorithm builder e.g Nsga2Builder omits
-// contraints_fn from the set process, then an explicit type must be given
-// algorithm: Nsga2<_, _, _, _, NoConstraintsFn, _> = Nsga2Builder::default().fitness_fn....
-// See moors_macros and several tests using the annotation
-// See also: https://github.com/colin-kiegel/rust-derive-builder/issues/343
-pub type NoConstraintsFnPointer<ConstrDim = ndarray::Ix1> =
-    fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, ConstrDim>;
+pub trait ConstraintsFn
+where
+    Self::Dim: D12,
+    <Self::Dim as Dimension>::Smaller: D01,
+{
+    type Dim: D12;
+    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim>;
+}
 
-pub type EvaluatorMOO<ConstrDim, F, G> = Evaluator<ndarray::Ix2, ConstrDim, F, G>;
-pub type EvaluatorSOO<ConstrDim, F, G> = Evaluator<ndarray::Ix1, ConstrDim, F, G>;
+impl<G, Dim> ConstraintsFn for G
+where
+    G: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Dim>,
+    Dim: D12,
+    <Dim as Dimension>::Smaller: D01,
+{
+    type Dim = Dim;
+    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Dim> {
+        (self)(genes)
+    }
+}
+
+/// A zero-sized type that serves as the default implementation of ConstraintsFn.
+#[derive(Debug)]
+pub struct NoConstraints;
+
+/// Implement the ConstraintsFn trait for the default case:
+/// - Associated type `Dim` is fixed to `Ix1`
+impl ConstraintsFn for NoConstraints {
+    type Dim = ndarray::Ix1;
+
+    fn call(&self, _genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim> {
+        Array1::from(vec![])
+    }
+}
+
+pub trait FitnessFn
+where
+    <Self::Dim as Dimension>::Smaller: D01,
+{
+    type Dim: D12;
+    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim>;
+}
+
+impl<F, Dim> FitnessFn for F
+where
+    F: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Dim>,
+    Dim: D12,
+    <Dim as Dimension>::Smaller: D01,
+{
+    type Dim = Dim;
+    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Dim> {
+        (self)(genes)
+    }
+}
 
 /// Error type for the Evaluator.
 #[derive(Debug, Error)]
@@ -34,19 +75,13 @@ pub enum EvaluatorError {
 /// then assembling a `Population`. In addition to the user-provided constraints function,
 /// optional lower and upper bounds can be specified for the decision variables (genes).
 #[derive(Debug)]
-pub struct Evaluator<
-    FDim = ndarray::Ix2,
-    ConstrDim = ndarray::Ix2,
-    F = FitnessFnPointer<FDim>,
-    G = NoConstraintsFnPointer<ConstrDim>,
-> where
-    FDim: D12,
-    ConstrDim: D12,
-    F: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, FDim>,
-    G: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, ConstrDim>,
+pub struct Evaluator<F, G>
+where
+    F: FitnessFn,
+    G: ConstraintsFn,
 {
-    fitness_fn: F,
-    constraints_fn: Option<G>,
+    fitness: F,
+    constraints: G,
     keep_infeasible: bool,
     /// Optional lower bound for each gene.
     lower_bound: Option<f64>,
@@ -54,44 +89,27 @@ pub struct Evaluator<
     upper_bound: Option<f64>,
 }
 
-impl<FDim, ConstrDim, F, G> Evaluator<FDim, ConstrDim, F, G>
+impl<F, G> Evaluator<F, G>
 where
-    FDim: D12,
-    ConstrDim: D12,
-    F: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, FDim>,
-    G: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, ConstrDim>,
+    F: FitnessFn,
+    G: ConstraintsFn,
 {
     /// Creates a new `Evaluator` with a fitness function, an optional constraints function,
     /// a flag to keep infeasible individuals, and optional lower/upper bounds.
     pub fn new(
-        fitness_fn: F,
-        constraints_fn: Option<G>,
+        fitness: F,
+        constraints: G,
         keep_infeasible: bool,
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
     ) -> Self {
         Self {
-            fitness_fn,
-            constraints_fn,
+            fitness,
+            constraints,
             keep_infeasible,
             lower_bound,
             upper_bound,
         }
-    }
-
-    /// Evaluates the fitness of the population genes (2D ndarray).
-    fn evaluate_fitness(&self, population_genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, FDim> {
-        (self.fitness_fn)(population_genes)
-    }
-
-    /// Evaluates the constraints (if available).
-    fn evaluate_constraints(
-        &self,
-        population_genes: &Array2<f64>,
-    ) -> Option<ArrayBase<OwnedRepr<f64>, ConstrDim>> {
-        self.constraints_fn
-            .as_ref()
-            .map(|constr_fn| constr_fn(population_genes))
     }
 
     /// Builds the population instance from the genes. If `keep_infeasible` is false,
@@ -101,9 +119,9 @@ where
     pub fn evaluate(
         &self,
         genes: Array2<f64>,
-    ) -> Result<Population<FDim, ConstrDim>, EvaluatorError> {
-        let fitness = self.evaluate_fitness(&genes);
-        let constraints = self.evaluate_constraints(&genes);
+    ) -> Result<Population<F::Dim, G::Dim>, EvaluatorError> {
+        let fitness = self.fitness.call(&genes);
+        let constraints = self.constraints.call(&genes);
         let mut evaluated_population = Population {
             genes: genes,
             fitness: fitness,
@@ -118,10 +136,15 @@ where
             let mut feasible_indices: Vec<usize> = (0..n).collect();
 
             // Filter individuals that do not satisfy the constraints function (if provided).
-            if let Some(ref c) = evaluated_population.constraints {
-                feasible_indices
-                    .retain(|&i| c.index_axis(Axis(0), i).iter().all(|&val| val <= 0.0));
-            }
+            if evaluated_population.constraints.len() > 0 {
+                feasible_indices.retain(|&i| {
+                    evaluated_population
+                        .constraints
+                        .index_axis(Axis(0), i)
+                        .iter()
+                        .all(|&val| val <= 0.0)
+                });
+            };
 
             // Further filter individuals based on the optional lower and upper bounds.
             if self.lower_bound.is_some() || self.upper_bound.is_some() {
@@ -200,22 +223,26 @@ mod tests {
         genes.sum_axis(Axis(1)).mapv(|s| s - 10.0)
     }
 
+    fn no_constraints(_genes: &Array2<f64>) -> Array1<f64> {
+        Array1::from(vec![])
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // 2-D fitness – no constraints
     // ──────────────────────────────────────────────────────────────────────────
 
     #[test]
     fn two_d_fitness_without_constraints_keeps_every_row() {
-        let eval: Evaluator<_, _, _, NoConstraintsFnPointer<ndarray::Ix2>> = Evaluator::new(
+        let eval = Evaluator::new(
             fitness_2d_single,
-            None,
+            no_constraints,
             /* keep_infeasible = */ true,
             None,
             None,
         );
 
         let genes = array![[1.0, 2.0], [3.0, 4.0], [0.0, 0.0]];
-        let fit = eval.evaluate_fitness(&genes);
+        let fit = eval.evaluate(genes).unwrap().fitness;
 
         // Each row keeps its sphere value in a single column
         let expected = array![[5.0], [25.0], [0.0]];
@@ -228,7 +255,7 @@ mod tests {
 
     #[test]
     fn multi_constraints_are_computed_correctly() {
-        let eval = Evaluator::new(fitness_2d_single, Some(constraints_multi), true, None, None);
+        let eval = Evaluator::new(fitness_2d_single, constraints_multi, true, None, None);
 
         let genes = array![
             /* idx 0 */ [1.0, 2.0], // Σ=3  → c0 = -7 ; all genes ≥0
@@ -236,17 +263,17 @@ mod tests {
             /* idx 2 */
             [5.0, 6.0], // Σ=11 → c0 =  1 (will be infeasible when filtering)
         ];
-        let c = eval.evaluate_constraints(&genes);
+        let c = eval.evaluate(genes).unwrap().constraints;
 
         let expected = array![[-7.0, -1.0, -2.0], [-3.0, -3.0, -4.0], [1.0, -5.0, -6.0],];
-        assert_eq!(c.unwrap(), expected);
+        assert_eq!(c, expected);
     }
 
     #[test]
     fn keep_infeasible_true_retains_every_row() {
         let eval = Evaluator::new(
             fitness_2d_single,
-            Some(constraints_multi),
+            constraints_multi,
             /* keep_infeasible = */ true, // do NOT filter
             None,
             None,
@@ -266,7 +293,7 @@ mod tests {
         // Rule set: constraints ≤0   AND   0 ≤ gene ≤ 5
         let eval = Evaluator::new(
             fitness_2d_single,
-            Some(constraints_multi),
+            constraints_multi,
             /* keep_infeasible */ false,
             Some(0.0), // lower
             Some(5.0), // upper
@@ -292,8 +319,8 @@ mod tests {
     #[test]
     fn one_d_fitness_multi_constraints_filters_by_constraint_only() {
         let eval = Evaluator::new(
-            fitness_1d,              // Array2 → Array1
-            Some(constraints_multi), // Array2 → Array2
+            fitness_1d,        // Array2 → Array1
+            constraints_multi, // Array2 → Array2
             false,
             None,
             None,
@@ -317,7 +344,7 @@ mod tests {
     fn one_d_fitness_single_constraint_filters_correctly() {
         let eval = Evaluator::new(
             fitness_1d,
-            Some(constraints_single), // Array2 → Array1
+            constraints_single, // Array2 → Array1
             false,
             None,
             None,
@@ -332,7 +359,7 @@ mod tests {
         assert_eq!(pop.genes.nrows(), 1);
         assert_eq!(pop.fitness, array![13.0]); // 2²+3²=13
         assert_eq!(
-            pop.constraints.unwrap(),
+            pop.constraints,
             array![-5.0], // Σ - 10 = -5
             "Only constraint column for the surviving row"
         );
@@ -344,13 +371,7 @@ mod tests {
 
     #[test]
     fn bounds_only_filtering_removes_rows_outside_range() {
-        let eval = Evaluator::new(
-            fitness_1d,
-            None::<fn(&Array2<f64>) -> Array2<f64>>,
-            false,
-            Some(0.0),
-            Some(5.0),
-        );
+        let eval = Evaluator::new(fitness_1d, no_constraints, false, Some(0.0), Some(5.0));
 
         let genes = array![
             /* 0 OK  */ [1.0, 2.0],
@@ -371,13 +392,7 @@ mod tests {
 
     #[test]
     fn all_rows_removed_returns_no_feasible_error() {
-        let eval = Evaluator::new(
-            fitness_1d,
-            Some(constraints_multi),
-            false,
-            Some(0.0),
-            Some(5.0),
-        );
+        let eval = Evaluator::new(fitness_1d, constraints_multi, false, Some(0.0), Some(5.0));
 
         // Every candidate violates either constraint (Σ>10) or bounds (6.0)
         let genes = array![[6.0, 6.0], [5.5, 6.0], [6.0, 4.0]];
@@ -394,16 +409,10 @@ mod tests {
 
     #[test]
     fn two_objective_fitness_is_computed_for_each_row() {
-        let eval = Evaluator::new(
-            fitness_2d_two_obj,
-            None::<fn(&Array2<f64>) -> Array2<f64>>,
-            true,
-            None,
-            None,
-        );
+        let eval = Evaluator::new(fitness_2d_two_obj, no_constraints, true, None, None);
 
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
-        let fit = eval.evaluate_fitness(&genes);
+        let fit = eval.evaluate(genes).unwrap().fitness;
 
         // Row-wise expected values: [Σx², Σ|x|]
         let expected = array![[5.0, 3.0], [25.0, 7.0]];
@@ -418,7 +427,7 @@ mod tests {
     fn two_objective_with_filtering_keeps_only_feasible_and_in_bounds() {
         let eval = Evaluator::new(
             fitness_2d_two_obj,
-            Some(constraints_multi),
+            constraints_multi,
             false,
             Some(0.0),
             Some(5.0),

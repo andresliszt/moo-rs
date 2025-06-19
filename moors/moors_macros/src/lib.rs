@@ -135,6 +135,7 @@ pub fn algorithm_builder(_attr: TokenStream, item: TokenStream) -> TokenStream {
             "crossover_rate" => Some(quote!(0.9)),
             "mutation_rate" => Some(quote!(0.1)),
             "num_constraints" => Some(quote!(0)),
+            "duplicates_cleaner" => Some(quote!(crate::duplicates::NoDuplicatesCleaner)),
             _ => None,
         }
     }
