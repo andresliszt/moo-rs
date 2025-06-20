@@ -97,7 +97,7 @@ mod tests {
         sampling::RandomSamplingBinary, survival::moo::nsga2::Nsga2RankCrowdingSurvival,
     };
     use crate::random::MOORandomGenerator;
-    use ndarray::{Array1, Array2};
+    use ndarray::Array2;
 
     /// A dummy fitness function that returns an array of zeros
     /// with shape `(population_size, num_objectives)`.
@@ -119,8 +119,9 @@ mod tests {
         Array2::zeros((population_size, num_constraints))
     }
 
-    fn no_constraints(_genes: &Array2<f64>) -> Array1<f64> {
-        Array1::from(vec![])
+    fn no_constraints(genes: &Array2<f64>) -> Array2<f64> {
+        let n = genes.nrows();
+        Array2::zeros((n, 0))
     }
 
     #[test]

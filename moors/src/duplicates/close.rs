@@ -22,9 +22,10 @@ impl CloseDuplicatesCleaner {
 
 impl PopulationCleaner for CloseDuplicatesCleaner {
     fn remove(&self, population: Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64> {
+        let ref_array = reference.unwrap_or(&population);
         let n = population.nrows();
         let num_cols = population.ncols();
-        let dists_sq = cross_euclidean_distances(&population, &population);
+        let dists_sq = cross_euclidean_distances(&population, ref_array);
 
         let eps_sq = self.epsilon;
         let mut keep = vec![true; n];

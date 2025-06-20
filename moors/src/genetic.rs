@@ -267,15 +267,16 @@ where
     }
 }
 
-impl<FDim> Population<FDim, Ix1>
+impl<FDim> Population<FDim, Ix2>
 where
     FDim: D12,
 {
     pub fn new_unconstrained(genes: Array2<f64>, fitness: Fitness<FDim>) -> Self {
+        let n = genes.nrows();
         Self {
             genes,
             fitness,
-            constraints: Array1::from_vec(vec![]),
+            constraints: Array2::zeros((n, 0)),
             rank: None,
             survival_score: None,
         }
@@ -283,7 +284,7 @@ where
 }
 
 /// Type alias for Population in Multi Objective Optimization
-pub type PopulationMOO<ConstrDim = Ix1> = Population<Ix2, ConstrDim>;
+pub type PopulationMOO<ConstrDim = Ix2> = Population<Ix2, ConstrDim>;
 /// Type alias for Population in Single Objective Optimization
 pub type PopulationSOO<ConstrDim = Ix1> = Population<Ix1, ConstrDim>;
 /// Type alias for Individual in Multi Objective Optimization

@@ -24,7 +24,26 @@
 use crate::{selection::moo::RandomSelection, survival::moo::Nsga3ReferencePointsSurvival};
 
 create_algorithm!(
-    /// NSGA‑III algorithm wrapper.
+    /// NSGA-III algorithm wrapper.
+    ///
+    /// This struct is a thin facade over [`GeneticAlgorithmMOO`] preset with
+    /// the NSGA-III survival and selection strategy.
+    ///
+    /// * **Selection:** [`RandomSelection`]
+    /// * **Survival:**  [`Nsga3ReferencePointsSurvival`] (elitist, reference-point based)
+    ///
+    /// Construct it with [`Nsga3Builder`](crate::algorithms::Nsga3Builder).
+    /// After building, call [`run`](GeneticAlgorithmMOO::run)
+    /// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
+    /// final non-dominated set.
+    ///
+    /// For algorithmic details, see:
+    /// Kalyanmoy Deb and Himanshu Jain (2014),
+    /// "An Evolutionary Many-Objective Optimization Algorithm Using Reference-Point-Based
+    /// Nondominated Sorting Approach, Part I: Solving Problems with Box Constraints",
+    /// *IEEE Transactions on Evolutionary Computation*, vol. 18, no. 4,
+    /// pp. 577–601, Aug. 2014.
+    /// DOI: 10.1109/TEVC.2013.2281535
     Nsga3,
     RandomSelection,
     Nsga3ReferencePointsSurvival

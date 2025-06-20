@@ -127,11 +127,14 @@ where
 
             // Create offspring from these parents (crossover + mutation)
             let mut new_offsprings = self.mating_batch(&parents_a.genes, &parents_b.genes, rng);
+            println!("NEW BEFORE SHAPE {}", new_offsprings.nrows());
             // Clean duplicates within the new offspring (internal cleaning)
             new_offsprings = (self.duplicates_cleaner).remove(new_offsprings, None);
             // Clean duplicates between new offspring and the current population.
             new_offsprings =
                 (self.duplicates_cleaner).remove(new_offsprings, Some(&population.genes));
+
+            println!("NEW AFTER SHAPE {}", new_offsprings.nrows());
             // If we have already accumulated offspring, clean new offspring against them.
             if !all_offsprings.is_empty() {
                 let acc_array = Array2::<f64>::from_shape_vec(

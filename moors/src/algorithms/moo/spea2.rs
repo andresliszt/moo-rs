@@ -26,7 +26,24 @@ use crate::operators::{
 };
 
 create_algorithm!(
-    /// SPEA‑II algorithm wrapper.
+    /// SPEA-II algorithm wrapper.
+    ///
+    /// This struct is a thin facade over [`GeneticAlgorithmMOO`] preset with
+    /// the SPEA-II survival and selection strategy.
+    ///
+    /// * **Selection:** [`RankAndScoringSelection`]
+    /// * **Survival:**  [`Spea2KnnSurvival`] (elitist, k-nearest neighbors density)
+    ///
+    /// Construct it with [`Spea2Builder`](crate::algorithms::Spea2Builder).
+    /// After building, call [`run`](GeneticAlgorithmMOO::run)
+    /// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
+    /// final non-dominated set.
+    ///
+    /// For algorithmic details, see:
+    /// Eckart Zitzler, Marco Laumanns, and Lothar Thiele (2001),
+    /// "SPEA2: Improving the Strength Pareto Evolutionary Algorithm",
+    /// TIK-Report 103, Computer Engineering and Networks Laboratory,
+    /// ETH Zurich, Switzerland, 2001.
     Spea2,
     RankAndScoringSelection,
     Spea2KnnSurvival

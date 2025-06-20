@@ -32,18 +32,22 @@ use crate::{
 };
 
 create_algorithm!(
-    /// R‑NSGA‑II algorithm wrapper.
+    /// R-NSGA-II algorithm wrapper.
     ///
-    /// Thin façade around [`GeneticAlgorithmMOO`] pre‑configured with
-    /// reference‑distance survival and a minimise‑the‑score selector.
+    /// Thin facade around [`GeneticAlgorithmMOO`] pre-configured with
+    /// reference-distance survival and a minimise-the-score selector.
     ///
     /// * **Selection:** [`RankAndScoringSelection`] (`SurvivalScoringComparison::Minimize`)
     /// * **Survival:**  [`Rnsga2ReferencePointsSurvival`]
-    /// * **Paper:** Imada et al. 2017 (*GECCO*)
+    /// * **Paper:** Shinsaku Imada, Yuji Sakane, Masaru Tanigaki, and Masanori Sugimoto (2017),
+    ///   "R-NSGA-II: Reference-Point-Based Non-Dominated Sorting Genetic Algorithm II",
+    ///   *Proceedings of the Genetic and Evolutionary Computation Conference (GECCO ’17 Companion)*,
+    ///   pp. 1685–1692, July 2017.
+    ///   DOI: 10.1145/3067695.3082520
     ///
     /// Build via [`Rnsga2Builder`](crate::algorithms::Rnsga2Builder) or directly
     /// with [`Rnsga2::new`]; then call `run()` and `population()` to retrieve the
-    /// preference‑biased Pareto set.
+    /// preference-biased Pareto set.
     Rnsga2,
     RankAndScoringSelection,
     Rnsga2ReferencePointsSurvival

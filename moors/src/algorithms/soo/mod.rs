@@ -42,14 +42,20 @@ where
     fitness_fn: F,
     constraints_fn: G,
     num_vars: usize,
+    #[builder(default = "1")]
     num_objectives: usize,
+    #[builder(default = "0")]
     num_constraints: usize,
     population_size: usize,
     num_offsprings: usize,
     num_iterations: usize,
+    #[builder(default = "0.2")]
     mutation_rate: f64,
+    #[builder(default = "0.9")]
     crossover_rate: f64,
+    #[builder(default = "true")]
     keep_infeasible: bool,
+    #[builder(default = "false")]
     verbose: bool,
     // Optional lower and upper bounds for each gene.
     #[builder(setter(strip_option), default)]

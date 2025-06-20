@@ -4,7 +4,7 @@
 //! and constraints functions) meets the core data structures of *moors*.  It
 //! takes a 2‑D array of genomes (`PopulationGenes` = `Array2<f64>`) and returns
 //! a fully populated [`Population`] with fitness values and optional constraints
-use ndarray::{Array1, Array2, ArrayBase, Axis, Dimension, OwnedRepr};
+use ndarray::{Array2, ArrayBase, Axis, Dimension, OwnedRepr};
 use thiserror::Error;
 
 use crate::genetic::{D01, D12, Population};
@@ -37,10 +37,11 @@ pub struct NoConstraints;
 /// Implement the ConstraintsFn trait for the default case:
 /// - Associated type `Dim` is fixed to `Ix1`
 impl ConstraintsFn for NoConstraints {
-    type Dim = ndarray::Ix1;
+    type Dim = ndarray::Ix2;
 
-    fn call(&self, _genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim> {
-        Array1::from(vec![])
+    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim> {
+        let n = genes.nrows();
+        Array2::zeros((n, 0))
     }
 }
 
@@ -178,6 +179,8 @@ mod tests {
     use super::*;
     use ndarray::{Array1, Array2, Axis, array, concatenate};
 
+    use crate::NoConstraints;
+
     // ──────────────────────────────────────────────────────────────────────────
     // Helper functions
     // ──────────────────────────────────────────────────────────────────────────
@@ -223,10 +226,6 @@ mod tests {
         genes.sum_axis(Axis(1)).mapv(|s| s - 10.0)
     }
 
-    fn no_constraints(_genes: &Array2<f64>) -> Array1<f64> {
-        Array1::from(vec![])
-    }
-
     // ──────────────────────────────────────────────────────────────────────────
     // 2-D fitness – no constraints
     // ──────────────────────────────────────────────────────────────────────────
@@ -235,7 +234,7 @@ mod tests {
     fn two_d_fitness_without_constraints_keeps_every_row() {
         let eval = Evaluator::new(
             fitness_2d_single,
-            no_constraints,
+            NoConstraints,
             /* keep_infeasible = */ true,
             None,
             None,
@@ -371,7 +370,7 @@ mod tests {
 
     #[test]
     fn bounds_only_filtering_removes_rows_outside_range() {
-        let eval = Evaluator::new(fitness_1d, no_constraints, false, Some(0.0), Some(5.0));
+        let eval = Evaluator::new(fitness_1d, NoConstraints, false, Some(0.0), Some(5.0));
 
         let genes = array![
             /* 0 OK  */ [1.0, 2.0],
@@ -409,7 +408,7 @@ mod tests {
 
     #[test]
     fn two_objective_fitness_is_computed_for_each_row() {
-        let eval = Evaluator::new(fitness_2d_two_obj, no_constraints, true, None, None);
+        let eval = Evaluator::new(fitness_2d_two_obj, NoConstraints, true, None, None);
 
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
         let fit = eval.evaluate(genes).unwrap().fitness;

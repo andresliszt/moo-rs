@@ -15,8 +15,7 @@
 //! Each public algorithm struct (e.g. [`Nsga2`]) is a thin wrapper around
 //! `GeneticAlgorithmMOO` that configures **its own selector, survivor and
 //! any algorithm‑specific parameters**.  To make end‑user construction
-//! ergonomic, we rely on the procedural macro
-//! [`moors_macros::algorithm_builder`]. That macro auto‑generates an
+//! ergonomic, we rely on the derive_builder crate. That derive_builder auto‑generates an
 //! `*Builder` type following the *builder pattern* (`.foo(…)` setters +
 //! `.build()`).
 //!
@@ -65,20 +64,19 @@
 //! ### Writing your **own** algorithm
 //!
 //! 1. **Pick / implement** a [`SelectionOperator`] and a [`SurvivalOperator`].
-//! 2. Wrap them in a new struct:
+//! 2. Use them with helper macro `create_algorithm!`:
 //!
 //!    ```rust, ignore
+//!    create_algorithm!(MyNewAlgorithm, NewSelector, NewSurvival);
+//!    ```
+//!
+//! From there, a new algorithm struct will be created
+//! ```rust, ignore
 //!    pub struct MyAlgo<S, Cross, Mut, F, G, DC> {
-//!        inner: GeneticAlgorithmMOO<…>
+//!        inner: GeneticAlgorithmMOO<S, NewSelector, NewSurvival, Cross, Mut, F, G, DC>
 //!    }
 //!    ```
-//! 3. Inside an `impl` block, add a `new( … ) -> Result<Self, _>` constructor that
-//!    instantiates `GeneticAlgorithmMOO` with your chosen operators.
-//! 4. Decorate the `impl` with **`#[algorithm_builder]`**. The macro will emit
-//!    `MyAlgoBuilder` + the typical `delegate_algorithm_methods!()`.
-//!
-//! From there, users can build your algorithm with the same fluent API they
-//! already know from `Nsga2Builder` et al.
+//! Also, the its respective builder is availble `MyAlgoBuilder`
 //!
 //! ## GeneticAlgorithmMOO – generic core
 //!
@@ -87,7 +85,7 @@
 //! sampling, iterative evolution, evaluation and survivor selection.  Concrete
 //! algorithms customise its behaviour exclusively through trait objects, so
 //! they stay **zero‑cost abstractions** once monomorphised.
-//!
+
 //! ---
 //!
 //! *Evolution is a mystery*  Feel free to open an issue or PR if you implement a new
@@ -124,12 +122,6 @@ pub(in crate::algorithms) mod revea;
 pub(in crate::algorithms) mod rnsga2;
 pub(in crate::algorithms) mod spea2;
 
-impl From<AlgorithmError> for AlgorithmMOOBuilderError {
-    fn from(err: AlgorithmError) -> Self {
-        AlgorithmMOOBuilderError::ValidationError(err.to_string())
-    }
-}
-
 #[derive(Builder, Debug)]
 #[builder(
     pattern = "owned",
@@ -165,20 +157,25 @@ pub struct GeneticAlgorithmParams<
     constraints_fn: G,
     num_vars: usize,
     num_objectives: usize,
+    #[builder(default = "0")]
     num_constraints: usize,
     population_size: usize,
     num_offsprings: usize,
     num_iterations: usize,
+    #[builder(default = "0.2")]
     mutation_rate: f64,
+    #[builder(default = "0.9")]
     crossover_rate: f64,
+    #[builder(default = "true")]
     keep_infeasible: bool,
+    #[builder(default = "false")]
     verbose: bool,
     // Optional lower and upper bounds for each gene.
-    #[builder(setter(strip_option), default)]
+    #[builder(setter(strip_option), default = "None")]
     lower_bound: Option<f64>,
-    #[builder(setter(strip_option), default)]
+    #[builder(setter(strip_option), default = "None")]
     upper_bound: Option<f64>,
-    #[builder(setter(strip_option), default)]
+    #[builder(setter(strip_option), default = "None")]
     seed: Option<u64>,
 }
 
@@ -195,11 +192,27 @@ where
 {
     /// Pre build validation
     fn validate(&self) -> Result<(), AlgorithmMOOBuilderError> {
-        validate_positive(self.num_vars.unwrap(), "Number of variables")?;
-        validate_probability(self.crossover_rate.unwrap(), "Crossover rate")?;
-        validate_positive(self.num_offsprings.unwrap(), "Number of offsprings")?;
-        validate_positive(self.num_iterations.unwrap(), "Number of iterations")?;
-        validate_bounds(self.lower_bound.unwrap(), self.upper_bound.unwrap())?;
+        if let Some(num_vars) = self.num_vars {
+            validate_positive(num_vars, "Number of variables")?;
+        }
+        if let Some(population_size) = self.population_size {
+            validate_positive(population_size, "Population size")?;
+        }
+        if let Some(crossover_rate) = self.crossover_rate {
+            validate_probability(crossover_rate, "Crossover rate")?;
+        }
+        if let Some(mutation_rate) = self.mutation_rate {
+            validate_probability(mutation_rate, "Mutation rate")?;
+        }
+        if let Some(num_offsprings) = self.num_offsprings {
+            validate_positive(num_offsprings, "Number of offsprings")?;
+        }
+        if let Some(num_iterations) = self.num_iterations {
+            validate_positive(num_iterations, "Number of iterations")?;
+        }
+        if let (Some(lower), Some(upper)) = (self.lower_bound, self.upper_bound) {
+            validate_bounds(lower, upper)?;
+        }
         Ok(())
     }
 

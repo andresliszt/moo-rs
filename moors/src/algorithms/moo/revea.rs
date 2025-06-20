@@ -36,14 +36,18 @@ use crate::operators::{
 create_algorithm!(
     /// REVEA algorithm wrapper.
     ///
-    /// Thin façade around [`GeneticAlgorithmMOO`] pre‑configured with
-    /// reference‑vector survival and random parent selection.
+    /// Thin facade around [`GeneticAlgorithmMOO`] pre-configured with
+    /// reference-vector survival and random parent selection.
     ///
     /// * **Selection:** [`RandomSelection`]
     /// * **Survival:**  [`ReveaReferencePointsSurvival`]
-    /// * **Paper:** Ran Cheng et al. 2016 (*IEEE TEC* 20 (5): 773–791)
+    /// * **Paper:** Ran Cheng, Yixin Zhang, Min Dai, and Xingyi Zhang (2016),
+    ///   "A Reference-Vector Guided Evolutionary Algorithm for Many-Objective Optimization",
+    ///   *IEEE Transactions on Evolutionary Computation*, vol. 20, no. 5,
+    ///   pp. 773–791, Oct. 2016.
+    ///   DOI: 10.1109/TEVC.2015.2495854
     ///
-    /// Build via [`ReveaBuilder`](crate::algorithms::ReveaBuilder) or directly with
+    /// Build via [`ReveaBuilder`](crate::algorithms::ReveaBuilder) or directly with
     /// [`Revea::new`], then call `run()` and `population()` to obtain the final
     /// Pareto approximation.
     Revea,

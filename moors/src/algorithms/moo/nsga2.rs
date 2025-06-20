@@ -23,21 +23,25 @@
 use crate::{selection::moo::RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival};
 
 create_algorithm!(
-    /// NSGA‑II algorithm wrapper.
+    /// NSGA-II algorithm wrapper.
     ///
-    /// This struct is a thin façade over [`GeneticAlgorithmMOO`] preset with
-    /// the NSGA‑II survival and selection strategy.
+    /// This struct is a thin facade over [`GeneticAlgorithmMOO`] preset with
+    /// the NSGA-II survival and selection strategy.
     ///
     /// * **Selection:** [`RankAndScoringSelection`]
-    /// * **Survival:**  [`Nsga2RankCrowdingSurvival`] (elitist, crowding‑distance)
+    /// * **Survival:**  [`Nsga2RankCrowdingSurvival`] (elitist, crowding-distance)
     ///
-    /// Construct it with [`Nsga2Builder`](crate::algorithms::Nsga2Builder) or
-    /// directly via [`Nsga2::new`].  After building, call [`run`](GeneticAlgorithmMOO::run)
+    /// Construct it with [`Nsga2Builder`](crate::algorithms::Nsga2Builder).
+    /// After building, call [`run`](GeneticAlgorithmMOO::run)
     /// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
-    /// final non‑dominated set.
+    /// final non-dominated set.
     ///
     /// For algorithmic details, see:
-    /// K. Deb *et al.* (2002), *IEEE TEC 6 (2)*, 182‑197.
+    /// Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan (2002),
+    /// "A Fast and Elitist Multiobjective Genetic Algorithm: NSGA-II",
+    /// *IEEE Transactions on Evolutionary Computation*, vol. 6, no. 2,
+    /// pp. 182–197, Apr. 2002.
+    /// DOI: 10.1109/4235.996017
     Nsga2,
     RankAndScoringSelection,
     Nsga2RankCrowdingSurvival

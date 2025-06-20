@@ -278,7 +278,7 @@ mod tests {
 
     /// Helper: build a Population from raw fitness only.
     /// We use a dummy 1-column gene matrix and no constraints nor rank.
-    fn make_population(fitness: Array2<f64>) -> PopulationMOO<ndarray::Ix1> {
+    fn make_population(fitness: Array2<f64>) -> PopulationMOO<ndarray::Ix2> {
         let n = fitness.nrows();
         // 1 variable per individual, value zero—genes are never used by survival
         let genes = Array2::<f64>::zeros((n, 1));
