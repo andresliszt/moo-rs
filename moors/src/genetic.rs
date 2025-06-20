@@ -38,7 +38,7 @@ where
 {
     pub genes: ArrayView1<'a, f64>,
     pub fitness: ArrayView<'a, f64, FDim>,
-    pub constraints: Option<ArrayView<'a, f64, ConstrDim>>,
+    pub constraints: ArrayView<'a, f64, ConstrDim>,
     pub rank: Option<usize>,
     pub survival_score: Option<f64>,
 }
@@ -58,7 +58,7 @@ where
         Self {
             genes,
             fitness,
-            constraints: Some(constraints),
+            constraints: constraints,
             rank: None,
             survival_score: None,
         }
@@ -68,12 +68,8 @@ where
     /// If `constraints` is `None`, it's always feasible.
     /// Otherwise, all constraint values must be ≤ 0.0.
     pub fn is_feasible(&self) -> bool {
-        match &self.constraints {
-            Some(c) => c.iter().all(|&val| val <= 0.0),
-            None => true,
-        }
+        self.constraints.len() == 0 || self.constraints.iter().all(|&val| val <= 0.0)
     }
-
     /// Sets the rank of the individual.
     pub fn set_rank(&mut self, rank: usize) {
         self.rank = Some(rank);
@@ -85,12 +81,10 @@ where
     }
 }
 
-impl<'a, FDim> Individual<'a, FDim, ndarray::Ix0>
+impl<'a, FDim> Individual<'a, FDim, Ix1>
 where
     FDim: D01,
 {
-    /// Creates a new `Individual` with given genes, fitness and without constraints.
-    /// `rank` and `survival_score` are initialized to `None`.
     pub fn new_unconstrained(
         genes: ArrayView1<'a, f64>,
         fitness: ArrayView<'a, f64, FDim>,
@@ -98,7 +92,7 @@ where
         Self {
             genes,
             fitness,
-            constraints: None,
+            constraints: ArrayView1::from(&[]),
             rank: None,
             survival_score: None,
         }
@@ -115,7 +109,7 @@ where
 {
     pub genes: Array2<f64>,
     pub fitness: Fitness<FDim>,
-    pub constraints: Option<Constraints<ConstrDim>>,
+    pub constraints: Constraints<ConstrDim>,
     pub rank: Option<Array1<usize>>,
     pub survival_score: Option<Array1<f64>>,
 }
@@ -135,7 +129,7 @@ where
         Self {
             genes,
             fitness,
-            constraints: Some(constraints),
+            constraints: constraints,
             rank: None,
             survival_score: None,
         }
@@ -151,10 +145,7 @@ where
     {
         let genes: ArrayView1<'a, f64> = self.genes.row(idx);
         let fitness = self.fitness.index_axis(Axis(0), idx);
-        let constraints = self
-            .constraints
-            .as_ref()
-            .map(|mat| mat.index_axis(Axis(0), idx));
+        let constraints = self.constraints.index_axis(Axis(0), idx);
 
         let rank = self.rank.as_ref().map(|r| r[idx]);
         let survival_score = self.survival_score.as_ref().map(|s| s[idx]);
@@ -167,20 +158,16 @@ where
             survival_score,
         }
     }
-
     /// Returns a new `Population` containing only the individuals at the specified indices.
     pub fn selected(&self, indices: &[usize]) -> Self {
         let genes = self.genes.select(Axis(0), indices);
         let fitness = self.fitness.select(Axis(0), indices);
+        let constraints = self.constraints.select(Axis(0), indices);
         let rank = self.rank.as_ref().map(|r| r.select(Axis(0), indices));
         let survival_score = self
             .survival_score
             .as_ref()
             .map(|ss| ss.select(Axis(0), indices));
-        let constraints = self
-            .constraints
-            .as_ref()
-            .map(|mat| mat.select(Axis(0), indices));
 
         Population {
             genes,
@@ -241,6 +228,15 @@ where
         )
         .expect("Failed to merge fitness");
 
+        let merged_constraints = concatenate(
+            Axis(0),
+            &[
+                population1.constraints.view(),
+                population2.constraints.view(),
+            ],
+        )
+        .expect("Failed to merge genes");
+
         // Merge rank: both must be Some or both must be None.
         let merged_rank = match (&population1.rank, &population2.rank) {
             (Some(r1), Some(r2)) => {
@@ -248,19 +244,6 @@ where
             }
             (None, None) => None,
             _ => panic!("Mismatched population rank: one is set and the other is None"),
-        };
-
-        // Merge constraints: both must have values or both must be None.
-        let merged_constraints = match (&population1.constraints, &population2.constraints) {
-            (Some(mat1), Some(mat2)) => {
-                let merged = concatenate(Axis(0), &[mat1.view(), mat2.view()])
-                    .expect("Failed to merge constraints");
-                Some(merged)
-            }
-            (None, None) => None,
-            _ => panic!(
-                "Mismatched population constraints: one has constraints and the other does not"
-            ),
         };
 
         // Merge survival_score: both must be Some or both must be None.
@@ -284,16 +267,16 @@ where
     }
 }
 
-/// When no constraints are set, type it as Ix1 for simplicity and avoid turbofish
-impl<FDim> Population<FDim, Ix1>
+impl<FDim> Population<FDim, Ix2>
 where
     FDim: D12,
 {
     pub fn new_unconstrained(genes: Array2<f64>, fitness: Fitness<FDim>) -> Self {
+        let n = genes.nrows();
         Self {
             genes,
             fitness,
-            constraints: None,
+            constraints: Array2::zeros((n, 0)),
             rank: None,
             survival_score: None,
         }
@@ -301,7 +284,7 @@ where
 }
 
 /// Type alias for Population in Multi Objective Optimization
-pub type PopulationMOO<ConstrDim = Ix1> = Population<Ix2, ConstrDim>;
+pub type PopulationMOO<ConstrDim = Ix2> = Population<Ix2, ConstrDim>;
 /// Type alias for Population in Single Objective Optimization
 pub type PopulationSOO<ConstrDim = Ix1> = Population<Ix1, ConstrDim>;
 /// Type alias for Individual in Multi Objective Optimization
@@ -518,30 +501,6 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Mismatched population constraints: one has constraints and the other does not"
-    )]
-    fn test_population_moo_merge_mismatched_constraints() {
-        let genes1 = array![[1.0, 2.0]];
-        let fitness1 = array![[0.5, 1.0]];
-        let constraints1 = array![-1.0]; // Single constraints;
-        let pop1 = PopulationMOO::new(genes1, fitness1, constraints1);
-
-        let genes2 = array![[3.0, 4.0]];
-        let fitness2 = array![[1.5, 2.0]];
-        // pop2 without constraints.
-        let pop2 = PopulationMOO {
-            genes: genes2,
-            fitness: fitness2,
-            constraints: None,
-            rank: None,
-            survival_score: None,
-        };
-
-        PopulationMOO::merge(&pop1, &pop2);
-    }
-
-    #[test]
-    #[should_panic(
         expected = "Mismatched population survival scores: one is set and the other is None"
     )]
     fn test_population_moo_merge_mismatched_survival_score() {
@@ -565,7 +524,7 @@ mod tests {
         let fitness = arr0(42.0);
         let ind_unconstrained = IndividualSOO::new_unconstrained(genes.view(), fitness.view());
         // Should have no constraints
-        assert!(ind_unconstrained.constraints.is_none());
+        assert_eq!(ind_unconstrained.constraints, ArrayView1::from(&[]));
         assert!(ind_unconstrained.is_feasible());
         assert_eq!(ind_unconstrained.rank, None);
         assert_eq!(ind_unconstrained.survival_score, None);
@@ -573,14 +532,14 @@ mod tests {
         // Constrained individual with a scalar constraint ≤ 0
         let constraint_ok = arr0(-0.5);
         let ind_ok = IndividualSOO::new(genes.view(), fitness.view(), constraint_ok.view());
-        let c_ok = ind_ok.constraints.unwrap().into_scalar();
+        let c_ok = ind_ok.constraints.into_scalar();
         assert_eq!(*c_ok, -0.5);
         assert!(ind_ok.is_feasible());
 
         // Constrained individual with a scalar constraint > 0
         let constraint_fail = arr0(1.5);
         let ind_fail = IndividualSOO::new(genes.view(), fitness.view(), constraint_fail.view());
-        let c_fail = ind_fail.constraints.unwrap().into_scalar();
+        let c_fail = ind_fail.constraints.into_scalar();
         assert_eq!(*c_fail, 1.5);
         assert!(!ind_fail.is_feasible());
     }

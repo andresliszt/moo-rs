@@ -16,7 +16,7 @@ impl ExactDuplicatesCleaner {
 }
 
 impl PopulationCleaner for ExactDuplicatesCleaner {
-    fn remove(&self, population: &Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64> {
+    fn remove(&self, population: Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64> {
         let ncols = population.ncols();
         let mut unique_rows: Vec<Vec<f64>> = Vec::new();
         // A HashSet to hold the hashable representation of rows.
@@ -64,7 +64,7 @@ mod tests {
         let population =
             Array2::<f64>::from_shape_vec((5, 3), raw_data).expect("Failed to create test array");
         let cleaner = ExactDuplicatesCleaner::new();
-        let cleaned = cleaner.remove(&population, None);
+        let cleaned = cleaner.remove(population, None);
         assert_eq!(cleaned.nrows(), 3);
         assert_eq!(cleaned.row(0).to_vec(), vec![1.0, 2.0, 3.0]);
         assert_eq!(cleaned.row(1).to_vec(), vec![4.0, 5.0, 6.0]);
@@ -76,7 +76,7 @@ mod tests {
         let population = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
         let reference = array![[1.0, 2.0, 3.0]]; // row 0 is in reference
         let cleaner = ExactDuplicatesCleaner::new();
-        let cleaned = cleaner.remove(&population, Some(&reference));
+        let cleaned = cleaner.remove(population, Some(&reference));
         assert_eq!(cleaned.nrows(), 1);
         assert_eq!(cleaned.row(0).to_vec(), vec![4.0, 5.0, 6.0]);
     }

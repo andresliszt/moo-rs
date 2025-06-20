@@ -1,7 +1,7 @@
 use ndarray::{Array1, Array2, Axis};
 
 use moors::{
-    CloseDuplicatesCleaner, GaussianMutation, GeneticAlgorithmSOOBuilder, PopulationSOO,
+    AlgorithmSOOBuilder, CloseDuplicatesCleaner, GaussianMutation, PopulationSOO,
     RandomSamplingFloat, SimulatedBinaryCrossover, selection::soo::RankSelection,
     survival::soo::FitnessSurvival,
 };
@@ -19,7 +19,7 @@ fn constraints_sphere(population: &Array2<f64>) -> Array1<f64> {
 
 #[test]
 fn test_ga_minimize_parabolid() {
-    let mut algorithm = GeneticAlgorithmSOOBuilder::default()
+    let mut algorithm = AlgorithmSOOBuilder::default()
         .sampler(RandomSamplingFloat::new(-1.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.05, 0.1))

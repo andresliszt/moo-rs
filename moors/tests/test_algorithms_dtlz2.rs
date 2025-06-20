@@ -1,14 +1,15 @@
 use ndarray::{Array2, Axis, stack};
 
 use moors::{
-    NoConstraintsFnPointer,
+    NoConstraints,
     algorithms::{Nsga3Builder, ReveaBuilder},
     duplicates::CloseDuplicatesCleaner,
     genetic::PopulationMOO,
     operators::{
         GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
         survival::moo::{
-            DanAndDenisReferencePoints, Nsga3ReferencePoints, StructuredReferencePoints,
+            DanAndDenisReferencePoints, Nsga3ReferencePoints, Nsga3ReferencePointsSurvival,
+            ReveaReferencePointsSurvival, StructuredReferencePoints,
         },
     },
 };
@@ -62,15 +63,17 @@ fn test_nsga3_dtlz2_three_objectives() {
     // 1) build 3-objective reference points
     let rp = DanAndDenisReferencePoints::new(100, 3).generate();
     let nsga3_rp = Nsga3ReferencePoints::new(rp, false);
+    let survivor = Nsga3ReferencePointsSurvival::new(nsga3_rp);
 
     // 2) instantiate via builder
-    let mut algorithm = Nsga3Builder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
-        .reference_points(nsga3_rp)
+    let mut algorithm = Nsga3Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(20.0))
         .mutation(GaussianMutation::new(0.05, 0.1))
+        .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
+        .constraints_fn(NoConstraints)
         .num_vars(2)
         .num_objectives(3)
         .population_size(100)
@@ -96,19 +99,21 @@ fn test_nsga3_dtlz2_three_objectives() {
 
 #[test]
 fn test_revea_dtlz2_three_objectives() {
-    // 1) build 3-objective reference points
+    // build 3-objective reference points
     let rp = DanAndDenisReferencePoints::new(100, 3).generate();
+    let alpha = 2.5;
+    let frequency = 0.2;
+    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency);
 
-    // 2) instantiate via builder
-    let mut algorithm = ReveaBuilder::<_, _, _, _, _, NoConstraintsFnPointer, _>::default()
-        .reference_points(rp)
-        .alpha(2.5)
-        .frequency(0.2)
+    // instantiate via builder
+    let mut algorithm = ReveaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(20.0))
         .mutation(GaussianMutation::new(0.05, 0.1))
+        .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
+        .constraints_fn(NoConstraints)
         .num_vars(2)
         .num_objectives(3)
         .population_size(100)

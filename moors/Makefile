@@ -19,7 +19,7 @@ build-release:  ## cargo build --release
 # Run Rust tests
 test:  ## cargo test
 	@echo "[moors] test"
-	cargo test --all-features
+	cargo test --release --all-features
 
 # Format
 fmt:  ## cargo fmt

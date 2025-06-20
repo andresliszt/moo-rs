@@ -4,7 +4,7 @@ use ndarray::{Array1, Array2, ArrayViewMut1};
 
 use moors::{
     RandomGenerator,
-    algorithms::{AlgorithmError, Nsga2Builder},
+    algorithms::{AlgorithmError, AlgorithmMOOBuilderError, Nsga2Builder},
     duplicates::CloseDuplicatesCleaner,
     operators::{
         CrossoverOperator, GaussianMutation, MutationOperator, RandomSamplingFloat,
@@ -70,7 +70,7 @@ fn test_empty_mating_finish_algorithm_earlier() {
         .build()
         .expect("Failed to Build Nsga2");
 
-    nsga2.run().expect("Failed to run Nsga2");
+    nsga2.inner.run().expect("Failed to run Nsga2");
 
     // Just check the context, current iteration should be set as 0
     assert_eq!(nsga2.inner.context.current_iteration, 0);
@@ -106,6 +106,7 @@ fn test_no_feasible_in_evaluation() {
         .num_iterations(100)
         .population_size(10)
         .num_offsprings(10)
+        .keep_infeasible(false)
         .build()
         .expect("Failed to Build Nsga2");
 
@@ -137,6 +138,7 @@ fn test_no_feasible_in_initialization() {
         .mutation(GaussianMutation::new(0.1, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-8))
         .num_vars(10)
+        .keep_infeasible(false)
         .num_constraints(10)
         .num_objectives(10)
         .num_iterations(100)
@@ -183,7 +185,7 @@ fn test_invalid_params() {
         Err(e) => e,
     };
     match err {
-        AlgorithmError::InvalidParameter(inner) => {
+        AlgorithmMOOBuilderError::ValidationError(inner) => {
             let msg = inner.to_string();
             assert_eq!(msg, "Crossover rate must be between 0 and 1, got -1",);
         }

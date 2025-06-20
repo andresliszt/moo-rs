@@ -19,49 +19,43 @@
 //! The public API exposes only high‑level controls (population size,
 //! iteration budget, etc.); internal operator choices can be overridden if
 //! you need custom behaviour.
-use ndarray::Array2;
 
-use crate::{
-    algorithms::moo::{AlgorithmError, GeneticAlgorithmMOO},
-    duplicates::PopulationCleaner,
-    genetic::{Constraints, D01, D12},
-    operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator,
-        selection::moo::RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival,
-    },
-};
+use crate::{selection::moo::RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival};
 
-use moors_macros::algorithm_builder;
+create_algorithm!(
+    /// NSGA-II algorithm wrapper.
+    ///
+    /// This struct is a thin facade over [`GeneticAlgorithmMOO`] preset with
+    /// the NSGA-II survival and selection strategy.
+    ///
+    /// * **Selection:** [`RankAndScoringSelection`]
+    /// * **Survival:**  [`Nsga2RankCrowdingSurvival`] (elitist, crowding-distance)
+    ///
+    /// Construct it with [`Nsga2Builder`](crate::algorithms::Nsga2Builder).
+    /// After building, call [`run`](GeneticAlgorithmMOO::run)
+    /// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
+    /// final non-dominated set.
+    ///
+    /// For algorithmic details, see:
+    /// Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan (2002),
+    /// "A Fast and Elitist Multiobjective Genetic Algorithm: NSGA-II",
+    /// *IEEE Transactions on Evolutionary Computation*, vol. 6, no. 2,
+    /// pp. 182–197, Apr. 2002.
+    /// DOI: 10.1109/4235.996017
+    Nsga2,
+    RankAndScoringSelection,
+    Nsga2RankCrowdingSurvival
+);
 
-/// NSGA‑II algorithm wrapper.
-///
-/// This struct is a thin façade over [`GeneticAlgorithmMOO`] preset with
-/// the NSGA‑II survival and selection strategy.
-///
-/// * **Selection:** [`RankAndScoringSelection`]
-/// * **Survival:**  [`Nsga2RankCrowdingSurvival`] (elitist, crowding‑distance)
-///
-/// Construct it with [`Nsga2Builder`](crate::algorithms::Nsga2Builder) or
-/// directly via [`Nsga2::new`].  After building, call [`run`](GeneticAlgorithmMOO::run)
-/// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
-/// final non‑dominated set.
-///
-/// For algorithmic details, see:
-/// K. Deb *et al.* (2002), *IEEE TEC 6 (2)*, 182‑197.
-///
-#[derive(Debug)]
-pub struct Nsga2<ConstrDim, S, Cross, Mut, F, G, DC>
+impl<S, Cross, Mut, F, G, DC> Default for Nsga2Builder<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: Fn(&Array2<f64>) -> Array2<f64>,
-    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
+    F: FitnessFn<Dim = ndarray::Ix2>,
+    G: ConstraintsFn,
     DC: PopulationCleaner,
-    ConstrDim: D12,
-    <ConstrDim as ndarray::Dimension>::Smaller: D01,
-{
-    pub inner: GeneticAlgorithmMOO<
+    AlgorithmMOOBuilder<
         S,
         RankAndScoringSelection,
         Nsga2RankCrowdingSurvival,
@@ -70,75 +64,24 @@ where
         F,
         G,
         DC,
-        ConstrDim,
-    >,
-}
-
-#[algorithm_builder]
-impl<ConstrDim, S, Cross, Mut, F, G, DC> Nsga2<ConstrDim, S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: Fn(&Array2<f64>) -> Array2<f64>,
-    G: Fn(&Array2<f64>) -> Constraints<ConstrDim>,
-    DC: PopulationCleaner,
-    ConstrDim: D12,
-    <ConstrDim as ndarray::Dimension>::Smaller: D01,
+    >: Default,
 {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        sampler: S,
-        crossover: Cross,
-        mutation: Mut,
-        duplicates_cleaner: Option<DC>,
-        fitness_fn: F,
-        num_vars: usize,
-        num_objectives: usize,
-        num_constraints: usize,
-        population_size: usize,
-        num_offsprings: usize,
-        num_iterations: usize,
-        mutation_rate: f64,
-        crossover_rate: f64,
-        keep_infeasible: bool,
-        verbose: bool,
-        constraints_fn: Option<G>,
-        // Optional lower and upper bounds for each gene.
-        lower_bound: Option<f64>,
-        upper_bound: Option<f64>,
-        seed: Option<u64>,
-    ) -> Result<Self, AlgorithmError> {
-        // Define NSGA2 selector and survivor
-        let survivor = Nsga2RankCrowdingSurvival::new();
-        let selector = RankAndScoringSelection::default();
-        // Define inner algorithm
-        let algorithm = GeneticAlgorithmMOO::new(
-            sampler,
-            selector,
-            survivor,
-            crossover,
-            mutation,
-            duplicates_cleaner,
-            fitness_fn,
-            num_vars,
-            num_objectives,
-            num_constraints,
-            population_size,
-            num_offsprings,
-            num_iterations,
-            mutation_rate,
-            crossover_rate,
-            keep_infeasible,
-            verbose,
-            constraints_fn,
-            lower_bound,
-            upper_bound,
-            seed,
-        )?;
-        Ok(Self { inner: algorithm })
+    fn default() -> Self {
+        let mut inner: AlgorithmMOOBuilder<
+            S,
+            RankAndScoringSelection,
+            Nsga2RankCrowdingSurvival,
+            Cross,
+            Mut,
+            F,
+            G,
+            DC,
+        > = Default::default();
+        inner = inner
+            .selector(RankAndScoringSelection::default())
+            .survivor(Nsga2RankCrowdingSurvival);
+        Nsga2Builder {
+            inner_builder: inner,
+        }
     }
-
-    // Delegate methods from inner
-    delegate_algorithm_methods!();
 }

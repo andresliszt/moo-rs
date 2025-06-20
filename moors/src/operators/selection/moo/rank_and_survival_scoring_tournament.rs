@@ -191,7 +191,7 @@ mod tests {
         let p1: IndividualMOO<'_, ndarray::Ix0> = IndividualMOO {
             genes: genes.view(),
             fitness: fitness.view(),
-            constraints: Some(left_constraints),
+            constraints: left_constraints,
             rank: Some(left_rank),
             survival_score: Some(left_survival),
         };
