@@ -55,11 +55,6 @@ where
     keep_infeasible: bool,
     #[builder(default = "false")]
     verbose: bool,
-    // Optional lower and upper bounds for each gene.
-    #[builder(setter(strip_option), default)]
-    lower_bound: Option<f64>,
-    #[builder(setter(strip_option), default)]
-    upper_bound: Option<f64>,
     #[builder(setter(strip_option), default)]
     seed: Option<u64>,
 }
@@ -79,13 +74,13 @@ where
     ) -> Result<GeneticAlgorithmSOO<S, Sel, Sur, Cross, Mut, F, G, DC>, AlgorithmSOOBuilderError>
     {
         let params = self.build_params()?;
+        let lb = params.constraints_fn.lower_bound();
+        let ub = params.constraints_fn.upper_bound();
 
         let evaluator = EvaluatorBuilder::default()
             .fitness(params.fitness_fn)
             .constraints(params.constraints_fn)
             .keep_infeasible(params.keep_infeasible)
-            .lower_bound(params.lower_bound)
-            .upper_bound(params.upper_bound)
             .build()
             .expect("Params already validated in build_params");
 
@@ -94,8 +89,8 @@ where
             .population_size(params.population_size)
             .num_offsprings(params.num_offsprings)
             .num_iterations(params.num_iterations)
-            .lower_bound(params.lower_bound)
-            .upper_bound(params.upper_bound)
+            .lower_bound(lb)
+            .upper_bound(ub)
             .build()
             .expect("Params already validated in build_params");
 
@@ -106,8 +101,8 @@ where
             .duplicates_cleaner(params.duplicates_cleaner)
             .crossover_rate(params.crossover_rate)
             .mutation_rate(params.mutation_rate)
-            .lower_bound(params.lower_bound)
-            .upper_bound(params.upper_bound)
+            .lower_bound(lb)
+            .upper_bound(ub)
             .build()
             .expect("Params already validated in build_params");
 

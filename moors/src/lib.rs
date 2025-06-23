@@ -111,7 +111,7 @@ pub use algorithms::{
 pub use duplicates::{
     CloseDuplicatesCleaner, ExactDuplicatesCleaner, NoDuplicatesCleaner, PopulationCleaner,
 };
-pub use evaluator::{EvaluatorError, NoConstraints};
+pub use evaluator::{ConstraintsFn, EvaluatorError, FitnessFn, NoConstraints};
 pub use genetic::{
     Individual, IndividualMOO, IndividualSOO, Population, PopulationMOO, PopulationSOO,
 };

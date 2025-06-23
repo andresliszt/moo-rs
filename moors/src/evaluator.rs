@@ -17,6 +17,12 @@ where
 {
     type Dim: D12;
     fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim>;
+    fn lower_bound(&self) -> Option<f64> {
+        None
+    }
+    fn upper_bound(&self) -> Option<f64> {
+        None
+    }
 }
 
 impl<G, Dim> ConstraintsFn for G
@@ -87,10 +93,6 @@ where
     constraints: G,
     #[builder(default = "true")]
     keep_infeasible: bool,
-    #[builder(default)]
-    lower_bound: Option<f64>,
-    #[builder(default)]
-    upper_bound: Option<f64>,
 }
 
 impl<F, G> Evaluator<F, G>
@@ -131,26 +133,9 @@ where
                         .all(|&val| val <= 0.0)
                 });
             };
-
-            // Further filter individuals based on the optional lower and upper bounds.
-            if self.lower_bound.is_some() || self.upper_bound.is_some() {
-                feasible_indices.retain(|&i| {
-                    let individual = evaluated_population.genes.index_axis(Axis(0), i);
-                    let lower_ok = self
-                        .lower_bound
-                        .map_or(true, |lb| individual.iter().all(|&x| x >= lb));
-                    let upper_ok = self
-                        .upper_bound
-                        .map_or(true, |ub| individual.iter().all(|&x| x <= ub));
-
-                    lower_ok && upper_ok
-                });
-            }
-
             if feasible_indices.is_empty() {
                 return Err(EvaluatorError::NoFeasibleIndividuals);
             }
-
             // Filter all relevant arrays (genes, fitness, and constraints if present).
             evaluated_population = evaluated_population.selected(&feasible_indices);
         }
@@ -221,8 +206,6 @@ mod tests {
             .fitness(fitness_2d_single)
             .constraints(NoConstraints)
             .keep_infeasible(true)
-            .lower_bound(None)
-            .upper_bound(None)
             .build()
             .expect("Builder failed");
 
@@ -273,30 +256,6 @@ mod tests {
             pop.genes.nrows(),
             3,
             "Nothing filtered when keep_infeasible = true"
-        );
-    }
-
-    #[test]
-    fn infeasible_or_out_of_bounds_are_dropped() {
-        // Rule set: constraints ≤0   AND   0 ≤ gene ≤ 5
-        let eval = EvaluatorBuilder::default()
-            .fitness(fitness_2d_single)
-            .constraints(constraints_multi)
-            .keep_infeasible(false)
-            .upper_bound(Some(5.0))
-            .build()
-            .expect("Builder failed");
-
-        let genes = array![
-            /* 0 OK  */ [1.0, 2.0], // inside bounds, constraints satisfied
-            /* 1 OK  */ [3.0, 4.0], // inside bounds, constraints satisfied
-            /* 2 BAD */ [6.0, 1.0], // 6.0 violates upper bound
-        ];
-        let pop = eval.evaluate(genes).unwrap();
-        assert_eq!(
-            pop.genes.nrows(),
-            2,
-            "Row with 6.0 was removed for exceeding upper_bound"
         );
     }
 
@@ -352,34 +311,6 @@ mod tests {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // 1-D fitness – bounds filtering without constraints
-    // ──────────────────────────────────────────────────────────────────────────
-
-    #[test]
-    fn bounds_only_filtering_removes_rows_outside_range() {
-        let eval = EvaluatorBuilder::default()
-            .fitness(fitness_1d)
-            .constraints(NoConstraints)
-            .keep_infeasible(false)
-            .lower_bound(Some(0.0))
-            .upper_bound(Some(5.0))
-            .build()
-            .expect("Builder failed");
-
-        let genes = array![
-            /* 0 OK  */ [1.0, 2.0],
-            /* 1 OK  */ [3.0, 4.0],
-            /* 2 BAD */ [6.0, 0.5], // 6.0 exceeds upper bound
-        ];
-        let pop = eval.evaluate(genes).unwrap();
-        assert_eq!(
-            pop.genes.nrows(),
-            2,
-            "Third row removed solely due to upper_bound violation"
-        );
-    }
-
-    // ──────────────────────────────────────────────────────────────────────────
     // 1-D fitness – everything filtered → EvaluatorError
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -389,13 +320,11 @@ mod tests {
             .fitness(fitness_1d)
             .constraints(constraints_multi)
             .keep_infeasible(false)
-            .lower_bound(Some(0.0))
-            .upper_bound(Some(5.0))
             .build()
             .expect("Builder failed");
 
-        // Every candidate violates either constraint (Σ>10) or bounds (6.0)
-        let genes = array![[6.0, 6.0], [5.5, 6.0], [6.0, 4.0]];
+        // Every candidate violates constraints (Σ>10)
+        let genes = array![[6.0, 6.0], [5.5, 6.0], [6.0, 100.0]];
         let err = eval.evaluate(genes).unwrap_err();
         assert!(
             matches!(err, EvaluatorError::NoFeasibleIndividuals),
@@ -421,38 +350,5 @@ mod tests {
         // Row-wise expected values: [Σx², Σ|x|]
         let expected = array![[5.0, 3.0], [25.0, 7.0]];
         assert_eq!(fit, expected);
-    }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // 2-objective fitness + constraints + bounds
-    // ──────────────────────────────────────────────────────────────────────────
-
-    #[test]
-    fn two_objective_with_filtering_keeps_only_feasible_and_in_bounds() {
-        let eval = EvaluatorBuilder::default()
-            .fitness(fitness_2d_two_obj)
-            .constraints(constraints_multi)
-            .keep_infeasible(false)
-            .lower_bound(Some(0.0))
-            .upper_bound(Some(5.0))
-            .build()
-            .expect("Builder failed");
-
-        let genes = array![
-            /* 0 OK  */ [1.0, 2.0], // constraints OK, bounds OK
-            /* 1 OK  */ [3.0, 4.0], // idem
-            /* 2 BAD */ [6.0, 1.0], // 6.0 violates upper bound
-            /* 3 BAD */ [4.0, 7.0], // Σ>10 violates c0
-        ];
-        let pop = eval.evaluate(genes).unwrap();
-
-        assert_eq!(
-            pop.genes.nrows(),
-            2,
-            "Rows 2 and 3 filtered for bound and constraint violations"
-        );
-
-        let expected_fit = array![[5.0, 3.0], [25.0, 7.0]];
-        assert_eq!(pop.fitness, expected_fit);
     }
 }

@@ -3,9 +3,9 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    AgeMoeaBuilder, CloseDuplicatesCleaner, GaussianMutation, NoConstraints, Nsga2Builder,
-    Nsga3Builder, Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat, ReveaBuilder,
-    Rnsga2Builder, SimulatedBinaryCrossover, Spea2Builder,
+    AgeMoeaBuilder, CloseDuplicatesCleaner, GaussianMutation, Nsga2Builder, Nsga3Builder,
+    Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat, ReveaBuilder, Rnsga2Builder,
+    SimulatedBinaryCrossover, Spea2Builder, impl_constraints_fn,
     survival::moo::{
         DanAndDenisReferencePoints, Nsga3ReferencePoints, ReveaReferencePointsSurvival,
         Rnsga2ReferencePointsSurvival, StructuredReferencePoints,
@@ -48,6 +48,8 @@ fn assert_small_real_front(pop: &PopulationMOO) {
     }
 }
 
+impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
+
 #[test]
 fn test_nsga2() {
     let mut algorithm = Nsga2Builder::default()
@@ -56,7 +58,7 @@ fn test_nsga2() {
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
@@ -65,8 +67,6 @@ fn test_nsga2() {
         .crossover_rate(0.9)
         .keep_infeasible(false)
         .verbose(false)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .seed(42)
         .build()
         .expect("failed to build NSGA2");
@@ -86,7 +86,7 @@ fn test_agemoea() {
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
@@ -95,8 +95,6 @@ fn test_agemoea() {
         .crossover_rate(0.9)
         .keep_infeasible(false)
         .verbose(false)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .seed(1729)
         .build()
         .expect("failed to build AgeMoea");
@@ -121,7 +119,7 @@ fn test_nsga3() {
         .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
@@ -130,8 +128,6 @@ fn test_nsga3() {
         .crossover_rate(0.9)
         .keep_infeasible(false)
         .verbose(false)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .seed(42)
         .build()
         .expect("failed to build NSGA3");
@@ -155,7 +151,7 @@ fn test_rnsga2() {
         .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
@@ -164,8 +160,6 @@ fn test_rnsga2() {
         .crossover_rate(0.9)
         .keep_infeasible(false)
         .verbose(false)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .seed(42)
         .build()
         .expect("failed to build RNSGA2");
@@ -190,7 +184,7 @@ fn test_revea() {
         .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
@@ -199,8 +193,6 @@ fn test_revea() {
         .crossover_rate(0.95)
         .keep_infeasible(false)
         .verbose(false)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .build()
         .expect("failed to build REVEA");
 
@@ -220,7 +212,7 @@ fn test_spea2() {
         .mutation(GaussianMutation::new(0.5, 0.01))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(200)
         .num_offsprings(200)
@@ -229,8 +221,6 @@ fn test_spea2() {
         .crossover_rate(0.9)
         .keep_infeasible(false)
         .verbose(true)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .seed(42)
         .build()
         .expect("failed to build SPEA2");

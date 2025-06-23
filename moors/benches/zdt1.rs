@@ -6,8 +6,8 @@ use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion
 use ndarray::{Array2, Axis, stack};
 
 use moors::{
-    CloseDuplicatesCleaner, GaussianMutation, NoConstraints, Nsga2Builder, RandomSamplingFloat,
-    SimulatedBinaryCrossover,
+    CloseDuplicatesCleaner, GaussianMutation, Nsga2Builder, RandomSamplingFloat,
+    SimulatedBinaryCrossover, impl_constraints_fn,
 };
 
 /// ZDT1 test function:
@@ -23,6 +23,8 @@ fn zdt1(pop_genes: &Array2<f64>) -> Array2<f64> {
     stack(Axis(1), &[f1.view(), f2.view()]).expect("stack failed")
 }
 
+impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
+
 fn bench_nsga2_zdt1(c: &mut Criterion) {
     c.bench_function("nsga2_zdt1", |b| {
         b.iter(|| {
@@ -32,7 +34,7 @@ fn bench_nsga2_zdt1(c: &mut Criterion) {
                 .mutation(GaussianMutation::new(0.5, 0.01))
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
                 .fitness_fn(zdt1)
-                .constraints_fn(NoConstraints)
+                .constraints_fn(MyConstr)
                 .num_vars(10)
                 .population_size(1000)
                 .num_offsprings(1000)
@@ -40,8 +42,6 @@ fn bench_nsga2_zdt1(c: &mut Criterion) {
                 .mutation_rate(0.1)
                 .crossover_rate(0.9)
                 .keep_infeasible(false)
-                .lower_bound(0.0)
-                .upper_bound(1.0)
                 .seed(123)
                 .build()
                 .expect("failed to build NSGA2");

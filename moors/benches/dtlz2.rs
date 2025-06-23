@@ -6,9 +6,9 @@ use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion
 use ndarray::{Array2, Axis, stack};
 
 use moors::{
-    CloseDuplicatesCleaner, DanAndDenisReferencePoints, GaussianMutation, NoConstraints,
-    Nsga3Builder, Nsga3ReferencePoints, Nsga3ReferencePointsSurvival, RandomSamplingFloat,
-    SimulatedBinaryCrossover, StructuredReferencePoints,
+    CloseDuplicatesCleaner, DanAndDenisReferencePoints, GaussianMutation, Nsga3Builder,
+    Nsga3ReferencePoints, Nsga3ReferencePointsSurvival, RandomSamplingFloat,
+    SimulatedBinaryCrossover, StructuredReferencePoints, impl_constraints_fn,
 };
 
 /// DTLZ2 for 3 objectives (m = 3) with k = 0 (so num_vars = m−1 = 2):
@@ -36,6 +36,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
     // 1) prepare 3-objective reference points once
     let base_rp = DanAndDenisReferencePoints::new(1000, 3).generate();
     let nsga3_rp = Nsga3ReferencePoints::new(base_rp, false);
+    impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
     c.bench_function("nsga3_dtlz2_3obj", |b| {
         b.iter(|| {
@@ -47,7 +48,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .survivor(Nsga3ReferencePointsSurvival::new(nsga3_rp.clone()))
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
                 .fitness_fn(fitness_dtlz2_3obj)
-                .constraints_fn(NoConstraints)
+                .constraints_fn(MyConstr)
                 .num_vars(2)
                 .population_size(1000)
                 .num_offsprings(1000)
@@ -56,8 +57,6 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .crossover_rate(0.9)
                 .keep_infeasible(false)
                 .verbose(false)
-                .lower_bound(0.0)
-                .upper_bound(1.0)
                 .seed(123)
                 .build()
                 .expect("failed to build NSGA3");

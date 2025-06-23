@@ -5,6 +5,7 @@ use moors::{
     NoConstraints,
     algorithms::{AlgorithmMOOBuilderError, Nsga2Builder},
     duplicates::NoDuplicatesCleaner,
+    impl_constraints_fn,
     operators::{GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover},
 };
 use rstest::rstest;
@@ -189,25 +190,22 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
     );
 }
 
-#[rstest]
-#[case(1.0, 1.0)]
-#[case(2.0, 1.0)]
-fn test_invalid_bounds(#[case] lower: f64, #[case] upper: f64) {
+#[test]
+fn test_invalid_bounds() {
+    impl_constraints_fn!(MyConstr, lower_bound = 2.0, upper_bound = 1.0);
     let err = match Nsga2Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(2.0))
         .mutation(GaussianMutation::new(0.1, 0.05))
         .duplicates_cleaner(NoDuplicatesCleaner)
         .fitness_fn(dummy_fitness)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
         .mutation_rate(0.1)
         .crossover_rate(0.9)
-        .lower_bound(lower) // ← invalid lower
-        .upper_bound(upper) // ← invalid upper
         .build()
     {
         Ok(_) => panic!("Expected error for invalid bounds"),
@@ -225,4 +223,24 @@ fn test_invalid_bounds(#[case] lower: f64, #[case] upper: f64) {
         "Error message did not explain bound ordering: {}",
         msg
     );
+
+    impl_constraints_fn!(MyConstrEq, lower_bound = 2.0, upper_bound = 2.0);
+    match Nsga2Builder::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(2.0))
+        .mutation(GaussianMutation::new(0.1, 0.05))
+        .duplicates_cleaner(NoDuplicatesCleaner)
+        .fitness_fn(dummy_fitness)
+        .constraints_fn(MyConstrEq)
+        .num_vars(10)
+        .population_size(100)
+        .num_offsprings(50)
+        .num_iterations(50)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .build()
+    {
+        Ok(_) => panic!("Expected error for invalid bounds"),
+        Err(e) => e,
+    };
 }

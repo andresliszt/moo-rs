@@ -107,8 +107,6 @@ macro_rules! create_algorithm {
                 pub fn crossover_rate(mut self, v: f64) -> Self { self.inner_builder = self.inner_builder.crossover_rate(v); self }
                 pub fn keep_infeasible(mut self, v: bool) -> Self { self.inner_builder = self.inner_builder.keep_infeasible(v); self }
                 pub fn verbose(mut self, v: bool) -> Self { self.inner_builder = self.inner_builder.verbose(v); self }
-                pub fn lower_bound(mut self, v: f64) -> Self { self.inner_builder = self.inner_builder.lower_bound(v); self }
-                pub fn upper_bound(mut self, v: f64) -> Self { self.inner_builder = self.inner_builder.upper_bound(v); self }
                 pub fn seed(mut self, v: u64) -> Self { self.inner_builder = self.inner_builder.seed(v); self }
 
                 pub fn build(self) -> Result<$algo<S, Cross, Mut, F, G, DC>, AlgorithmMOOBuilderError> {

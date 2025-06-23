@@ -1,10 +1,10 @@
 use ndarray::{Array2, Axis, stack};
 
 use moors::{
-    NoConstraints,
     algorithms::{Nsga3Builder, ReveaBuilder},
     duplicates::CloseDuplicatesCleaner,
     genetic::PopulationMOO,
+    impl_constraints_fn,
     operators::{
         GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
         survival::moo::{
@@ -64,6 +64,7 @@ fn test_nsga3_dtlz2_three_objectives() {
     let rp = DanAndDenisReferencePoints::new(100, 3).generate();
     let nsga3_rp = Nsga3ReferencePoints::new(rp, false);
     let survivor = Nsga3ReferencePointsSurvival::new(nsga3_rp);
+    impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
     // 2) instantiate via builder
     let mut algorithm = Nsga3Builder::default()
@@ -73,7 +74,7 @@ fn test_nsga3_dtlz2_three_objectives() {
         .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
@@ -82,8 +83,6 @@ fn test_nsga3_dtlz2_three_objectives() {
         .crossover_rate(0.9)
         .keep_infeasible(false)
         .verbose(false)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .seed(123)
         .build()
         .expect("failed to build NSGA3");
@@ -103,6 +102,7 @@ fn test_revea_dtlz2_three_objectives() {
     let alpha = 2.5;
     let frequency = 0.2;
     let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency);
+    impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
     // instantiate via builder
     let mut algorithm = ReveaBuilder::default()
@@ -112,7 +112,7 @@ fn test_revea_dtlz2_three_objectives() {
         .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
@@ -121,8 +121,6 @@ fn test_revea_dtlz2_three_objectives() {
         .crossover_rate(0.9)
         .keep_infeasible(false)
         .verbose(false)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .build()
         .expect("failed to build REVEA");
 

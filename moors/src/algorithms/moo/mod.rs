@@ -165,11 +165,6 @@ pub struct GeneticAlgorithmParams<
     keep_infeasible: bool,
     #[builder(default = "false")]
     verbose: bool,
-    // Optional lower and upper bounds for each gene.
-    #[builder(setter(strip_option), default = "None")]
-    lower_bound: Option<f64>,
-    #[builder(setter(strip_option), default = "None")]
-    upper_bound: Option<f64>,
     #[builder(setter(strip_option), default = "None")]
     seed: Option<u64>,
 }
@@ -205,8 +200,11 @@ where
         if let Some(num_iterations) = self.num_iterations {
             validate_positive(num_iterations, "Number of iterations")?;
         }
-        if let (Some(lower), Some(upper)) = (self.lower_bound, self.upper_bound) {
-            validate_bounds(lower, upper)?;
+        if let Some(cf) = &self.constraints_fn {
+            // Now call the trait methods (note the parentheses!)
+            if let (Some(lower), Some(upper)) = (cf.lower_bound(), cf.upper_bound()) {
+                validate_bounds(lower, upper)?;
+            }
         }
         Ok(())
     }
@@ -216,13 +214,13 @@ where
     ) -> Result<GeneticAlgorithmMOO<S, Sel, Sur, Cross, Mut, F, G, DC>, AlgorithmMOOBuilderError>
     {
         let params = self.build_params()?;
+        let lb = params.constraints_fn.lower_bound();
+        let ub = params.constraints_fn.upper_bound();
 
         let evaluator = EvaluatorBuilder::default()
             .fitness(params.fitness_fn)
             .constraints(params.constraints_fn)
             .keep_infeasible(params.keep_infeasible)
-            .lower_bound(params.lower_bound)
-            .upper_bound(params.upper_bound)
             .build()
             .expect("Params already validated in build_params");
 
@@ -231,8 +229,8 @@ where
             .population_size(params.population_size)
             .num_offsprings(params.num_offsprings)
             .num_iterations(params.num_iterations)
-            .lower_bound(params.lower_bound)
-            .upper_bound(params.upper_bound)
+            .lower_bound(lb)
+            .upper_bound(ub)
             .build()
             .expect("Params already validated in build_params");
 
@@ -243,8 +241,8 @@ where
             .duplicates_cleaner(params.duplicates_cleaner)
             .crossover_rate(params.crossover_rate)
             .mutation_rate(params.mutation_rate)
-            .lower_bound(params.lower_bound)
-            .upper_bound(params.upper_bound)
+            .lower_bound(lb)
+            .upper_bound(ub)
             .build()
             .expect("Params already validated in build_params");
 
