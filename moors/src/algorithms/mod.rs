@@ -11,5 +11,5 @@ pub use moo::spea2::{Spea2, Spea2Builder};
 pub use moo::{AlgorithmMOOBuilder, AlgorithmMOOBuilderError, GeneticAlgorithmMOO};
 pub use soo::{AlgorithmSOOBuilder, AlgorithmSOOBuilderError, GeneticAlgorithmSOO};
 
-pub(crate) use helpers::{AlgorithmContext, AlgorithmContextBuilder};
+pub(crate) use helpers::AlgorithmContext;
 pub use helpers::{AlgorithmError, InitializationError};
