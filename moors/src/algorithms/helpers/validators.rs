@@ -29,16 +29,14 @@ pub(in crate::algorithms) fn validate_positive(
 }
 
 pub(in crate::algorithms) fn validate_bounds(
-    lower_bound: Option<f64>,
-    upper_bound: Option<f64>,
+    lower_bound: f64,
+    upper_bound: f64,
 ) -> Result<(), AlgorithmMOOBuilderError> {
-    if let (Some(lower), Some(upper)) = (lower_bound, upper_bound) {
-        if lower >= upper {
-            return Err(AlgorithmMOOBuilderError::ValidationError(format!(
-                "Lower bound ({}) must be less than upper bound ({})",
-                lower, upper
-            )));
-        }
+    if lower_bound >= upper_bound {
+        return Err(AlgorithmMOOBuilderError::ValidationError(format!(
+            "Lower bound ({}) must be less than upper bound ({})",
+            lower_bound, upper_bound
+        )));
     }
     Ok(())
 }

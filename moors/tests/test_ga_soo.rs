@@ -2,8 +2,8 @@ use ndarray::{Array1, Array2, Axis};
 
 use moors::{
     AlgorithmSOOBuilder, CloseDuplicatesCleaner, GaussianMutation, PopulationSOO,
-    RandomSamplingFloat, SimulatedBinaryCrossover, selection::soo::RankSelection,
-    survival::soo::FitnessSurvival,
+    RandomSamplingFloat, SimulatedBinaryCrossover, impl_constraints_fn,
+    selection::soo::RankSelection, survival::soo::FitnessSurvival,
 };
 
 /// Simple minimization of 1 - (x**2 + y**2 + z**2)
@@ -54,5 +54,60 @@ fn test_ga_minimize_parabolid() {
         let z = gene[2];
         let constraint_value = x * x + y * y + z * z - 1.0;
         assert!(constraint_value.abs() < 1e-3);
+    }
+}
+
+/// Problem: minimize f(x, y) = x² + y²
+/// Subject to the equality constraint x + y = 1.
+/// The optimal solution is the point on the line closest to the origin, (0.5, 0.5).
+
+fn fitness_quadratic(population: &Array2<f64>) -> Array1<f64> {
+    // Compute f = x² + y² for each row [x, y]
+    population.map_axis(Axis(1), |row| row.dot(&row))
+}
+
+fn line_constraint(genes: &Array2<f64>) -> Array1<f64> {
+    // h(genes) = x + y – 1 = 0
+    genes.map_axis(Axis(1), |row| row.sum() - 1.0)
+}
+
+// Generate a struct implementing moors::ConstraintsFn for the single equality:
+// |x+y−1| − ε ≤ 0
+impl_constraints_fn!(LineProjectionConstraints, eq = [line_constraint],);
+
+#[test]
+#[should_panic]
+/// See this issue https://github.com/andresliszt/moo-rs/issues/196
+fn test_minimize_projection_on_line() {
+    let mut algorithm = AlgorithmSOOBuilder::default()
+        .sampler(RandomSamplingFloat::new(-1.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.05, 0.1))
+        .selector(RankSelection)
+        .survivor(FitnessSurvival)
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_quadratic)
+        .constraints_fn(LineProjectionConstraints)
+        .num_vars(2)
+        .population_size(100)
+        .num_offsprings(100)
+        .num_iterations(350)
+        .mutation_rate(0.2)
+        .crossover_rate(0.9)
+        .keep_infeasible(true)
+        .verbose(true)
+        .seed(123)
+        .build()
+        .expect("failed to build GA");
+
+    algorithm.run().expect("GA run failed");
+    let population = algorithm
+        .population
+        .expect("population should have been initialized");
+
+    // Verify every individual is (approximately) (0.5, 0.5)
+    for gene in population.best().genes.rows() {
+        assert!((gene[0] - 0.5).abs() < 1e-3, "x ≈ 0.5, got {}", gene[0]);
+        assert!((gene[1] - 0.5).abs() < 1e-3, "y ≈ 0.5, got {}", gene[1]);
     }
 }

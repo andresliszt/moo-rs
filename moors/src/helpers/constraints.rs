@@ -1,38 +1,44 @@
 // =============================================================================
-// Constraint-building macros
+// Constraint-building macros for moors
 // =============================================================================
 //
 // ▸ `__eq_helper!(g)`              – Wraps a *single* constraint function `g`
-//                           and treats it as an **equality** constraint,
-//                           i.e. `|g(genes)| − ε ≤ 0` with ε = 1 × 10⁻⁶.
+//                                    and treats it as an **equality** constraint,
+//                                    i.e. `|g(genes)| - ε ≤ 0` with ε = 1 × 10⁻⁶.
 //
-// ▸ `__constraints_helper!( … )`   – Internal helper that concatenates **already-wrapped**
-//                           constraint functions into one closure that returns
-//                           a 2-D array.
+// ▸ `__constraints_helper!( … )`   – Internal helper that concatenates **already-processed**
+//                                    constraint functions into one closure returning a 2-D array.
 //
-// ▸ **`constraints_fn!( … )`** – Public, user-facing macro that lets you list
-//                                inequalities first and (optionally) equalities
-//                                after `; eq:`.  It expands to a closure
-//                                `|genes: &Array2<f64>| -> Array2<f64>`.
+// ▸ **`impl_constraints_fn!( … )`** – Public, user-facing macro that defines a `struct` and
+//                                implements `moors::ConstraintsFn` for it. The first
+//                                argument is the `struct` name. Optionally list
+//                                `ineq = [ ... ]`, `eq = [ ... ]`,
+//                                `lower_bound = ...`, and/or `upper_bound = ...`.
 //
-//   ┌─────────────────────── Example ─────────────────────────
-//   │ let eval = constraints_fn!(
-//   │     g1, g2,                // inequalities: g(genes) ≤ 0
-//   │     ; eq: h1, h2, h3       // equalities:   |h(genes)| − ε ≤ 0
+//   ┌─────────────────────── Usage ─────────────────────────
+//   │ // Defines `struct MyConstraints;` and
+//   │ // `impl moors::ConstraintsFn for MyConstraints { ... }`
+//   │ constraints_fn!(
+//   │     MyConstraints,
+//   │     ineq        = [g1, g2],          // inequality functions
+//   │     eq          = [h1, h2],          // equality functions
+//   │     lower_bound = 0.0,               // optional: lower_bound - genes ≤ 0
+//   │     upper_bound = 5.0,               // optional: genes - upper_bound ≤ 0
 //   │ );
 //   │
-//   │ let m = eval(&population);  // (n_rows × 5) array
-//   └──────────────────────────────────────────────────────────
+//   │ // You can omit any combination of `ineq`, `eq`, `lower_bound`, or `upper_bound`:
+//   │ constraints_fn!(MyOnlyEq, eq = [h1]);
+//   │ constraints_fn!(MyBounds, lower_bound = -1.0, upper_bound = 1.0);
+//   └───────────────────────────────────────────────────────
 //
-//   Every identifier (`g1`, `h1`, …) **must** have the signature
-//   `fn(&Array2<f64>) -> Array1<f64>`.
+//   Each constraint function (`g1`, `h1`, etc.) must be `fn(&Array2<f64>) -> Array1<f64>`.
+//   `lower_bound` and `upper_bound` must be `f64` literals.
 // =============================================================================
 
-/// Wrap a single constraint function as an **equality**
-/// (`|g(genes)| − ε ≤ 0`, ε = 1 × 10⁻⁶).
+/// Wrap a single constraint function as an **equality** (`|g(genes)| - ε ≤ 0`, ε = 1e-6).
 ///
-/// This macro is **internal**; end-users should normally invoke it
-/// through [`constraints_fn!`](#macro.constraints_fn).
+/// # Internal Use
+/// This macro is not for direct user invocation; end-users should use [`constraints_fn!`].
 #[macro_export]
 macro_rules! __eq_helper {
     ($f:path $(,)?) => {
@@ -42,91 +48,104 @@ macro_rules! __eq_helper {
     };
 }
 
-/// Concatenate any number of already-wrapped constraints (inequalities
-/// or calls to [`eq!`](#macro.eq)) into a single evaluator closure.
+/// Concatenate one or more already-wrapped constraint closures (inequalities or
+/// equalities) into a single evaluator closure returning an Array2.
 ///
-/// **Internal helper** – users call [`constraints_fn!`](#macro.constraints_fn)
-/// instead.
+/// # Internal Use
+/// Users should call [`constraints_fn!`] instead of this macro.
 #[macro_export]
 macro_rules! __constraints_helper {
     ($($c:expr),+ $(,)?) => {
         |genes: &ndarray::Array2<f64>| -> ndarray::Array2<f64> {
-            // Evaluate every constraint
+            // Evaluate each constraint to produce a column vector
             let cols = vec![ $( ($c)(genes) ),+ ];
 
-            // Concatenate column views along axis-1
+            // Convert each 1-D result into a column view and concatenate horizontally
             let views: Vec<_> = cols.iter()
                 .map(|v| v.view().insert_axis(ndarray::Axis(1)))
                 .collect();
 
             ndarray::concatenate(ndarray::Axis(1), &views)
-                .expect("concatenate along axis 1")
+                .expect("Failed to concatenate constraints along axis 1")
         }
     };
 }
 
-/// **Build a combined constraint evaluator** from any mix of
-/// *inequality* and *equality* constraint functions.
+/// Defines a `struct` and implements [`moors::ConstraintsFn`] for it.
 ///
 /// # Syntax
 ///
 /// ```ignore
-/// // Only inequalities
-/// constraints_fn!(g1, g2, g3);
-///
-/// // Inequalities followed by equalities
 /// constraints_fn!(
-///     g1, g2,                 // inequalities  g(genes) ≤ 0
-///     ; eq: h1, h2,           // equalities    |h(genes)| − ε ≤ 0
+///     StructName,
+///     ineq        = [g1, g2],          // zero or more inequality functions
+///     eq          = [h1, h2],          // zero or more equality functions
+///     lower_bound = f64_literal,       // optional lower bound value
+///     upper_bound = f64_literal,       // optional upper bound value
 /// );
 /// ```
 ///
-/// * Inequalities must come **before** the semicolon.<br>
-/// * The `; eq:` block is **optional**.
-/// * Each listed symbol (`g1`, `h1`, …) must implement
-///   `fn(&Array2<f64>) -> Array1<f64>`.
+/// - The **first** argument is the name of the `struct` to generate.
+/// - `ineq`, `eq`, `lower_bound`, and `upper_bound` are **all optional** and can
+///   appear in any order after the struct name.
+/// - Equality functions are wrapped as `|h(genes)| - ε` (ε=1e-6).
 ///
-/// The macro expands to a **closure**
-///
-/// ```rust, ignore
-/// |genes: &ndarray::Array2<f64>| -> ndarray::Array2<f64>
-/// ```
-///
-/// returning an `(n_rows × n_constraints)` matrix whose columns contain
-/// all inequalities in the given order, followed by all transformed
-/// equalities (ε = 1 × 10⁻⁶).
-///
-/// # Example
-///
-/// ```rust
-/// use ndarray::{array, Array1, Array2, Axis};
-/// use moors::constraints_fn;
-///
-/// fn g1(genes: &Array2<f64>) -> Array1<f64> {
-///     genes.map_axis(Axis(1), |r| r.sum() - 1.0)        // ≤ 0
+/// # Result
+/// Generates:
+/// ```ignore
+/// pub struct StructName;
+/// impl moors::ConstraintsFn for StructName {
+///     type Dim = ndarray::Ix2;
+///     fn call(&self, genes: &Array2<f64>) -> Array2<f64> { ... }
+///     fn lower_bound(&self) -> Option<f64> { ... }
+///     fn upper_bound(&self) -> Option<f64> { ... }
 /// }
-///
-/// fn h1(genes: &Array2<f64>) -> Array1<f64> {
-///     genes.map_axis(Axis(1), |r| r[0] - r[1])          // = 0  → |·| − ε
-/// }
-///
-/// let my_constraints_clousure = constraints_fn!(g1; eq: h1);
-/// let genes = array![[0.5, 0.5], [1.5, 0.0]];
-/// let mat = my_constraints_clousure(&genes);          // shape: (2 × 2)
 /// ```
 #[macro_export]
-macro_rules! constraints_fn {
-    // Inequalities + Equalities
-    ( $( $ineq:path ),* ; eq: $( $eq:path ),+ $(,)? ) => {
-        $crate::__constraints_helper!(
-            $( $ineq ),* ,
-            $( $crate::__eq_helper!($eq) ),*
-        )
-    };
+macro_rules! impl_constraints_fn {
+    (
+        $name:ident
+        $(, ineq        = [ $($ineq:path),* $(,)? ] )?
+        $(, eq          = [ $($eq:path),*   $(,)? ] )?
+        $(, lower_bound = $lb:expr )?
+        $(, upper_bound = $ub:expr )?
+        $(,)?
+    ) => {
+        #[derive(Debug, Clone, Copy)]
+        pub struct $name;
 
-    // Inequalities only
-    ( $( $ineq:path ),+ $(,)? ) => {
-        $crate::__constraints_helper!($( $ineq ),*)
+        impl $crate::ConstraintsFn for $name {
+            type Dim = ndarray::Ix2;
+
+            fn call(&self, genes: &ndarray::Array2<f64>) -> ndarray::Array2<f64> {
+                use ndarray::{concatenate, Axis};
+
+                let mut mats: Vec<ndarray::Array2<f64>> = Vec::new();
+
+                // Inequality functions
+                $( mats.push($crate::__constraints_helper!($($ineq),*)(genes)); )?
+
+                // Equality functions wrapped via __eq_helper!
+                $( mats.push($crate::__constraints_helper!( $($crate::__eq_helper!($eq)),* )(genes)); )?
+
+                // Optional lower bound: lower_bound - genes
+                $( mats.push({ let lb_mat = genes.mapv(|_| $lb); lb_mat - genes }); )?
+
+                // Optional upper bound: genes - upper_bound
+                $( mats.push({ let ub_mat = genes.mapv(|_| $ub); genes - ub_mat }); )?
+
+                if mats.is_empty() {
+                    ndarray::Array2::zeros((genes.nrows(), 0))
+                } else {
+                    let views: Vec<_> = mats.iter().map(|m| m.view()).collect();
+                    concatenate(Axis(1), &views)
+                        .expect("Failed to concatenate constraints along axis 1")
+                }
+            }
+
+            $( fn lower_bound(&self) -> Option<f64> { Some($lb) } )?
+            $( fn upper_bound(&self) -> Option<f64> { Some($ub) } )?
+        }
     };
 }
 
@@ -134,7 +153,8 @@ macro_rules! constraints_fn {
 mod tests {
     use ndarray::{Array1, Array2, Axis, array};
 
-    use crate::constraints_fn;
+    use crate::ConstraintsFn;
+    use crate::impl_constraints_fn;
 
     /* ───────────────── helper constraint fns ───────────────── */
 
@@ -156,8 +176,8 @@ mod tests {
     #[test]
     fn inequalities_only() {
         let genes = array![[0.0, 0.0], [1.0, 1.0]]; // 2 × 2
-        let comb = constraints_fn!(g1, g2); // closure (genes) -> Array2
-        let res = comb(&genes); // 2 × 2
+        impl_constraints_fn!(MyConstr, ineq = [g1, g2]); // closure (genes) -> Array2
+        let res = MyConstr.call(&genes); // 2 × 2
 
         let expect = array![[-1.0, -1.0], [1.0, 1.0]];
         assert_eq!(res.shape(), &[2, 2]);
@@ -173,8 +193,8 @@ mod tests {
             [2.0, 1.0], // g1 = 2.0, g2 = 4.0,  g3 = 1  → 1-ε
         ];
         // g1, g2,  |g3|-ε
-        let comb = constraints_fn!(g1, g2 ; eq: g3);
-        let res = comb(&genes); // 2 × 3
+        impl_constraints_fn!(MyConstr, ineq = [g1, g2], eq = [g3]);
+        let res = MyConstr.call(&genes); // 2 × 3
 
         // Build expected matrix by hand
         let mut exp = Array2::<f64>::zeros((2, 3));
@@ -186,29 +206,84 @@ mod tests {
         exp[[1, 1]] = 4.0; // g2 row1
         exp[[1, 2]] = 1.0 - EPS; // |g3|-ε row1
 
-        assert_eq!(res.shape(), &[2, 3]);
-        for (&a, &e) in res.iter().zip(exp.iter()) {
-            assert!((a - e).abs() < 1e-10, "got {a}, expected {e}");
-        }
+        assert_eq!(res, exp);
     }
 
     #[test]
-    fn reuse_combined_closure() {
-        // Ensure the closure returned by `constraints!` can be reused
-        let comb = constraints_fn!(g1; eq: g3);
+    fn equalities_only() {
+        let genes = array![[2.0, 2.0], [0.5, 1.5]]; // 2 × 2
+        impl_constraints_fn!(EqOnly, eq = [g3]);
+        let res = EqOnly.call(&genes); // 2 × 1
 
-        let p1 = array![[1.0, 1.0]];
-        let p2 = array![[0.0, 0.0]];
+        const EPS: f64 = 1e-6;
+        // |g3| - ε = |x - y| - ε
+        let mut exp = Array2::<f64>::zeros((2, 1));
+        exp[[0, 0]] = -EPS; // |2–2|−ε = 0−ε
+        exp[[1, 0]] = 1.0 - EPS; // |0.5–1.5|−ε = 1−ε
 
-        let m1 = comb(&p1);
-        let m2 = comb(&p2);
+        assert_eq!(res, exp);
+    }
 
-        // Shapes: 1 × 2
-        assert_eq!(m1.shape(), &[1, 2]);
-        assert_eq!(m2.shape(), &[1, 2]);
+    #[test]
+    fn lower_bound_only() {
+        let genes = array![[1.0, 3.0], [0.0, 2.0]];
+        impl_constraints_fn!(LowOnly, lower_bound = 2.0);
+        let res = LowOnly.call(&genes); // 2 × 2
 
-        // Quick sanity checks
-        assert!((m1[[0, 0]] - 1.0).abs() < 1e-10); // g1(1,1) = 1
-        assert!((m2[[0, 0]] + 1.0).abs() < 1e-10); // g1(0,0) = -1
+        // lower_bound - genes = 2 - genes
+        let mut exp = Array2::<f64>::zeros((2, 2));
+        exp[[0, 0]] = 2.0 - 1.0;
+        exp[[0, 1]] = 2.0 - 3.0;
+        exp[[1, 0]] = 2.0 - 0.0;
+        exp[[1, 1]] = 2.0 - 2.0;
+        assert_eq!(res, exp);
+    }
+
+    #[test]
+    fn upper_bound_only() {
+        let genes = array![[1.0, 3.0], [0.0, 2.0]];
+        impl_constraints_fn!(UpOnly, upper_bound = 3.0);
+        let res = UpOnly.call(&genes); // 2 × 2
+
+        // genes - upper_bound = genes - 3
+        let mut exp = Array2::<f64>::zeros((2, 2));
+        exp[[0, 0]] = 1.0 - 3.0;
+        exp[[0, 1]] = 3.0 - 3.0;
+        exp[[1, 0]] = 0.0 - 3.0;
+        exp[[1, 1]] = 2.0 - 3.0;
+        assert_eq!(res, exp);
+    }
+
+    #[test]
+    fn all_constraints_combined() {
+        const EPS: f64 = 1e-6;
+        let genes = array![[0.0, 1.0], [2.0, 1.0]];
+        impl_constraints_fn!(
+            AllC,
+            ineq = [g1],
+            eq = [g3],
+            lower_bound = 1.0,
+            upper_bound = 2.0
+        );
+        let res = AllC.call(&genes); // 2 × 4
+        let mut exp = Array2::<f64>::zeros((2, 6));
+        // row 0 (genes = [0.0, 1.0])
+        exp[[0, 0]] = 0.0; // g1: 0+1-1
+        exp[[0, 1]] = 1.0 - EPS; // |0-1|-ε
+        exp[[0, 2]] = 1.0 - 0.0; // lower_bound - gene0
+        exp[[0, 3]] = 1.0 - 1.0; // lower_bound - gene1
+        exp[[0, 4]] = 0.0 - 2.0; // gene0 - upper_bound
+        exp[[0, 5]] = 1.0 - 2.0; // gene1 - upper_bound
+
+        // row 1 (genes = [2.0, 1.0])
+        exp[[1, 0]] = 2.0; // g1: 2+1-1
+        exp[[1, 1]] = 1.0 - EPS; // |2-1|-ε
+        exp[[1, 2]] = 1.0 - 2.0; // lower_bound - gene0
+        exp[[1, 3]] = 1.0 - 1.0; // lower_bound - gene1
+        exp[[1, 4]] = 2.0 - 2.0; // gene0 - upper_bound
+        exp[[1, 5]] = 1.0 - 2.0; // gene1 - upper_bound
+        assert_eq!(res, exp);
+
+        assert_eq!(res, exp);
     }
 }

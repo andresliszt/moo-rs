@@ -8,7 +8,7 @@ use crate::{
 };
 /// `FitnessSurvival` selects the individuals with the lowest fitness values
 /// (minimization) to survive into the next generation.
-pub struct FitnessSurvival {}
+pub struct FitnessSurvival;
 
 impl FitnessSurvival {
     pub fn new() -> Self {

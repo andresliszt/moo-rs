@@ -53,8 +53,6 @@ fn test_knapsack_nsga2_small_binary() {
         .num_iterations(2)
         .crossover_rate(0.9)
         .mutation_rate(0.1)
-        .lower_bound(0.0)
-        .upper_bound(1.0)
         .build()
         .unwrap();
 

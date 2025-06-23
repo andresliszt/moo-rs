@@ -1,7 +1,8 @@
 use moors::{
-    EvaluatorError, NoConstraints,
+    EvaluatorError,
     algorithms::{AlgorithmError, InitializationError, Nsga2Builder},
     duplicates::{ExactDuplicatesCleaner, NoDuplicatesCleaner},
+    impl_constraints_fn,
     operators::{BitFlipMutation, RandomSamplingBinary, SinglePointBinaryCrossover},
 };
 use ndarray::{Array1, Array2, Axis, stack};
@@ -49,9 +50,10 @@ fn test_keep_infeasible() {
 }
 #[test]
 fn test_keep_infeasible_out_of_bounds() {
+    impl_constraints_fn!(MyConstr, lower_bound = 2.0, upper_bound = 10.0);
     let mut algorithm = Nsga2Builder::default()
         .fitness_fn(fitness_binary_biobj)
-        .constraints_fn(NoConstraints)
+        .constraints_fn(MyConstr)
         .sampler(RandomSamplingBinary::new())
         .crossover(SinglePointBinaryCrossover::new())
         .mutation(BitFlipMutation::new(0.5))
@@ -61,8 +63,6 @@ fn test_keep_infeasible_out_of_bounds() {
         .num_offsprings(32)
         .num_iterations(20)
         .keep_infeasible(true)
-        .lower_bound(2.0)
-        .upper_bound(10.0)
         .build()
         .unwrap();
 
