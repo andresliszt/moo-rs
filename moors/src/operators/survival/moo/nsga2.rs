@@ -99,7 +99,7 @@ mod tests {
     use super::*;
     use ndarray::{Array2, Axis, array, concatenate};
 
-    use crate::algorithms::AlgorithmContextBuilder;
+    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::genetic::PopulationMOO;
     use crate::random::NoopRandomGenerator;
 

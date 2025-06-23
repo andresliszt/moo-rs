@@ -337,7 +337,7 @@ fn niching(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithms::AlgorithmContextBuilder;
+    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
 

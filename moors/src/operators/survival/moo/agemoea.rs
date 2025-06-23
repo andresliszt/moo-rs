@@ -308,7 +308,7 @@ pub fn assign_survival_scores_higher_front(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithms::AlgorithmContextBuilder;
+    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::genetic::PopulationMOO;
     use crate::operators::survival::moo::helpers::HyperPlaneNormalization;
     use crate::random::NoopRandomGenerator;

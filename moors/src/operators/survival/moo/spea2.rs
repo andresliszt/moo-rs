@@ -193,7 +193,7 @@ mod tests {
     use super::*;
     use ndarray::array;
 
-    use crate::algorithms::AlgorithmContextBuilder;
+    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::random::NoopRandomGenerator;
 
     #[test]

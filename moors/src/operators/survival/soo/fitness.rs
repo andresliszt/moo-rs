@@ -53,7 +53,7 @@ mod tests {
     use crate::random::TestDummyRng;
     use ndarray::{Array1, Array2, array};
 
-    use crate::algorithms::AlgorithmContextBuilder;
+    use crate::algorithms::helpers::AlgorithmContextBuilder;
 
     // A fake random generator; FitnessSurvival does not actually use RNG here,
     // but we need to satisfy the trait bound.
