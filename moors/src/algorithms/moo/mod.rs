@@ -49,8 +49,6 @@
 //!         .mutation(BitFlipMutation::new(0.5))
 //!         .duplicates_cleaner(ExactDuplicatesCleaner::new())
 //!         .num_vars(5)
-//!         .num_objectives(2)
-//!         .num_constraints(1)
 //!         .population_size(100)
 //!         ...                     // other setters such as rates / iterations
 //!         .build()?;               // ← macro‑generated .build()

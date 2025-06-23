@@ -283,6 +283,7 @@ mod tests {
             .fitness(fitness_2d_single)
             .constraints(constraints_multi)
             .keep_infeasible(false)
+            .upper_bound(Some(5.0))
             .build()
             .expect("Builder failed");
 
