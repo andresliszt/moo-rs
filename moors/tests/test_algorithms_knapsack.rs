@@ -48,8 +48,6 @@ fn test_knapsack_nsga2_small_binary() {
         .duplicates_cleaner(ExactDuplicatesCleaner::new())
         .num_vars(5)
         .keep_infeasible(false)
-        .num_constraints(1)
-        .num_objectives(2)
         .population_size(100)
         .num_offsprings(32)
         .num_iterations(2)

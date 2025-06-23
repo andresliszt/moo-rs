@@ -308,6 +308,7 @@ pub fn assign_survival_scores_higher_front(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::genetic::PopulationMOO;
     use crate::operators::survival::moo::helpers::HyperPlaneNormalization;
     use crate::random::NoopRandomGenerator;
@@ -468,7 +469,9 @@ mod tests {
         let mut operator = AgeMoeaSurvival::new();
         let mut rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(2, 5, 5, 2, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
         let survivors = operator.operate(population, num_survive, &mut rng, &_context);
 
         assert_eq!(

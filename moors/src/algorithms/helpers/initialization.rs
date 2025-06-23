@@ -1,10 +1,8 @@
-use ndarray::ArrayView;
-
 use crate::{
     algorithms::helpers::{context::AlgorithmContext, error::InitializationError},
     duplicates::PopulationCleaner,
     evaluator::{ConstraintsFn, Evaluator, FitnessFn},
-    genetic::{D01, Population},
+    genetic::Population,
     operators::{SamplingOperator, SurvivalOperator},
     random::RandomGenerator,
 };
@@ -37,9 +35,6 @@ impl Initialization {
             .evaluate(genes)
             .map_err(InitializationError::from)?;
         // Validate first individual
-        let individual = population.get(0);
-        Self::check_fitness(&individual.fitness, context)?;
-        Self::check_constraints(&individual.constraints, context)?;
         // this step is very important. All members of the population survive, because
         // we use num_survive = context.population_size, but this step is adding the ranking
         // and the survival scorer (if the algorithm needs them), so in the selection step
@@ -47,52 +42,14 @@ impl Initialization {
         population = survivor.operate(population, context.population_size, rng, &context);
         Ok(population)
     }
-
-    /// Validates that the fitness array length matches expected objectives.
-    fn check_fitness<FDim>(
-        fitness: &ArrayView<f64, FDim>,
-        context: &AlgorithmContext,
-    ) -> Result<(), InitializationError>
-    where
-        FDim: D01,
-    {
-        let expected = context.num_objectives;
-        let actual = fitness.len();
-
-        match actual == expected {
-            true => Ok(()),
-            false => Err(InitializationError::InvalidFitness(format!(
-                "Expected {} fitness values, got {}",
-                expected, actual
-            ))),
-        }
-    }
-
-    /// Validates constraints array length or absence against context.
-    fn check_constraints<ConstrDim>(
-        constraints: &ArrayView<f64, ConstrDim>,
-        context: &AlgorithmContext,
-    ) -> Result<(), InitializationError>
-    where
-        ConstrDim: D01,
-    {
-        let expected = context.num_constraints;
-        let actual = constraints.len();
-        match actual == expected {
-            true => Ok(()),
-            false => Err(InitializationError::InvalidConstraints(format!(
-                "Expected {} constraints, got {}",
-                expected, actual
-            ))),
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithms::helpers::context::AlgorithmContext;
+    use crate::algorithms::helpers::context::AlgorithmContextBuilder;
     use crate::duplicates::ExactDuplicatesCleaner;
+    use crate::evaluator::EvaluatorBuilder;
     use crate::operators::{
         sampling::RandomSamplingBinary, survival::moo::nsga2::Nsga2RankCrowdingSurvival,
     };
@@ -119,35 +76,30 @@ mod tests {
         Array2::zeros((population_size, num_constraints))
     }
 
-    fn no_constraints(genes: &Array2<f64>) -> Array2<f64> {
-        let n = genes.nrows();
-        Array2::zeros((n, 0))
-    }
-
     #[test]
-    fn initialize_succeeds_with_matching_shapes() {
+    fn initialize_succeeds() {
         let sampler = RandomSamplingBinary::new();
         let mut survivor = Nsga2RankCrowdingSurvival::new();
         let seed = 123;
         let mut rng = MOORandomGenerator::new_from_seed(Some(seed));
 
-        let context = AlgorithmContext::new(
-            4, // num_vars
-            8, // population_size
-            3, // num_offsprings
-            2, // num_objectives
-            1, // num_iterations
-            1, // num_constraints
-            None, None,
-        );
+        let context = AlgorithmContextBuilder::default()
+            .num_vars(4)
+            .population_size(8)
+            .num_offsprings(3)
+            .num_iterations(1)
+            .build()
+            .expect("Builder failed");
 
-        let fitness_fn = |genes: &Array2<f64>| {
-            dummy_fitness(genes, context.population_size, context.num_objectives)
-        };
-        let constraints_fn = |genes: &Array2<f64>| {
-            dummy_constraints(genes, context.population_size, context.num_constraints)
-        };
-        let evaluator = Evaluator::new(fitness_fn, constraints_fn, false, None, None);
+        let fitness_fn = |genes: &Array2<f64>| dummy_fitness(genes, context.population_size, 2);
+        let constraints_fn =
+            |genes: &Array2<f64>| dummy_constraints(genes, context.population_size, 2);
+        let evaluator = EvaluatorBuilder::default()
+            .fitness(fitness_fn)
+            .constraints(constraints_fn)
+            .keep_infeasible(false)
+            .build()
+            .expect("Builder failed");
         let duplicates_cleaner = ExactDuplicatesCleaner::new();
 
         let pop = Initialization::initialize(
@@ -168,109 +120,5 @@ mod tests {
             pop.survival_score.is_some(),
             "survival_score should be set after initialization"
         );
-    }
-
-    #[test]
-    fn initialize_fails_on_fitness_length_mismatch() {
-        let sampler = RandomSamplingBinary::new();
-        let mut survivor = Nsga2RankCrowdingSurvival::new();
-        let duplicates_cleaner = ExactDuplicatesCleaner::new();
-        let mut rng = MOORandomGenerator::new_from_seed(Some(123));
-
-        let context = AlgorithmContext::new(
-            4, 8, 3, 2, // expecting 2 objectives
-            1, // iterations
-            0, // no constraints
-            None, None,
-        );
-
-        // returns only 1 column instead of 2
-        let bad_fitness = |genes: &Array2<f64>| {
-            dummy_fitness(genes, context.population_size, context.num_objectives - 1)
-        };
-        let evaluator = Evaluator::new(bad_fitness, no_constraints, false, None, None);
-
-        let err = Initialization::initialize(
-            &sampler,
-            &mut survivor,
-            &evaluator,
-            &duplicates_cleaner,
-            &mut rng,
-            &context,
-        )
-        .unwrap_err();
-
-        assert!(matches!(err, InitializationError::InvalidFitness(_)));
-    }
-
-    #[test]
-    fn initialize_fails_on_constraints_length_mismatch() {
-        let sampler = RandomSamplingBinary::new();
-        let mut survivor = Nsga2RankCrowdingSurvival::new();
-        let duplicates_cleaner = ExactDuplicatesCleaner::new();
-        let mut rng = MOORandomGenerator::new_from_seed(Some(123));
-
-        let context = AlgorithmContext::new(
-            4, 8, 3, 2, // objectives
-            1, // iterations
-            1, // expecting 1 constraint
-            None, None,
-        );
-
-        let fitness_fn = |genes: &Array2<f64>| {
-            dummy_fitness(genes, context.population_size, context.num_objectives)
-        };
-        // returns zero columns instead of 1
-        let bad_constraints = |genes: &Array2<f64>| {
-            dummy_constraints(genes, context.population_size, context.num_constraints - 1)
-        };
-        let evaluator = Evaluator::new(fitness_fn, bad_constraints, false, None, None);
-
-        let err = Initialization::initialize(
-            &sampler,
-            &mut survivor,
-            &evaluator,
-            &duplicates_cleaner,
-            &mut rng,
-            &context,
-        )
-        .unwrap_err();
-
-        assert!(matches!(err, InitializationError::InvalidConstraints(_)));
-    }
-
-    #[test]
-    fn initialize_fails_when_constraints_fn_is_none_but_expected_non_zero() {
-        let sampler = RandomSamplingBinary::new();
-        let mut survivor = Nsga2RankCrowdingSurvival::new();
-        let duplicates_cleaner = ExactDuplicatesCleaner::new();
-        let mut rng = MOORandomGenerator::new_from_seed(Some(42));
-
-        let context = AlgorithmContext::new(
-            3, // num_vars
-            6, // population_size
-            2, // num_offsprings
-            1, // num_objectives
-            1, // num_iterations
-            2, // num_constraints (expected but no fn)
-            None, None,
-        );
-
-        let fitness_fn = |genes: &Array2<f64>| {
-            dummy_fitness(genes, context.population_size, context.num_objectives)
-        };
-        let evaluator = Evaluator::new(fitness_fn, no_constraints, false, None, None);
-
-        let err = Initialization::initialize(
-            &sampler,
-            &mut survivor,
-            &evaluator,
-            &duplicates_cleaner,
-            &mut rng,
-            &context,
-        )
-        .unwrap_err();
-
-        assert!(matches!(err, InitializationError::InvalidConstraints(_)));
     }
 }

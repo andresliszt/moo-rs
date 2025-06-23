@@ -77,7 +77,7 @@ pub use crossover::{
     CrossoverOperator, ExponentialCrossover, OrderCrossover, SimulatedBinaryCrossover,
     SinglePointBinaryCrossover, UniformBinaryCrossover,
 };
-pub use evolve::{Evolve, EvolveError};
+pub use evolve::{Evolve, EvolveBuilder, EvolveError};
 pub use mutation::{
     BitFlipMutation, DisplacementMutation, GaussianMutation, MutationOperator, ScrambleMutation,
     SwapMutation,

@@ -28,7 +28,6 @@ fn test_ga_minimize_parabolid() {
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_sphere)
         .constraints_fn(constraints_sphere)
-        .num_constraints(1)
         .num_vars(3)
         .population_size(100)
         .num_offsprings(50)
