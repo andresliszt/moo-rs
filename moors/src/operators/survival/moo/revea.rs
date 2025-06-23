@@ -51,6 +51,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
     {
         let z_min = get_ideal(&population.fitness);
         let z_max = get_nadir(&population.fitness);
+        let num_objectives = population.fitness.ncols();
         let translated = &population.fitness - &z_min;
         let (translated_fitness_norm, reference_norm, faer_dot) =
             faer_dot_and_norms(&translated, &self.reference_points);
@@ -66,7 +67,7 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
             translated_fitness_norm,
             cosine_distances,
             gamma,
-            algorithm_context.num_objectives,
+            num_objectives,
             algorithm_context.current_iteration,
             algorithm_context.num_iterations,
             self.alpha,

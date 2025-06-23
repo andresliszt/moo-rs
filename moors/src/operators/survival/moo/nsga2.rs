@@ -99,6 +99,7 @@ mod tests {
     use super::*;
     use ndarray::{Array2, Axis, array, concatenate};
 
+    use crate::algorithms::AlgorithmContextBuilder;
     use crate::genetic::PopulationMOO;
     use crate::random::NoopRandomGenerator;
 
@@ -195,7 +196,9 @@ mod tests {
         let selector = Nsga2RankCrowdingSurvival::new();
         let mut rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
         selector.set_front_survival_score(&mut fronts, &mut rng, &_context);
 
         let expected: Array1<f64> = array![
@@ -218,7 +221,9 @@ mod tests {
         let mut selector = Nsga2RankCrowdingSurvival;
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
         let new_population = selector.operate(population, num_survive, &mut _rng, &_context);
 
         // The resulting population should remain unchanged.
@@ -263,7 +268,9 @@ mod tests {
         let mut selector = Nsga2RankCrowdingSurvival;
         let mut _rng = NoopRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(10, 10, 5, 2, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
         let new_population = selector.operate(population, num_survive, &mut _rng, &_context);
 
         // The final population must have 4 individuals.

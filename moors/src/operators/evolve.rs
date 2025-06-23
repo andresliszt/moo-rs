@@ -1,3 +1,4 @@
+use derive_builder::Builder;
 use ndarray::Array2;
 use thiserror::Error;
 
@@ -8,7 +9,8 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Builder)]
+#[builder(pattern = "owned")]
 pub struct Evolve<Sel, Cross, Mut, DC>
 where
     Sel: SelectionOperator,
@@ -39,28 +41,6 @@ where
     Mut: MutationOperator,
     DC: PopulationCleaner,
 {
-    pub fn new(
-        selection: Sel,
-        crossover: Cross,
-        mutation: Mut,
-        duplicates_cleaner: DC,
-        mutation_rate: f64,
-        crossover_rate: f64,
-        lower_bound: Option<f64>,
-        upper_bound: Option<f64>,
-    ) -> Self {
-        Self {
-            selection,
-            crossover,
-            mutation,
-            duplicates_cleaner,
-            mutation_rate,
-            crossover_rate,
-            lower_bound,
-            upper_bound,
-        }
-    }
-
     /// Performs a single-step crossover + mutation for a batch of selected parents.
     ///
     /// Before returning the offsprings (PopulationGenes Array2), it clamps each gene

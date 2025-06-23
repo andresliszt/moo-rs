@@ -100,8 +100,6 @@ macro_rules! create_algorithm {
                 pub fn constraints_fn(mut self, v: G) -> Self { self.inner_builder = self.inner_builder.constraints_fn(v); self }
                 pub fn duplicates_cleaner(mut self, v: DC) -> Self { self.inner_builder = self.inner_builder.duplicates_cleaner(v); self }
                 pub fn num_vars(mut self, v: usize) -> Self { self.inner_builder = self.inner_builder.num_vars(v); self }
-                pub fn num_objectives(mut self, v: usize) -> Self { self.inner_builder = self.inner_builder.num_objectives(v); self }
-                pub fn num_constraints(mut self, v: usize) -> Self { self.inner_builder = self.inner_builder.num_constraints(v); self }
                 pub fn population_size(mut self, v: usize) -> Self { self.inner_builder = self.inner_builder.population_size(v); self }
                 pub fn num_offsprings(mut self, v: usize) -> Self { self.inner_builder = self.inner_builder.num_offsprings(v); self }
                 pub fn num_iterations(mut self, v: usize) -> Self { self.inner_builder = self.inner_builder.num_iterations(v); self }

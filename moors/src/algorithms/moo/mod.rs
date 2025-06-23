@@ -98,16 +98,16 @@ use ndarray::{Axis, concatenate};
 
 use crate::{
     algorithms::helpers::{
-        AlgorithmContext, AlgorithmError,
+        AlgorithmContext, AlgorithmContextBuilder, AlgorithmError,
         initialization::Initialization,
         validators::{validate_bounds, validate_positive, validate_probability},
     },
     duplicates::{NoDuplicatesCleaner, PopulationCleaner},
-    evaluator::{ConstraintsFn, Evaluator, FitnessFn, NoConstraints},
+    evaluator::{ConstraintsFn, Evaluator, EvaluatorBuilder, FitnessFn, NoConstraints},
     genetic::PopulationMOO,
     helpers::printer::print_minimum_moo,
     operators::{
-        CrossoverOperator, Evolve, EvolveError, MutationOperator, SamplingOperator,
+        CrossoverOperator, Evolve, EvolveBuilder, EvolveError, MutationOperator, SamplingOperator,
         SelectionOperator, SurvivalOperator,
     },
     random::MOORandomGenerator,
@@ -156,9 +156,6 @@ pub struct GeneticAlgorithmParams<
     fitness_fn: F,
     constraints_fn: G,
     num_vars: usize,
-    num_objectives: usize,
-    #[builder(default = "0")]
-    num_constraints: usize,
     population_size: usize,
     num_offsprings: usize,
     num_iterations: usize,
@@ -222,35 +219,37 @@ where
     {
         let params = self.build_params()?;
 
-        let evaluator = Evaluator::new(
-            params.fitness_fn,
-            params.constraints_fn,
-            params.keep_infeasible,
-            params.lower_bound,
-            params.upper_bound,
-        );
+        let evaluator = EvaluatorBuilder::default()
+            .fitness(params.fitness_fn)
+            .constraints(params.constraints_fn)
+            .keep_infeasible(params.keep_infeasible)
+            .lower_bound(params.lower_bound)
+            .upper_bound(params.upper_bound)
+            .build()
+            .expect("Params already validated in build_params");
 
-        let context: AlgorithmContext = AlgorithmContext::new(
-            params.num_vars,
-            params.population_size,
-            params.num_offsprings,
-            params.num_objectives,
-            params.num_iterations,
-            params.num_constraints,
-            params.upper_bound,
-            params.lower_bound,
-        );
+        let context = AlgorithmContextBuilder::default()
+            .num_vars(params.num_vars)
+            .population_size(params.population_size)
+            .num_offsprings(params.num_offsprings)
+            .num_iterations(params.num_iterations)
+            .lower_bound(params.lower_bound)
+            .upper_bound(params.upper_bound)
+            .build()
+            .expect("Params already validated in build_params");
 
-        let evolve = Evolve::new(
-            params.selector,
-            params.crossover,
-            params.mutation,
-            params.duplicates_cleaner,
-            params.mutation_rate,
-            params.crossover_rate,
-            params.lower_bound,
-            params.upper_bound,
-        );
+        let evolve = EvolveBuilder::default()
+            .selection(params.selector)
+            .crossover(params.crossover)
+            .mutation(params.mutation)
+            .duplicates_cleaner(params.duplicates_cleaner)
+            .crossover_rate(params.crossover_rate)
+            .mutation_rate(params.mutation_rate)
+            .lower_bound(params.lower_bound)
+            .upper_bound(params.upper_bound)
+            .build()
+            .expect("Params already validated in build_params");
+
         let rng = MOORandomGenerator::new_from_seed(params.seed);
 
         Ok(GeneticAlgorithmMOO {

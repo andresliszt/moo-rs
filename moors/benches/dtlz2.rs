@@ -49,7 +49,6 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .fitness_fn(fitness_dtlz2_3obj)
                 .constraints_fn(NoConstraints)
                 .num_vars(2)
-                .num_objectives(3)
                 .population_size(1000)
                 .num_offsprings(1000)
                 .num_iterations(10)

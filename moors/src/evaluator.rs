@@ -4,6 +4,7 @@
 //! and constraints functions) meets the core data structures of *moors*.  It
 //! takes a 2‑D array of genomes (`PopulationGenes` = `Array2<f64>`) and returns
 //! a fully populated [`Population`] with fitness values and optional constraints
+use derive_builder::Builder;
 use ndarray::{Array2, ArrayBase, Axis, Dimension, OwnedRepr};
 use thiserror::Error;
 
@@ -75,7 +76,8 @@ pub enum EvaluatorError {
 /// Evaluator struct for calculating fitness and (optionally) constraints,
 /// then assembling a `Population`. In addition to the user-provided constraints function,
 /// optional lower and upper bounds can be specified for the decision variables (genes).
-#[derive(Debug)]
+#[derive(Debug, Builder)]
+#[builder(pattern = "owned")]
 pub struct Evaluator<F, G>
 where
     F: FitnessFn,
@@ -83,10 +85,11 @@ where
 {
     fitness: F,
     constraints: G,
+    #[builder(default = "true")]
     keep_infeasible: bool,
-    /// Optional lower bound for each gene.
+    #[builder(default)]
     lower_bound: Option<f64>,
-    /// Optional upper bound for each gene.
+    #[builder(default)]
     upper_bound: Option<f64>,
 }
 
@@ -95,24 +98,6 @@ where
     F: FitnessFn,
     G: ConstraintsFn,
 {
-    /// Creates a new `Evaluator` with a fitness function, an optional constraints function,
-    /// a flag to keep infeasible individuals, and optional lower/upper bounds.
-    pub fn new(
-        fitness: F,
-        constraints: G,
-        keep_infeasible: bool,
-        lower_bound: Option<f64>,
-        upper_bound: Option<f64>,
-    ) -> Self {
-        Self {
-            fitness,
-            constraints,
-            keep_infeasible,
-            lower_bound,
-            upper_bound,
-        }
-    }
-
     /// Builds the population instance from the genes. If `keep_infeasible` is false,
     /// individuals are filtered out if they do not satisfy:
     ///   - The provided constraints function (all constraint values must be ≤ 0), and
@@ -232,13 +217,14 @@ mod tests {
 
     #[test]
     fn two_d_fitness_without_constraints_keeps_every_row() {
-        let eval = Evaluator::new(
-            fitness_2d_single,
-            NoConstraints,
-            /* keep_infeasible = */ true,
-            None,
-            None,
-        );
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_2d_single)
+            .constraints(NoConstraints)
+            .keep_infeasible(true)
+            .lower_bound(None)
+            .upper_bound(None)
+            .build()
+            .expect("Builder failed");
 
         let genes = array![[1.0, 2.0], [3.0, 4.0], [0.0, 0.0]];
         let fit = eval.evaluate(genes).unwrap().fitness;
@@ -254,7 +240,11 @@ mod tests {
 
     #[test]
     fn multi_constraints_are_computed_correctly() {
-        let eval = Evaluator::new(fitness_2d_single, constraints_multi, true, None, None);
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_2d_single)
+            .constraints(constraints_multi)
+            .build()
+            .expect("Builder failed");
 
         let genes = array![
             /* idx 0 */ [1.0, 2.0], // Σ=3  → c0 = -7 ; all genes ≥0
@@ -270,13 +260,12 @@ mod tests {
 
     #[test]
     fn keep_infeasible_true_retains_every_row() {
-        let eval = Evaluator::new(
-            fitness_2d_single,
-            constraints_multi,
-            /* keep_infeasible = */ true, // do NOT filter
-            None,
-            None,
-        );
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_2d_single)
+            .constraints(constraints_multi)
+            .keep_infeasible(true)
+            .build()
+            .expect("Builder failed");
 
         let genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
         let pop = eval.evaluate(genes).unwrap();
@@ -290,13 +279,12 @@ mod tests {
     #[test]
     fn infeasible_or_out_of_bounds_are_dropped() {
         // Rule set: constraints ≤0   AND   0 ≤ gene ≤ 5
-        let eval = Evaluator::new(
-            fitness_2d_single,
-            constraints_multi,
-            /* keep_infeasible */ false,
-            Some(0.0), // lower
-            Some(5.0), // upper
-        );
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_2d_single)
+            .constraints(constraints_multi)
+            .keep_infeasible(false)
+            .build()
+            .expect("Builder failed");
 
         let genes = array![
             /* 0 OK  */ [1.0, 2.0], // inside bounds, constraints satisfied
@@ -317,13 +305,12 @@ mod tests {
 
     #[test]
     fn one_d_fitness_multi_constraints_filters_by_constraint_only() {
-        let eval = Evaluator::new(
-            fitness_1d,        // Array2 → Array1
-            constraints_multi, // Array2 → Array2
-            false,
-            None,
-            None,
-        );
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_1d)
+            .constraints(constraints_multi)
+            .keep_infeasible(false)
+            .build()
+            .expect("Builder failed");
 
         let genes = array![
             /* 0 OK  */ [1.0, 2.0], // Σ=3  (feasible)
@@ -341,13 +328,12 @@ mod tests {
 
     #[test]
     fn one_d_fitness_single_constraint_filters_correctly() {
-        let eval = Evaluator::new(
-            fitness_1d,
-            constraints_single, // Array2 → Array1
-            false,
-            None,
-            None,
-        );
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_1d)
+            .constraints(constraints_single)
+            .keep_infeasible(false)
+            .build()
+            .expect("Builder failed");
 
         let genes = array![
             /* 0 OK  */ [2.0, 3.0], // Σ=5  (feasible)
@@ -370,7 +356,14 @@ mod tests {
 
     #[test]
     fn bounds_only_filtering_removes_rows_outside_range() {
-        let eval = Evaluator::new(fitness_1d, NoConstraints, false, Some(0.0), Some(5.0));
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_1d)
+            .constraints(NoConstraints)
+            .keep_infeasible(false)
+            .lower_bound(Some(0.0))
+            .upper_bound(Some(5.0))
+            .build()
+            .expect("Builder failed");
 
         let genes = array![
             /* 0 OK  */ [1.0, 2.0],
@@ -391,7 +384,14 @@ mod tests {
 
     #[test]
     fn all_rows_removed_returns_no_feasible_error() {
-        let eval = Evaluator::new(fitness_1d, constraints_multi, false, Some(0.0), Some(5.0));
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_1d)
+            .constraints(constraints_multi)
+            .keep_infeasible(false)
+            .lower_bound(Some(0.0))
+            .upper_bound(Some(5.0))
+            .build()
+            .expect("Builder failed");
 
         // Every candidate violates either constraint (Σ>10) or bounds (6.0)
         let genes = array![[6.0, 6.0], [5.5, 6.0], [6.0, 4.0]];
@@ -408,7 +408,11 @@ mod tests {
 
     #[test]
     fn two_objective_fitness_is_computed_for_each_row() {
-        let eval = Evaluator::new(fitness_2d_two_obj, NoConstraints, true, None, None);
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_2d_two_obj)
+            .constraints(NoConstraints)
+            .build()
+            .expect("Builder failed");
 
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
         let fit = eval.evaluate(genes).unwrap().fitness;
@@ -424,13 +428,14 @@ mod tests {
 
     #[test]
     fn two_objective_with_filtering_keeps_only_feasible_and_in_bounds() {
-        let eval = Evaluator::new(
-            fitness_2d_two_obj,
-            constraints_multi,
-            false,
-            Some(0.0),
-            Some(5.0),
-        );
+        let eval = EvaluatorBuilder::default()
+            .fitness(fitness_2d_two_obj)
+            .constraints(constraints_multi)
+            .keep_infeasible(false)
+            .lower_bound(Some(0.0))
+            .upper_bound(Some(5.0))
+            .build()
+            .expect("Builder failed");
 
         let genes = array![
             /* 0 OK  */ [1.0, 2.0], // constraints OK, bounds OK

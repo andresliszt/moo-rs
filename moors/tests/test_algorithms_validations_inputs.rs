@@ -26,7 +26,6 @@ fn test_invalid_mutation_rate(#[case] invalid: f64) {
         .fitness_fn(dummy_fitness)
         .constraints_fn(NoConstraints)
         .num_vars(10)
-        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -63,7 +62,6 @@ fn test_invalid_crossover_rate(#[case] invalid: f64) {
         .fitness_fn(dummy_fitness)
         .constraints_fn(NoConstraints)
         .num_vars(10)
-        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -99,7 +97,6 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .constraints_fn(NoConstraints)
         .num_vars(0) // ← invalid
-        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)
@@ -125,7 +122,6 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .constraints_fn(NoConstraints)
         .num_vars(10)
-        .num_objectives(10)
         .population_size(0) // ← invalid
         .num_offsprings(50)
         .num_iterations(50)
@@ -151,7 +147,6 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .constraints_fn(NoConstraints)
         .num_vars(10)
-        .num_objectives(10)
         .population_size(100)
         .num_offsprings(0) // ← invalid
         .num_iterations(50)
@@ -177,7 +172,6 @@ fn test_invalid_n_vars_population_offsprings_iterations() {
         .fitness_fn(dummy_fitness)
         .constraints_fn(NoConstraints)
         .num_vars(10)
-        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(0) // ← invalid
@@ -207,7 +201,6 @@ fn test_invalid_bounds(#[case] lower: f64, #[case] upper: f64) {
         .fitness_fn(dummy_fitness)
         .constraints_fn(NoConstraints)
         .num_vars(10)
-        .num_objectives(10)
         .population_size(100)
         .num_offsprings(50)
         .num_iterations(50)

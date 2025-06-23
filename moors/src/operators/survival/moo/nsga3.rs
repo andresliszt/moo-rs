@@ -337,6 +337,7 @@ fn niching(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::algorithms::AlgorithmContextBuilder;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
 
@@ -491,7 +492,9 @@ mod tests {
         let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);
         let mut rng = FakeRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(2, 5, 5, 2, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
         // Set num_survive to 3 so that splitting must occur on the single front.
         let survivors = survival_operator.operate(population, 3, &mut rng, &_context);
         assert_eq!(survivors.len(), 3, "Final survivors count should be 3");
@@ -535,7 +538,9 @@ mod tests {
         let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);
         let mut rng = FakeRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(2, 7, 5, 2, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
         // Total individuals if merged completely would be 7.
         // Set num_survive to 5 so that the first front (3 individuals) is completely taken
         // and 2 individuals are selected from the second front.

@@ -53,6 +53,8 @@ mod tests {
     use crate::random::TestDummyRng;
     use ndarray::{Array1, Array2, array};
 
+    use crate::algorithms::AlgorithmContextBuilder;
+
     // A fake random generator; FitnessSurvival does not actually use RNG here,
     // but we need to satisfy the trait bound.
     struct FakeRandomGenerator {
@@ -93,7 +95,9 @@ mod tests {
         let pop = make_population(&[0.8, 0.2, 0.5, 0.1]);
         let mut rng = FakeRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(1, 4, 4, 1, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
 
         let mut selector = FitnessSurvival::new();
         let survived = selector.operate(pop, 2, &mut rng, &_context);
@@ -117,7 +121,9 @@ mod tests {
         let pop = make_population(&[0.3, 0.1, 0.2]);
         let mut rng = FakeRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(1, 3, 4, 1, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
 
         let mut selector = FitnessSurvival::new();
         let survived = selector.operate(pop, 5, &mut rng, &_context);
@@ -136,7 +142,9 @@ mod tests {
         let pop = make_population(&[0.42]);
         let mut rng = FakeRandomGenerator::new();
         // create context (not used in the algorithm)
-        let _context = AlgorithmContext::new(1, 1, 1, 1, 1, 0, None, None);
+        let _context = AlgorithmContextBuilder::default()
+            .build()
+            .expect("Failed to build context");
 
         let mut selector = FitnessSurvival::new();
         let survived = selector.operate(pop, 1, &mut rng, &_context);

@@ -34,7 +34,6 @@ fn bench_nsga2_zdt1(c: &mut Criterion) {
                 .fitness_fn(zdt1)
                 .constraints_fn(NoConstraints)
                 .num_vars(10)
-                .num_objectives(2)
                 .population_size(1000)
                 .num_offsprings(1000)
                 .num_iterations(10)
