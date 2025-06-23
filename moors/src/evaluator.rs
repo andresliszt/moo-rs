@@ -17,6 +17,12 @@ where
 {
     type Dim: D12;
     fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim>;
+    fn lower_bound(&self) -> Option<f64> {
+        None
+    }
+    fn upper_bound(&self) -> Option<f64> {
+        None
+    }
 }
 
 impl<G, Dim> ConstraintsFn for G
