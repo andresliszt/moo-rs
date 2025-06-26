@@ -60,12 +60,11 @@ impl SelectionOperator for RankAndScoringSelection {
         ConstrDim: D01,
     {
         // Feasibility dominates everything
-        match (p1.is_feasible(), p2.is_feasible()) {
-            (true, false) => return DuelResult::LeftWins,
-            (false, true) => return DuelResult::RightWins,
-            _ => {}
+        if let result @ DuelResult::LeftWins | result @ DuelResult::RightWins =
+            Self::feasibility_dominates(p1, p2)
+        {
+            return result;
         }
-
         // Rank (if enabled)
         if self.use_rank {
             match p1.rank.cmp(&p2.rank) {
@@ -160,7 +159,8 @@ mod tests {
         case(true, true, 0, 0, 10.0, 5.0, SurvivalScoringComparison::Minimize, DuelResult::RightWins),
         case(true, true, 0, 0, 8.0, 8.0, SurvivalScoringComparison::Minimize, DuelResult::Tie),
 
-        // Both are infeasible: rules are the same as for feasible individuals.
+        // Both are infeasible: return the one with smaller constraint violations. In this test case
+        // both have the same constraint violation totals, continue with rank and survival comparison
         case(false, false, 0, 1, 10.0, 5.0, SurvivalScoringComparison::Maximize, DuelResult::LeftWins),
         case(false, false, 0, 0, 7.0, 7.0, SurvivalScoringComparison::Maximize, DuelResult::Tie)
     )]
@@ -188,13 +188,11 @@ mod tests {
         let left_constraints = left_arr0.view();
         let right_constraints = right_arr0.view();
         // Create individuals with the given rank and survival (diversity) values.
-        let p1: IndividualMOO<'_, ndarray::Ix0> = IndividualMOO {
-            genes: genes.view(),
-            fitness: fitness.view(),
-            constraints: left_constraints,
-            rank: Some(left_rank),
-            survival_score: Some(left_survival),
-        };
+        let mut p1: IndividualMOO<'_, ndarray::Ix0> =
+            IndividualMOO::new(genes.view(), fitness.view(), left_constraints);
+        p1.set_rank(left_rank);
+        p1.set_survival_score(left_survival);
+
         let mut p2: IndividualMOO<'_, ndarray::Ix0> =
             IndividualMOO::new(genes.view(), fitness.view(), right_constraints);
         // Call setters to extend this test
@@ -205,6 +203,43 @@ mod tests {
         let mut rng = FakeRandomGenerator::new();
         let result = selector.tournament_duel(&p1, &p2, &mut rng);
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_tournament_duel_both_infeasible() {
+        // For simplicity, we use the same genes and fitness values for both individuals.
+        let genes = array![1.0, 2.0];
+        let fitness = array![0.5];
+
+        // p1 should win, both are infeasible but p1 constraints violaiton totals is smaller than p2
+        let left_arr0 = arr0(1.0);
+        let right_arr0 = arr0(2.0);
+        let left_constraints = left_arr0.view();
+        let right_constraints = right_arr0.view();
+        let p1: IndividualMOO<'_, ndarray::Ix0> =
+            IndividualMOO::new(genes.view(), fitness.view(), left_constraints);
+
+        let p2: IndividualMOO<'_, ndarray::Ix0> =
+            IndividualMOO::new(genes.view(), fitness.view(), right_constraints);
+
+        let selector = RankAndScoringSelection::default();
+        let mut rng = FakeRandomGenerator::new();
+        let result = selector.tournament_duel(&p1, &p2, &mut rng);
+        assert_eq!(result, DuelResult::LeftWins);
+
+        // Same test with ArrayView1 -- p2 has smaller total constraint violations than p1
+        let left_arr1 = array![1729.0, -250.0];
+        let right_arr1 = array![10.0, -5.0];
+        let left_constraints = left_arr1.view();
+        let right_constraints = right_arr1.view();
+        let p1: IndividualMOO<'_, ndarray::Ix1> =
+            IndividualMOO::new(genes.view(), fitness.view(), left_constraints);
+
+        let p2: IndividualMOO<'_, ndarray::Ix1> =
+            IndividualMOO::new(genes.view(), fitness.view(), right_constraints);
+
+        let result = selector.tournament_duel(&p1, &p2, &mut rng);
+        assert_eq!(result, DuelResult::RightWins);
     }
 
     #[test]

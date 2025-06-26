@@ -110,13 +110,7 @@ where
     ) -> Result<Population<F::Dim, G::Dim>, EvaluatorError> {
         let fitness = self.fitness.call(&genes);
         let constraints = self.constraints.call(&genes);
-        let mut evaluated_population = Population {
-            genes: genes,
-            fitness: fitness,
-            constraints: constraints,
-            rank: None,
-            survival_score: None,
-        };
+        let mut evaluated_population = Population::new(genes, fitness, constraints);
 
         if !self.keep_infeasible {
             // Create a list of all indices.

@@ -9,7 +9,7 @@
 `moors` is the core crate of the [moo-rs](https://github.com/andresliszt/moo-rs/) project for solving multi-objective optimization problems with evolutionary algorithms. It's a pure-Rust crate for high-performance implementations of genetic algorithms
 
 ## Features
-
+- Single Objective Genetic Algorithms (SO-GA)
 - NSGA-II, NSGA-III, R-NSGA-II, Age-MOEA, REVEA, SPEA-II (many more coming soon!)
 - Pluggable operators: sampling, crossover, mutation, duplicates removal
 - Flexible fitness & constraints via user-provided closures
@@ -81,6 +81,73 @@ fn main() -> Result<(), AlgorithmError> {
     Ok(())
 }
 ```
+
+## Duplicates Cleaner
+
+In the example above, we use `ExactDuplicatesCleaner` to remove duplicated individuals that are exactly the same (hash-based deduplication). The `CloseDuplicatesCleaner` is also available—it accepts an `epsilon` parameter to drop any individuals within an ε-ball. Note that eliminating duplicates can be computationally expensive; if you do not want to use a duplicate cleaner, pass `moors::NoDuplicatesCleaner` to the builder.
+
+
+## Constraints
+
+In **moors**, constraints (if provided) are used to enforce feasibility:
+
+- **Feasibility dominates everything**: any individual with all constraint values ≤ 0 is preferred over any infeasible one.
+- If both tournament participants are infeasible, the one with the smaller sum of positive violations wins.
+- All constraints must evaluate to ≤ 0. For “>” constraints, invert the inequality in your function (multiply by –1).
+- Equality constraints use an ε-tolerance:
+
+  $$g_{\text{ineq}}(x) = \bigl|g_{\text{eq}}(x)\bigr| - \varepsilon \;\le\; 0.$$
+
+```rust
+use ndarray::{Array2, Array1, Axis};
+
+const EPSILON: f64 = 1e-6;
+
+/// Returns an Array2 of shape (n, 2) containing two constraints for each row [x, y]:
+/// - Column 0: |x + y - 1| - EPSILON ≤ 0 (equality with ε-tolerance)
+/// - Column 1: x² + y² - 1.0 ≤ 0 (unit circle inequality)
+fn constraints(genes: &Array2<f64>) -> Array2<f64> {
+    // Constraint 1: |x + y - 1| - EPSILON
+    let eq = genes.map_axis(Axis(1), |row| (row[0] + row[1] - 1.0).abs() - EPSILON);
+    // Constraint 2: x^2 + y^2 - 1
+    let ineq = genes.map_axis(Axis(1), |row| row[0].powi(2) + row[1].powi(2) - 1.0);
+    // Stack into two columns
+    stack(Axis(1), &[eq.view(), ineq.view()]).unwrap()
+}
+```
+
+We know! we don't want to be stacking and using the epsilon technique everywhere. We have a helper macro to build the constraints for us
+
+```rust
+use ndarray::{Array2, Array1, Axis};
+
+use moors::impl_constraints_fn;
+
+const EPSILON: f64 = 1e-6;
+
+/// Equality constraint x + y = 1
+fn constraints_eq(genes: &Array2<f64>) -> Array1<f64> {
+    genes.map_axis(Axis(1), |row| row[0] + row[1] - 1.0)
+}
+
+/// Inequality constraint: x² + y² - 1 ≤ 0
+fn constraints_ineq(genes: &Array2<f64>) -> Array1<f64> {
+    genes.map_axis(Axis(1), |row| row[0].powi(2) + row[1].powi(2) - 1.0)
+}
+
+constraints_fn!(
+    MyConstraints,
+    ineq = [g_ineq],
+    eq   = [h_eq],
+);
+
+```
+
+The macro above will generate a struct `MyConstraints` that can be passed to any `moors` algorithm. This macro accepts optional arguments `lower_bound` and `upper_bound` both for now `f64` that are used to control the lower and upper bound of each gene.
+
+
+If the optimization problem does not have any constraint, then use in the builder the struct `moors::NoConstraints`
+
 
 ## Contributing
 
