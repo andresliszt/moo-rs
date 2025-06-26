@@ -3,6 +3,9 @@
 </p>
 
 # moo-rs
+
+> _Evolution is a mystery_
+
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Python Versions](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 [![PyPI version](https://img.shields.io/pypi/v/pymoors.svg)](https://pypi.org/project/pymoors/)
@@ -44,7 +47,7 @@ moo-rs/
 
 ```toml
 [dependencies]
-moors = "0.1.1"
+moors = "0.2.0"
 ```
 
 ### Quickstart
@@ -165,8 +168,8 @@ fn constraints_ineq(genes: &Array2<f64>) -> Array1<f64> {
 
 constraints_fn!(
     MyConstraints,
-    ineq = [g_ineq],
-    eq   = [h_eq],
+    ineq = [constraints_ineq],
+    eq   = [constraints_eq],
 );
 
 ```
