@@ -223,7 +223,6 @@ where
             .keep_infeasible(params.keep_infeasible)
             .build()
             .expect("Params already validated in build_params");
-
         let context = AlgorithmContextBuilder::default()
             .num_vars(params.num_vars)
             .population_size(params.population_size)

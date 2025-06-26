@@ -23,21 +23,16 @@ impl SelectionOperator for RandomSelection {
     where
         ConstrDim: D01,
     {
-        let p1_feasible = p1.is_feasible();
-        let p2_feasible = p2.is_feasible();
-
-        // If exactly one is feasible, that one automatically wins:
-        if p1_feasible && !p2_feasible {
+        if let result @ DuelResult::LeftWins | result @ DuelResult::RightWins =
+            Self::feasibility_dominates(p1, p2)
+        {
+            return result;
+        }
+        // Otherwise, both are feasible or both are infeasible => random winner.
+        if rng.gen_bool(0.5) {
             DuelResult::LeftWins
-        } else if p2_feasible && !p1_feasible {
-            DuelResult::RightWins
         } else {
-            // Otherwise, both are feasible or both are infeasible => random winner.
-            if rng.gen_bool(0.5) {
-                DuelResult::LeftWins
-            } else {
-                DuelResult::RightWins
-            }
+            DuelResult::RightWins
         }
     }
 }

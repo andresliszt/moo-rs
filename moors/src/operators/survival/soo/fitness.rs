@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use ndarray::Array1;
 
 use crate::{
@@ -9,12 +11,6 @@ use crate::{
 /// `FitnessSurvival` selects the individuals with the lowest fitness values
 /// (minimization) to survive into the next generation.
 pub struct FitnessSurvival;
-
-impl FitnessSurvival {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
 
 impl SurvivalOperator for FitnessSurvival {
     type FDim = ndarray::Ix1;
@@ -32,15 +28,32 @@ impl SurvivalOperator for FitnessSurvival {
         let pop_size = population.fitness.len();
         let mut indices: Vec<usize> = (0..pop_size).collect();
 
-        indices.sort_by(|&i, &j| {
-            population.fitness[i]
-                .partial_cmp(&population.fitness[j])
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
+        if let Some(violations) = &population.constraint_violation_totals {
+            // Lexicographic sort: primary by constraint violations, secondary by fitness
+            indices.sort_by(|&i, &j| {
+                let ord1 = violations[i]
+                    .partial_cmp(&violations[j])
+                    .unwrap_or(Ordering::Equal);
+                if ord1 != Ordering::Equal {
+                    ord1
+                } else {
+                    population.fitness[i]
+                        .partial_cmp(&population.fitness[j])
+                        .unwrap_or(Ordering::Equal)
+                }
+            });
+        } else {
+            // Sort only by fitness
+            indices.sort_by(|&i, &j| {
+                population.fitness[i]
+                    .partial_cmp(&population.fitness[j])
+                    .unwrap_or(Ordering::Equal)
+            });
+        }
         let survive_count = num_survive.min(pop_size);
         let selected_indices = &indices[..survive_count];
         let mut selected_population = population.selected(selected_indices);
-        // Population is already sorted by fitness
+        // Population is already lex-sorted by cv and fitness
         selected_population.set_rank(Array1::from_iter(0..survive_count));
         selected_population
     }
@@ -99,7 +112,7 @@ mod tests {
             .build()
             .expect("Failed to build context");
 
-        let mut selector = FitnessSurvival::new();
+        let mut selector = FitnessSurvival;
         let survived = selector.operate(pop, 2, &mut rng, &_context);
 
         // survive_count = 2
@@ -125,7 +138,7 @@ mod tests {
             .build()
             .expect("Failed to build context");
 
-        let mut selector = FitnessSurvival::new();
+        let mut selector = FitnessSurvival;
         let survived = selector.operate(pop, 5, &mut rng, &_context);
 
         assert_eq!(survived.fitness.len(), 3);
@@ -146,7 +159,7 @@ mod tests {
             .build()
             .expect("Failed to build context");
 
-        let mut selector = FitnessSurvival::new();
+        let mut selector = FitnessSurvival;
         let survived = selector.operate(pop, 1, &mut rng, &_context);
 
         assert_eq!(survived.fitness.len(), 1);

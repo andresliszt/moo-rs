@@ -5,12 +5,6 @@ use crate::random::RandomGenerator;
 #[derive(Debug, Clone)]
 pub struct RankSelection;
 
-impl RankSelection {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
 impl SelectionOperator for RankSelection {
     type FDim = ndarray::Ix1;
     /// Runs tournament selection on the given population and returns the duel result.
@@ -25,10 +19,10 @@ impl SelectionOperator for RankSelection {
         ConstrDim: D01,
     {
         // Feasibility dominates everything
-        match (p1.is_feasible(), p2.is_feasible()) {
-            (true, false) => return DuelResult::LeftWins,
-            (false, true) => return DuelResult::RightWins,
-            _ => {}
+        if let result @ DuelResult::LeftWins | result @ DuelResult::RightWins =
+            Self::feasibility_dominates(p1, p2)
+        {
+            return result;
         }
 
         match p1.rank.cmp(&p2.rank) {

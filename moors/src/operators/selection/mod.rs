@@ -26,6 +26,31 @@ pub trait SelectionOperator {
         2
     }
 
+    fn feasibility_dominates<'a, ConstrDim>(
+        p1: &Individual<'a, <Self::FDim as Dimension>::Smaller, ConstrDim>,
+        p2: &Individual<'a, <Self::FDim as Dimension>::Smaller, ConstrDim>,
+    ) -> DuelResult
+    where
+        <Self::FDim as Dimension>::Smaller: D01,
+        ConstrDim: D01,
+    {
+        match (p1.is_feasible(), p2.is_feasible()) {
+            (true, false) => DuelResult::LeftWins,
+            (false, true) => DuelResult::RightWins,
+            (false, false) => {
+                let sum1 = p1.constraint_violation_totals.unwrap();
+                let sum2 = p2.constraint_violation_totals.unwrap();
+                if sum1 < sum2 {
+                    DuelResult::LeftWins
+                } else if sum1 > sum2 {
+                    DuelResult::RightWins
+                } else {
+                    DuelResult::Tie
+                }
+            }
+            (true, true) => DuelResult::Tie,
+        }
+    }
     /// Selects random participants from the population for the tournaments.
     /// If `n_crossovers * pressure` is greater than the population size, it will create multiple permutations
     /// to ensure there are enough random indices.

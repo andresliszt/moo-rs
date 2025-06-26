@@ -41,6 +41,7 @@ where
     pub constraints: ArrayView<'a, f64, ConstrDim>,
     pub rank: Option<usize>,
     pub survival_score: Option<f64>,
+    pub constraint_violation_totals: Option<f64>,
 }
 
 impl<'a, FDim, ConstrDim> Individual<'a, FDim, ConstrDim>
@@ -55,21 +56,34 @@ where
         fitness: ArrayView<'a, f64, FDim>,
         constraints: ArrayView<'a, f64, ConstrDim>,
     ) -> Self {
+        let constraint_violation_totals = match ConstrDim::NDIM {
+            Some(0) => {
+                let val = constraints.first().copied().unwrap_or(0.0);
+                Some(if val <= 0.0 { 0.0 } else { val })
+            }
+            _ => {
+                let sum = constraints.iter().copied().filter(|&v| v > 0.0).sum();
+                Some(sum)
+            }
+        };
         Self {
             genes,
             fitness,
             constraints: constraints,
             rank: None,
             survival_score: None,
+            constraint_violation_totals: constraint_violation_totals,
         }
     }
 
     /// Checks if the individual is feasible.
-    /// If `constraints` is `None`, it's always feasible.
-    /// Otherwise, all constraint values must be ≤ 0.0.
     pub fn is_feasible(&self) -> bool {
-        self.constraints.len() == 0 || self.constraints.iter().all(|&val| val <= 0.0)
+        match self.constraint_violation_totals {
+            Some(val) => val == 0.0,
+            None => true,
+        }
     }
+
     /// Sets the rank of the individual.
     pub fn set_rank(&mut self, rank: usize) {
         self.rank = Some(rank);
@@ -95,6 +109,7 @@ where
             constraints: ArrayView1::from(&[]),
             rank: None,
             survival_score: None,
+            constraint_violation_totals: None,
         }
     }
 }
@@ -112,6 +127,7 @@ where
     pub constraints: Constraints<ConstrDim>,
     pub rank: Option<Array1<usize>>,
     pub survival_score: Option<Array1<f64>>,
+    pub constraint_violation_totals: Option<Array1<f64>>,
 }
 
 impl<FDim, ConstrDim> Population<FDim, ConstrDim>
@@ -126,12 +142,29 @@ where
         fitness: Fitness<FDim>,
         constraints: Constraints<ConstrDim>,
     ) -> Self {
+        let constraint_violation = match ConstrDim::NDIM {
+            Some(1) => {
+                let tmp = constraints.mapv(|x| x.max(0.0));
+                let mut arr = tmp.into_dimensionality::<Ix1>().unwrap();
+                // subtract 1e-4, floor at 0.0
+                arr.mapv_inplace(|v| (v - 1e-4).max(0.0));
+                Some(arr)
+            }
+            _ => {
+                let tmp = constraints.mapv(|x| x.max(0.0)).sum_axis(Axis(1));
+                let mut arr = tmp.into_dimensionality::<Ix1>().unwrap();
+                // subtract 1e-4, floor at 0.0
+                arr.mapv_inplace(|v| (v - 1e-4).max(0.0));
+                Some(arr)
+            }
+        };
         Self {
             genes,
             fitness,
             constraints: constraints,
             rank: None,
             survival_score: None,
+            constraint_violation_totals: constraint_violation,
         }
     }
 
@@ -149,14 +182,17 @@ where
 
         let rank = self.rank.as_ref().map(|r| r[idx]);
         let survival_score = self.survival_score.as_ref().map(|s| s[idx]);
-
-        Individual {
-            genes,
-            fitness,
-            constraints,
-            rank,
-            survival_score,
-        }
+        let constraint_violation_totals =
+            self.constraint_violation_totals.as_ref().map(|cv| cv[idx]);
+        let individual = Individual {
+            genes: genes,
+            fitness: fitness,
+            constraints: constraints,
+            rank: rank,
+            survival_score: survival_score,
+            constraint_violation_totals: constraint_violation_totals,
+        };
+        individual
     }
     /// Returns a new `Population` containing only the individuals at the specified indices.
     pub fn selected(&self, indices: &[usize]) -> Self {
@@ -164,17 +200,21 @@ where
         let fitness = self.fitness.select(Axis(0), indices);
         let constraints = self.constraints.select(Axis(0), indices);
         let rank = self.rank.as_ref().map(|r| r.select(Axis(0), indices));
+        let constraint_violation_totals = self
+            .constraint_violation_totals
+            .as_ref()
+            .map(|r| r.select(Axis(0), indices));
         let survival_score = self
             .survival_score
             .as_ref()
             .map(|ss| ss.select(Axis(0), indices));
-
         Population {
             genes,
             fitness,
             constraints,
             rank,
             survival_score,
+            constraint_violation_totals,
         }
     }
 
@@ -246,6 +286,17 @@ where
             _ => panic!("Mismatched population rank: one is set and the other is None"),
         };
 
+        let merged_total_cv = match (
+            &population1.constraint_violation_totals,
+            &population2.constraint_violation_totals,
+        ) {
+            (Some(r1), Some(r2)) => {
+                Some(concatenate(Axis(0), &[r1.view(), r2.view()]).expect("Failed to merge rank"))
+            }
+            (None, None) => None,
+            _ => panic!("Mismatched population rank: one is set and the other is None"),
+        };
+
         // Merge survival_score: both must be Some or both must be None.
         let merged_survival_score = match (&population1.survival_score, &population2.survival_score)
         {
@@ -263,6 +314,7 @@ where
             constraints: merged_constraints,
             rank: merged_rank,
             survival_score: merged_survival_score,
+            constraint_violation_totals: merged_total_cv,
         }
     }
 }
@@ -279,6 +331,7 @@ where
             constraints: Array2::zeros((n, 0)),
             rank: None,
             survival_score: None,
+            constraint_violation_totals: None,
         }
     }
 }
