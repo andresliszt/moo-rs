@@ -1,4 +1,7 @@
 # moors
+
+> _Evolution is a mystery_
+
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 [![codecov](https://codecov.io/gh/andresliszt/moo-rs/graph/badge.svg?token=KC6EAVYGHX?flag=moors)](https://codecov.io/gh/andresliszt/moo-rs?flag=moors)
 [![crates.io](https://img.shields.io/crates/v/moors.svg)](https://crates.io/crates/moors)
@@ -19,7 +22,7 @@
 
 ```toml
 [dependencies]
-moors = "0.1.1"
+moors = "0.2.0"
 ```
 
 ## Quickstart
@@ -137,8 +140,8 @@ fn constraints_ineq(genes: &Array2<f64>) -> Array1<f64> {
 
 constraints_fn!(
     MyConstraints,
-    ineq = [g_ineq],
-    eq   = [h_eq],
+    ineq = [constraints_ineq],
+    eq   = [constraints_eq],
 );
 
 ```
