@@ -135,6 +135,8 @@ where
     FDim: D12,
     ConstrDim: D12,
 {
+    const CONSTRAINTS_VIOLATION_TOLERANCE: f64 = 1e-6;
+
     /// Creates a new `Population` instance with the given genes, fitness, constraints, and rank.
     /// The `survival_score` field is set to `None` by default.
     pub fn new(
@@ -146,15 +148,13 @@ where
             Some(1) => {
                 let tmp = constraints.mapv(|x| x.max(0.0));
                 let mut arr = tmp.into_dimensionality::<Ix1>().unwrap();
-                // subtract 1e-4, floor at 0.0
-                arr.mapv_inplace(|v| (v - 1e-4).max(0.0));
+                arr.mapv_inplace(|v| (v - Self::CONSTRAINTS_VIOLATION_TOLERANCE).max(0.0));
                 Some(arr)
             }
             _ => {
                 let tmp = constraints.mapv(|x| x.max(0.0)).sum_axis(Axis(1));
                 let mut arr = tmp.into_dimensionality::<Ix1>().unwrap();
-                // subtract 1e-4, floor at 0.0
-                arr.mapv_inplace(|v| (v - 1e-4).max(0.0));
+                arr.mapv_inplace(|v| (v - Self::CONSTRAINTS_VIOLATION_TOLERANCE).max(0.0));
                 Some(arr)
             }
         };

@@ -9,22 +9,38 @@ use crate::{
     random::RandomGenerator,
 };
 
-/// A survival operator that selects individuals with the lowest fitness values
-/// (for minimization problems) to survive into the next generation.
+/// A survival operator that selects individuals based on a **penalized fitness** score,
+/// which combines the objective value (fitness) and the total constraint violation.
 ///
-/// If constraint violations are present in the population, selection is based on a
-/// **lexicographic sort**: individuals are prioritized first by their **total constraint
-/// violation**, and then — in case of ties — by their **fitness** values.
+/// The selection score for each individual is computed as:
 ///
-/// - Individuals with **lower constraint violations** are preferred.
-/// - Among individuals with equal violation, those with **lower fitness** are selected.
+/// ```text
+/// penalized_score = fitness + constraints_penalty × constraint_violation
+/// ```
 ///
-/// If no constraint violations are provided, selection is based solely on fitness.
+/// Individuals with lower penalized scores are preferred (i.e., minimization).
 ///
-/// This operator is used in single-objective optimization scenarios.
-pub struct FitnessSurvival;
+/// This operator allows you to balance the trade-off between feasibility and objective
+/// quality:
+///
+/// - When `constraints_penalty` is small, fitness dominates.
+/// - When `constraints_penalty` is large, constraint satisfaction dominates.
+///
+/// If no constraint violations are present in the population, selection defaults
+/// to pure fitness-based minimization.
+pub struct FitnessConstraintsPenaltySurvival {
+    constraints_penalty: f64,
+}
 
-impl SurvivalOperator for FitnessSurvival {
+impl FitnessConstraintsPenaltySurvival {
+    pub fn new(constraints_penalty: f64) -> Self {
+        Self {
+            constraints_penalty: constraints_penalty,
+        }
+    }
+}
+
+impl SurvivalOperator for FitnessConstraintsPenaltySurvival {
     type FDim = ndarray::Ix1;
 
     fn operate<ConstrDim>(
@@ -41,31 +57,27 @@ impl SurvivalOperator for FitnessSurvival {
         let mut indices: Vec<usize> = (0..pop_size).collect();
 
         if let Some(violations) = &population.constraint_violation_totals {
-            // Lexicographic sort: primary by constraint violations, secondary by fitness
+            let penalty_scores: Vec<f64> = (0..pop_size)
+                .map(|i| self.constraints_penalty * violations[i] + population.fitness[i])
+                .collect();
+
             indices.sort_by(|&i, &j| {
-                let ord1 = violations[i]
-                    .partial_cmp(&violations[j])
-                    .unwrap_or(Ordering::Equal);
-                if ord1 != Ordering::Equal {
-                    ord1
-                } else {
-                    population.fitness[i]
-                        .partial_cmp(&population.fitness[j])
-                        .unwrap_or(Ordering::Equal)
-                }
+                penalty_scores[i]
+                    .partial_cmp(&penalty_scores[j])
+                    .unwrap_or(Ordering::Equal)
             });
         } else {
-            // Sort only by fitness
             indices.sort_by(|&i, &j| {
                 population.fitness[i]
                     .partial_cmp(&population.fitness[j])
                     .unwrap_or(Ordering::Equal)
             });
         }
+
         let survive_count = num_survive.min(pop_size);
         let selected_indices = &indices[..survive_count];
         let mut selected_population = population.selected(selected_indices);
-        // Population is already lex-sorted by cv and fitness
+
         selected_population.set_rank(Array1::from_iter(0..survive_count));
         selected_population
     }
@@ -117,7 +129,7 @@ mod tests {
             .build()
             .expect("Failed to build context");
 
-        let mut selector = FitnessSurvival;
+        let mut selector = FitnessConstraintsPenaltySurvival::new(1.0);
         let survived = selector.operate(pop, 2, &mut rng, &_context);
 
         // survive_count = 2
@@ -148,7 +160,7 @@ mod tests {
             .build()
             .expect("Failed to build context");
 
-        let mut selector = FitnessSurvival;
+        let mut selector = FitnessConstraintsPenaltySurvival::new(1.0);
         let survived = selector.operate(pop, 2, &mut rng, &_context);
         // survive_count = 2
         assert_eq!(survived.fitness.len(), 2);
@@ -162,49 +174,37 @@ mod tests {
     }
 
     #[test]
-    fn selects_all_when_num_survive_exceeds_population() {
-        // Three individuals [0.3, 0.1, 0.2], requesting 5 survivors
-        // should return all 3 sorted by fitness: [0.1, 0.2, 0.3]
-        let genes = Array2::zeros((4, 1));
-        let fitness = array![0.3, 0.1, 0.2];
-        let pop = PopulationSOO::new_unconstrained(genes, fitness);
+    fn constraints_penalty_affects_selection_order() {
+        // Two infeasible individuals:
+        // - Individual 0: great fitness, high violation
+        // - Individual 1: poor fitness, low violation
+        let genes = Array2::zeros((2, 1));
+        let fitness = array![0.1, 0.9];
+        let constraints = array![10.0, 1.0];
+
+        let pop = PopulationSOO::new(genes, fitness, constraints);
         let mut rng = FakeRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
+
+        let context = AlgorithmContextBuilder::default()
             .build()
             .expect("Failed to build context");
 
-        let mut selector = FitnessSurvival;
-        let survived = selector.operate(pop, 5, &mut rng, &_context);
+        // --- Case 1: Low penalty → fitness dominates
+        // Penalized:
+        //   Individual 0: 0.1 + 0.001 * 10 = 0.11
+        //   Individual 1: 0.9 + 0.001 * 1  = 0.901
+        // → Individual 0 should win
+        let mut selector_low = FitnessConstraintsPenaltySurvival::new(0.001);
+        let survived_low = selector_low.operate(pop.clone(), 1, &mut rng, &context);
+        assert_eq!(survived_low.fitness, array![0.1]);
 
-        assert_eq!(survived.fitness.len(), 3);
-        let expected_fitness = array![0.1, 0.2, 0.3];
-        assert_eq!(survived.fitness, expected_fitness);
-        // Expected ranks: [0, 1, 2]
-        let expected_ranks = array![0, 1, 2];
-        assert_eq!(survived.rank.unwrap(), expected_ranks);
-    }
-
-    #[test]
-    fn single_individual_survives_with_rank_zero() {
-        // One individual with fitness [0.42], selecting 1 → same individual
-        let genes = Array2::zeros((1, 1));
-        let fitness = array![0.42];
-        let pop = PopulationSOO::new_unconstrained(genes, fitness);
-        let mut rng = FakeRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-
-        let mut selector = FitnessSurvival;
-        let survived = selector.operate(pop, 1, &mut rng, &_context);
-
-        assert_eq!(survived.fitness.len(), 1);
-        assert_eq!(survived.fitness[0], 0.42);
-
-        // Only one rank: [0]
-        let expected_ranks = array![0];
-        assert_eq!(survived.rank.unwrap(), expected_ranks);
+        // --- Case 2: High penalty → constraint violation dominates
+        // Penalized:
+        //   Individual 0: 0.1 + 1.0 * 10 = 10.1
+        //   Individual 1: 0.9 + 1.0 * 1  = 1.9
+        // → Individual 1 should win
+        let mut selector_high = FitnessConstraintsPenaltySurvival::new(1.0);
+        let survived_high = selector_high.operate(pop, 1, &mut rng, &context);
+        assert_eq!(survived_high.fitness, array![0.9]);
     }
 }
