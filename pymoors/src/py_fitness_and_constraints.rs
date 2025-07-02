@@ -1,21 +1,20 @@
+use ndarray::Array2;
 use numpy::{PyArray2, PyArrayMethods, ToPyArray};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 
-use moors::genetic::{PopulationConstraints, PopulationFitness, PopulationGenes};
-
 /// Placeholder types for the fitness and constraint functions.
-pub type PyFitnessFn = Box<dyn Fn(&PopulationGenes) -> PopulationFitness + Send + Sync>;
-pub type PyConstraintsFn = Box<dyn Fn(&PopulationGenes) -> PopulationConstraints + Send + Sync>;
+pub type PyFitnessFn = Box<dyn Fn(&Array2<f64>) -> Array2<f64> + Send + Sync>;
+pub type PyConstraintsFn = Box<dyn Fn(&Array2<f64>) -> Array2<f64> + Send + Sync>;
 
 /// Creates a closure that calls a Python function with a 2D NumPy array (`Array2<f64>`)
 /// and expects to get back another 2D array of floats (`Array2<f64>`).
 ///
 /// The returned closure has the signature:
-///     `Fn(&PopulationGenes) -> PopulationFitness`
+///     `Fn(&Array2<f64>) -> Array2<f64>`
 /// i.e., `(&Array2<f64>) -> Array2<f64>`.
 pub fn create_population_fitness_closure(py_fitness_fn: PyObject) -> PyResult<PyFitnessFn> {
-    Ok(Box::new(move |pop_genes: &PopulationGenes| {
+    Ok(Box::new(move |pop_genes: &Array2<f64>| {
         Python::with_gil(|py| {
             // Instead of `pop_genes.into_pyarray(py)`, use a reference-based method:
             let py_input = pop_genes.to_pyarray(py);
@@ -43,7 +42,7 @@ pub fn create_population_fitness_closure(py_fitness_fn: PyObject) -> PyResult<Py
 pub fn create_population_constraints_closure(
     py_constraints_fn: PyObject,
 ) -> PyResult<PyConstraintsFn> {
-    Ok(Box::new(move |pop_genes: &PopulationGenes| {
+    Ok(Box::new(move |pop_genes: &Array2<f64>| {
         Python::with_gil(|py| {
             // Convert from `Array2<f64>` to NumPy array without moving ownership
             let py_input = pop_genes.to_pyarray(py);

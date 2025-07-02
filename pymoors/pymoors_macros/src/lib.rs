@@ -294,7 +294,7 @@ pub fn register_py_operators_mutation(_attr: TokenStream, item: TokenStream) -> 
             }
             fn operate(
                 &self,
-                population: &mut moors::genetic::PopulationGenes,
+                population: &Array2<f64>,
                 mutation_rate: f64,
                 rng: &mut impl moors::random::RandomGenerator,
             ) {
@@ -428,19 +428,19 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
         impl moors::operators::CrossoverOperator for #enum_ident {
             fn crossover(
                 &self,
-                parent_a: &moors::genetic::IndividualGenes,
-                parent_b: &moors::genetic::IndividualGenes,
+                parent_a: &Array1<f64>,
+                parent_b: &Array1<f64>,
                 rng: &mut impl moors::random::RandomGenerator,
-            ) -> (moors::genetic::IndividualGenes, moors::genetic::IndividualGenes) {
+            ) -> (Array1<f64>, Array1<f64>) {
                 match self { #(#crossover_match)* }
             }
             fn operate(
                 &self,
-                parents_a: &moors::genetic::PopulationGenes,
-                parents_b: &moors::genetic::PopulationGenes,
+                parents_a: &Array2<f64>,
+                parents_b: &Array2<f64>,
                 crossover_rate: f64,
                 rng: &mut impl moors::random::RandomGenerator,
-            ) -> moors::genetic::PopulationGenes {
+            ) -> Array2<f64> {
                 match self { #(#operate_match)* }
             }
         }
