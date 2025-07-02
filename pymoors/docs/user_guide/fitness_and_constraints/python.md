@@ -1,4 +1,4 @@
-# Fitness Function in pymoors
+## Fitness Function in pymoors
 
 In **pymoors**, the way to define objective functions for optimization is through a NumPy-based function that operates on an entire population. This means that the provided function, `f(genes)`, expects `genes` to be a 2D NumPy array with dimensions `(population_size, num_vars)`. It must then return a 2D NumPy array of shape `(population_size, n_objectives)`, where each row corresponds to the evaluation of a single individual.
 

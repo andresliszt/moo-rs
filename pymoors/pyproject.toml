@@ -62,8 +62,8 @@ docs = [
     "mkdocs-jupyter",
     "mkdocs-material",
     "pymdown-extensions",
-    "neoteroi-mkdocs"
-
+    "neoteroi-mkdocs",
+    "mkdocs-include-markdown-plugin"
 ]
 
 all = [
