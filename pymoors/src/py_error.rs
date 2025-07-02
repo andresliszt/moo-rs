@@ -1,5 +1,5 @@
-use moors::algorithms::MultiObjectiveAlgorithmError;
-use moors::evaluator::EvaluatorError;
+use moors::EvaluatorError;
+use moors::{AlgorithmError, AlgorithmMOOBuilderError};
 use pyo3::PyErr;
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyRuntimeError};
@@ -38,10 +38,10 @@ create_exception!(
 /// A local wrapper for MultiObjectiveAlgorithmError,
 /// allowing us to implement conversion traits.
 #[derive(Debug)]
-pub struct MultiObjectiveAlgorithmErrorWrapper(pub MultiObjectiveAlgorithmError);
+pub struct MultiObjectiveAlgorithmErrorWrapper(pub AlgorithmError);
 
-impl From<MultiObjectiveAlgorithmError> for MultiObjectiveAlgorithmErrorWrapper {
-    fn from(err: MultiObjectiveAlgorithmError) -> Self {
+impl From<AlgorithmError> for MultiObjectiveAlgorithmErrorWrapper {
+    fn from(err: AlgorithmError) -> Self {
         MultiObjectiveAlgorithmErrorWrapper(err)
     }
 }
@@ -52,13 +52,11 @@ impl From<MultiObjectiveAlgorithmErrorWrapper> for PyErr {
     fn from(err: MultiObjectiveAlgorithmErrorWrapper) -> PyErr {
         let msg = err.0.to_string();
         match err.0 {
-            MultiObjectiveAlgorithmError::Initialization(_) => InitializationError::new_err(msg),
-            MultiObjectiveAlgorithmError::Evaluator(EvaluatorError::NoFeasibleIndividuals) => {
+            AlgorithmError::Initialization(_) => InitializationError::new_err(msg),
+            AlgorithmError::Evaluator(EvaluatorError::NoFeasibleIndividuals) => {
                 NoFeasibleIndividualsError::new_err(msg)
             }
-            MultiObjectiveAlgorithmError::InvalidParameter(_) => {
-                InvalidParameterError::new_err(msg)
-            }
+            AlgorithmError::InvalidParameter(_) => InvalidParameterError::new_err(msg),
             _ => PyRuntimeError::new_err(msg),
         }
     }
