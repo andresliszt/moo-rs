@@ -40,16 +40,19 @@ repo_url: https://github.com/andresliszt/moo-rs
 repo_name: "andresliszt/moo-rs"
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.snippets
+  - pymdownx.highlight:
+      linenums: true
+  - pymdownx.arithmatex:
+      generic: true
   - neoteroi.cards
   - neoteroi.timeline
   - neoteroi.projects
-  - admonition
-  - pymdownx.details
-  - pymdownx.arithmatex:
-      generic: true
 extra_javascript:
   - js/custom_mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
@@ -66,7 +69,7 @@ nav:
           - Small Real Valued Problem: getting_started_pymoors/real_valued.ipynb
   - 💻 Development: development.md
   - 📖 User Guide Pymoors:
-      - Fitness and Constraints: user_guide/fitness_and_constraints.md
+      - Fitness and Constraints: user_guide/fitness_and_constraints/index.md
       - Genetic Operators: user_guide/operators.md
       - Duplicates Cleaner: user_guide/duplicates.md
       - Algorithms:
@@ -80,3 +83,5 @@ nav:
 
 plugins:
     - mkdocs-jupyter
+    - search
+    - include-markdown
