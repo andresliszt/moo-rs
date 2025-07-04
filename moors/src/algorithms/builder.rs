@@ -1,93 +1,61 @@
-//! # `algorithms` – High‑level evolutionary engines
+//! # algorithms – Builder support for GeneticAlgorithm
 //!
-//! This module gathers concrete multi‑objective evolutionary algorithms built
-//! on top of the generic runtime [`GeneticAlgorithm`].
+//! This module defines the `AlgorithmBuilder` and the core `GeneticAlgorithm` struct,
+//! which together enable easy construction and execution of both single‑ and
+//! multi‑objective evolutionary algorithms. The builder (`AlgorithmBuilder`) follows
+//! a fluent interface (setter methods + `.build()`) to configure all algorithm
+//! parameters—sampling, selection, crossover, mutation, survivor policy, constraints,
+//! duplication cleaning, population size, number of variables, iteration count, rates,
+//! seed, and verbosity.
 //!
-//! | Algorithm | Selector | Survivor | Builder type |
-//! |-----------|----------|----------|--------------|
-//! | **NSGA‑II** | [`RankAndScoringSelection`](crate::operators::selection::rank_and_survival_scoring_tournament::RankAndScoringSelection) | [`Nsga2RankCrowdingSurvival`](crate::operators::survival::nsga2::Nsga2RankCrowdingSurvival) | [`Nsga2Builder`](crate::algorithms::Nsga2Builder) |
-//! | **NSGA‑III** | [`RandomSelection`](crate::operators::selection::random_tournament::RandomSelection) | [`Nsga3ReferencePointsSurvival`](crate::operators::survival::nsga3::Nsga3ReferencePointsSurvival) | [`Nsga3Builder`](crate::algorithms::Nsga3Builder) |
-//! | **R‑NSGA‑II** | [`RankAndScoringSelection`](crate::operators::selection::rank_and_survival_scoring_tournament::RankAndScoringSelection) | [`Rnsga2ReferencePointsSurvival`](crate::operators::survival::rnsga2::Rnsga2ReferencePointsSurvival) | [`Rnsga2Builder`](crate::algorithms::Rnsga2Builder) |
-//! | **SPEA‑2** | [`RankAndScoringSelection`](crate::operators::selection::rank_and_survival_scoring_tournament::RankAndScoringSelection) | [`Spea2KnnSurvival`](crate::operators::survival::spea2::Spea2KnnSurvival) | [`Spea2Builder`](crate::algorithms::Spea2Builder) |
-//! | **AGE‑MOEA** | [`RankAndScoringSelection`](crate::operators::selection::rank_and_survival_scoring_tournament::RankAndScoringSelection) | [`AgeMoeaSurvival`](crate::operators::survival::agemoea::AgeMoeaSurvival) | [`AgeMoeaBuilder`](crate::algorithms::AgeMoeaBuilder) |
-//! | **REVEA** | [`RandomSelection`](crate::operators::selection::random_tournament::RandomSelection) | [`ReveaReferencePointsSurvival`](crate::operators::survival::revea::ReveaReferencePointsSurvival) | [`ReveaBuilder`](crate::algorithms::ReveaBuilder) |
+//! Once built, the `GeneticAlgorithm` instance will automatically detect whether it is
+//! solving a single‑objective or multi‑objective problem by inspecting the
+//! dimensionality of the fitness array at runtime. If the fitness is 1‑dimensional,
+//! it treats it as a single‑objective optimization; if 2‑dimensional, it runs a
+//! multi‑objective optimization, computing minima per objective as needed.
 //!
-//! Each public algorithm struct (e.g. [`Nsga2`]) is a thin wrapper around
-//! `GeneticAlgorithm` that configures **its own selector, survivor and
-//! any algorithm‑specific parameters**.  To make end‑user construction
-//! ergonomic, we rely on the derive_builder crate. That derive_builder auto‑generates an
-//! `*Builder` type following the *builder pattern* (`.foo(…)` setters +
-//! `.build()`).
+//! ## Usage overview
+//! 1. Create an `AlgorithmBuilder<S, Sel, Sur, Cross, Mut, F, G, DC>::default()`.
+//! 2. Call setter methods to specify your sampling operator, selection operator,
+//!    survivor operator, crossover and mutation operators, fitness function, optional
+//!    constraints function, duplicate cleaner, population size, number of variables,
+//!    iteration count, rates, and other options.
+//! 3. Call `.build()?` to validate parameters and obtain a `GeneticAlgorithm<S,Sel,Sur,Cross,Mut,F,G,DC>`.
+//! 4. Call `.run()?`. Internally, this will initialize the population, then loop
+//!    through the requested number of iterations, evolving, evaluating, and selecting
+//!    survivors. If `verbose` is enabled, it prints out per‑iteration minima.
 //!
-//! ## Quick example: NSGA‑II
+//! ## Key types
+//! - **`AlgorithmBuilder<...>`** – builder type generated via `derive_builder`; use
+//!   its methods and `.build()` to configure and validate.
+//! - **`GeneticAlgorithm<...>`** – the engine; once constructed, call `.run()` to
+//!   execute the optimization loop. Its `run()` method detects fitness dimensionality
+//!   and handles both SOO and MOO use cases seamlessly.
 //!
-//! ```rust,no_run, ignore
-//! use ndarray::{Array1, Array2, Axis, stack};
-//! use moors::{
-//!     algorithms::{AlgorithmError, Nsga2Builder},
-//!     duplicates::ExactDuplicatesCleaner,
-//!     operators::{
-//!         crossover::SinglePointBinaryCrossover, mutation::BitFlipMutation,
-//!         sampling::RandomSamplingBinary,
-//!     },
-//! };
+//! ## Example
+//! ```rust,no_run
+//! use moors::algorithms::AlgorithmBuilder;
+//! use moors::operators::{SamplingOperator, SelectionOperator, SurvivalOperator};
+//! use moors::evaluator::{FitnessFn, ConstraintsFn};
+//! # fn fitness_fn(_: &ndarray::Array2<f64>) -> ndarray::Array2<f64> { todo!() }
+//! # fn constraints_fn(_: &ndarray::Array2<f64>) -> ndarray::Array2<f64> { todo!() }
 //!
-//! /* ---- problem definition omitted for brevity ---- */
+//! let mut algo = AlgorithmBuilder::<_, _, _, _, _, _, _>::default()
+//!     .sampler(my_sampler)
+//!     .selector(my_selector)
+//!     .survivor(my_survivor)
+//!     .crossover(my_crossover)
+//!     .mutation(my_mutation)
+//!     .duplicates_cleaner(my_cleaner)
+//!     .fitness_fn(fitness_fn)
+//!     .constraints_fn(constraints_fn)
+//!     .num_vars(10)
+//!     .population_size(100)
+//!     .num_iterations(50)
+//!     .build()?;
 //!
-//! # const WEIGHTS: [f64; 5] = [12.0, 2.0, 1.0, 4.0, 10.0];
-//! # const VALUES:  [f64; 5] = [ 4.0, 2.0, 1.0, 5.0,  3.0];
-//! # const CAPACITY: f64 = 15.0;
-//! # fn fitness(_: &Array2<f64>) -> Array2<f64> { todo!() }
-//! # fn constraints(_: &Array2<f64>) -> Array2<f64> { todo!() }
-//!
-//! fn main() -> Result<(), AlgorithmError> {
-//!     let mut algorithm = Nsga2Builder::default()
-//!         .fitness_fn(fitness)
-//!         .constraints_fn(constraints)
-//!         .sampler(RandomSamplingBinary::new())
-//!         .crossover(SinglePointBinaryCrossover::new())
-//!         .mutation(BitFlipMutation::new(0.5))
-//!         .duplicates_cleaner(ExactDuplicatesCleaner::new())
-//!         .num_vars(5)
-//!         .population_size(100)
-//!         ...                     // other setters such as rates / iterations
-//!         .build()?;               // ← macro‑generated .build()
-//!
-//!     algorithm.run()?;
-//!     println!("Done – final pop: {}", algorithm.population()?.len());
-//!     Ok(())
-//! }
+//! algo.run()?;  // automatically handles SOO vs. MOO
 //! ```
-//!
-//! ### Writing your **own** algorithm
-//!
-//! 1. **Pick / implement** a [`SelectionOperator`] and a [`SurvivalOperator`].
-//! 2. Use them with helper macro `create_algorithm!`:
-//!
-//!    ```rust, ignore
-//!    create_algorithm!(MyNewAlgorithm, NewSelector, NewSurvival);
-//!    ```
-//!
-//! From there, a new algorithm struct will be created
-//! ```rust, ignore
-//!    pub struct MyAlgo<S, Cross, Mut, F, G, DC> {
-//!        inner: GeneticAlgorithm<S, NewSelector, NewSurvival, Cross, Mut, F, G, DC>
-//!    }
-//!    ```
-//! Also, the its respective builder is availble `MyAlgoBuilder`
-//!
-//! ## GeneticAlgorithm – generic core
-//!
-//! The struct [`GeneticAlgorithm`] is **not** intended to be used
-//! directly by most users; it’s the reusable engine that handles initial
-//! sampling, iterative evolution, evaluation and survivor selection.  Concrete
-//! algorithms customise its behaviour exclusively through trait objects, so
-//! they stay **zero‑cost abstractions** once monomorphised.
-
-//! ---
-//!
-//! *Evolution is a mystery*  Feel free to open an issue or PR if you implement a new
-//! operator or algorithm.
 
 use std::marker::PhantomData;
 
@@ -342,10 +310,6 @@ where
                             &self.population.as_ref().unwrap().fitness,
                             current_iter + 1,
                         )
-                        // print_minimum_moo(
-                        //     &self.population.as_ref().unwrap().fitness,
-                        //     current_iter ++*+-++ 1,
-                        // );
                     }
                 }
                 Err(AlgorithmError::Evolve(err @ EvolveError::EmptyMatingResult)) => {
