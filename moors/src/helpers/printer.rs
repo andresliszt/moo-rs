@@ -68,15 +68,11 @@ where
                 let view1 = &self.view().into_dimensionality::<Ix1>().unwrap();
                 print_minimum_1d(view1, iteration);
             }
-            Some(2) => {
+            _ => {
                 // Safe to cast to 2D
                 let view2 = &self.view().into_dimensionality::<Ix2>().unwrap();
                 print_minimum_2d(view2, iteration);
             }
-            _ => panic!(
-                "PrintMinimum only supports 1D or 2D arrays, got {:?}",
-                D::NDIM
-            ),
         }
     }
 }
