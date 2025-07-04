@@ -29,33 +29,7 @@
 //! - **`AlgorithmBuilder<...>`** – builder type generated via `derive_builder`; use
 //!   its methods and `.build()` to configure and validate.
 //! - **`GeneticAlgorithm<...>`** – the engine; once constructed, call `.run()` to
-//!   execute the optimization loop. Its `run()` method detects fitness dimensionality
-//!   and handles both SOO and MOO use cases seamlessly.
-//!
-//! ## Example
-//! ```rust,no_run
-//! use moors::algorithms::AlgorithmBuilder;
-//! use moors::operators::{SamplingOperator, SelectionOperator, SurvivalOperator};
-//! use moors::evaluator::{FitnessFn, ConstraintsFn};
-//! # fn fitness_fn(_: &ndarray::Array2<f64>) -> ndarray::Array2<f64> { todo!() }
-//! # fn constraints_fn(_: &ndarray::Array2<f64>) -> ndarray::Array2<f64> { todo!() }
-//!
-//! let mut algo = AlgorithmBuilder::<_, _, _, _, _, _, _>::default()
-//!     .sampler(my_sampler)
-//!     .selector(my_selector)
-//!     .survivor(my_survivor)
-//!     .crossover(my_crossover)
-//!     .mutation(my_mutation)
-//!     .duplicates_cleaner(my_cleaner)
-//!     .fitness_fn(fitness_fn)
-//!     .constraints_fn(constraints_fn)
-//!     .num_vars(10)
-//!     .population_size(100)
-//!     .num_iterations(50)
-//!     .build()?;
-//!
-//! algo.run()?;  // automatically handles SOO vs. MOO
-//! ```
+//!   execute the optimization loop.
 
 use std::marker::PhantomData;
 
