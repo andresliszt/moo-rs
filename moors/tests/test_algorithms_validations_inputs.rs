@@ -3,7 +3,7 @@ use ndarray::Array2;
 
 use moors::{
     NoConstraints,
-    algorithms::{AlgorithmMOOBuilderError, Nsga2Builder},
+    algorithms::{AlgorithmBuilderError, Nsga2Builder},
     duplicates::NoDuplicatesCleaner,
     impl_constraints_fn,
     operators::{GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover},
@@ -39,7 +39,7 @@ fn test_invalid_mutation_rate(#[case] invalid: f64) {
     };
 
     assert!(
-        matches!(err, AlgorithmMOOBuilderError::ValidationError(_)),
+        matches!(err, AlgorithmBuilderError::ValidationError(_)),
         "got wrong error: {:?}",
         err
     );
@@ -75,7 +75,7 @@ fn test_invalid_crossover_rate(#[case] invalid: f64) {
     };
 
     assert!(
-        matches!(err, AlgorithmMOOBuilderError::ValidationError(_)),
+        matches!(err, AlgorithmBuilderError::ValidationError(_)),
         "got wrong error: {:?}",
         err
     );

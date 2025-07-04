@@ -21,20 +21,22 @@
 //! [`Nsga3ReferencePoints::from_simplex_lattice`] or a custom constructor—and
 //! the algorithm handles association and niche preservation automatically.
 
-use crate::{selection::moo::RandomSelection, survival::moo::Nsga3ReferencePointsSurvival};
+use crate::{
+    create_algorithm, selection::moo::RandomSelection, survival::moo::Nsga3ReferencePointsSurvival,
+};
 
 create_algorithm!(
     /// NSGA-III algorithm wrapper.
     ///
-    /// This struct is a thin facade over [`GeneticAlgorithmMOO`] preset with
+    /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
     /// the NSGA-III survival and selection strategy.
     ///
     /// * **Selection:** [`RandomSelection`]
     /// * **Survival:**  [`Nsga3ReferencePointsSurvival`] (elitist, reference-point based)
     ///
     /// Construct it with [`Nsga3Builder`](crate::algorithms::Nsga3Builder).
-    /// After building, call [`run`](GeneticAlgorithmMOO::run)
-    /// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
+    /// After building, call [`run`](GeneticAlgorithm::run)
+    /// and then [`population`](GeneticAlgorithm::population) to retrieve the
     /// final non-dominated set.
     ///
     /// For algorithmic details, see:
@@ -57,11 +59,11 @@ where
     F: FitnessFn<Dim = ndarray::Ix2>,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmMOOBuilder<S, RandomSelection, Nsga3ReferencePointsSurvival, Cross, Mut, F, G, DC>:
+    AlgorithmBuilder<S, RandomSelection, Nsga3ReferencePointsSurvival, Cross, Mut, F, G, DC>:
         Default,
 {
     fn default() -> Self {
-        let mut inner: AlgorithmMOOBuilder<
+        let mut inner: AlgorithmBuilder<
             S,
             RandomSelection,
             Nsga3ReferencePointsSurvival,

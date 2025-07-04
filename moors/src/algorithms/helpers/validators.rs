@@ -1,12 +1,12 @@
-use crate::algorithms::AlgorithmMOOBuilderError;
+use crate::algorithms::AlgorithmBuilderError;
 
 // Helper function for probability validation
 pub(in crate::algorithms) fn validate_probability(
     value: f64,
     name: &str,
-) -> Result<(), AlgorithmMOOBuilderError> {
+) -> Result<(), AlgorithmBuilderError> {
     if !(0.0..=1.0).contains(&value) {
-        return Err(AlgorithmMOOBuilderError::ValidationError(format!(
+        return Err(AlgorithmBuilderError::ValidationError(format!(
             "{} must be between 0 and 1, got {}",
             name, value
         )));
@@ -18,9 +18,9 @@ pub(in crate::algorithms) fn validate_probability(
 pub(in crate::algorithms) fn validate_positive(
     value: usize,
     name: &str,
-) -> Result<(), AlgorithmMOOBuilderError> {
+) -> Result<(), AlgorithmBuilderError> {
     if value == 0 {
-        return Err(AlgorithmMOOBuilderError::ValidationError(format!(
+        return Err(AlgorithmBuilderError::ValidationError(format!(
             "{} must be greater than 0",
             name
         )));
@@ -31,9 +31,9 @@ pub(in crate::algorithms) fn validate_positive(
 pub(in crate::algorithms) fn validate_bounds(
     lower_bound: f64,
     upper_bound: f64,
-) -> Result<(), AlgorithmMOOBuilderError> {
+) -> Result<(), AlgorithmBuilderError> {
     if lower_bound >= upper_bound {
-        return Err(AlgorithmMOOBuilderError::ValidationError(format!(
+        return Err(AlgorithmBuilderError::ValidationError(format!(
             "Lower bound ({}) must be less than upper bound ({})",
             lower_bound, upper_bound
         )));

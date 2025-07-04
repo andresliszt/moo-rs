@@ -27,6 +27,7 @@
 //!
 
 use crate::{
+    create_algorithm,
     selection::moo::RankAndScoringSelection,
     survival::moo::{Rnsga2ReferencePointsSurvival, SurvivalScoringComparison},
 };
@@ -34,7 +35,7 @@ use crate::{
 create_algorithm!(
     /// R-NSGA-II algorithm wrapper.
     ///
-    /// Thin facade around [`GeneticAlgorithmMOO`] pre-configured with
+    /// Thin facade around [`GeneticAlgorithm`] pre-configured with
     /// reference-distance survival and a minimise-the-score selector.
     ///
     /// * **Selection:** [`RankAndScoringSelection`] (`SurvivalScoringComparison::Minimize`)
@@ -61,7 +62,7 @@ where
     F: FitnessFn<Dim = ndarray::Ix2>,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmMOOBuilder<
+    AlgorithmBuilder<
         S,
         RankAndScoringSelection,
         Rnsga2ReferencePointsSurvival,
@@ -73,7 +74,7 @@ where
     >: Default,
 {
     fn default() -> Self {
-        let mut inner: AlgorithmMOOBuilder<
+        let mut inner: AlgorithmBuilder<
             S,
             RankAndScoringSelection,
             Rnsga2ReferencePointsSurvival,

@@ -1,17 +1,19 @@
-use crate::operators::{selection::moo::RankAndScoringSelection, survival::moo::AgeMoeaSurvival};
+use crate::{
+    create_algorithm, selection::moo::RankAndScoringSelection, survival::moo::AgeMoeaSurvival,
+};
 
 create_algorithm!(
     /// AGE-MOEA algorithm wrapper.
     ///
-    /// This struct is a thin facade over [`GeneticAlgorithmMOO`] preset with
+    /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
     /// the AGE-MOEA survival and selection strategy.
     ///
     /// * **Selection:** [`RankAndScoringSelection`]
     /// * **Survival:**  [`AgeMoeaSurvival`] (elitist, adaptive geometry estimation)
     ///
     /// Construct it with [`AgeMoeaBuilder`](crate::algorithms::AgeMoeaBuilder).
-    /// After building, call [`run`](GeneticAlgorithmMOO::run)
-    /// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
+    /// After building, call [`run`](GeneticAlgorithm::run)
+    /// and then [`population`](GeneticAlgorithm::population) to retrieve the
     /// final non-dominated set.
     ///
     /// For algorithmic details, see:
@@ -33,10 +35,10 @@ where
     F: FitnessFn<Dim = ndarray::Ix2>,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmMOOBuilder<S, RankAndScoringSelection, AgeMoeaSurvival, Cross, Mut, F, G, DC>: Default,
+    AlgorithmBuilder<S, RankAndScoringSelection, AgeMoeaSurvival, Cross, Mut, F, G, DC>: Default,
 {
     fn default() -> Self {
-        let mut inner: AlgorithmMOOBuilder<
+        let mut inner: AlgorithmBuilder<
             S,
             RankAndScoringSelection,
             AgeMoeaSurvival,
