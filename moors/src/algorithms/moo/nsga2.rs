@@ -20,20 +20,23 @@
 //! iteration budget, etc.); internal operator choices can be overridden if
 //! you need custom behaviour.
 
-use crate::{selection::moo::RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival};
+use crate::{
+    create_algorithm, selection::moo::RankAndScoringSelection,
+    survival::moo::Nsga2RankCrowdingSurvival,
+};
 
 create_algorithm!(
     /// NSGA-II algorithm wrapper.
     ///
-    /// This struct is a thin facade over [`GeneticAlgorithmMOO`] preset with
+    /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
     /// the NSGA-II survival and selection strategy.
     ///
     /// * **Selection:** [`RankAndScoringSelection`]
     /// * **Survival:**  [`Nsga2RankCrowdingSurvival`] (elitist, crowding-distance)
     ///
     /// Construct it with [`Nsga2Builder`](crate::algorithms::Nsga2Builder).
-    /// After building, call [`run`](GeneticAlgorithmMOO::run)
-    /// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
+    /// After building, call [`run`](GeneticAlgorithm::run)
+    /// and then [`population`](GeneticAlgorithm::population) to retrieve the
     /// final non-dominated set.
     ///
     /// For algorithmic details, see:
@@ -55,19 +58,11 @@ where
     F: FitnessFn<Dim = ndarray::Ix2>,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmMOOBuilder<
-        S,
-        RankAndScoringSelection,
-        Nsga2RankCrowdingSurvival,
-        Cross,
-        Mut,
-        F,
-        G,
-        DC,
-    >: Default,
+    AlgorithmBuilder<S, RankAndScoringSelection, Nsga2RankCrowdingSurvival, Cross, Mut, F, G, DC>:
+        Default,
 {
     fn default() -> Self {
-        let mut inner: AlgorithmMOOBuilder<
+        let mut inner: AlgorithmBuilder<
             S,
             RankAndScoringSelection,
             Nsga2RankCrowdingSurvival,

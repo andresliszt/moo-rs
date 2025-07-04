@@ -4,7 +4,7 @@ use ndarray::{Array1, Array2, ArrayViewMut1};
 
 use moors::{
     RandomGenerator,
-    algorithms::{AlgorithmError, AlgorithmMOOBuilderError, Nsga2Builder},
+    algorithms::{AlgorithmBuilderError, AlgorithmError, Nsga2Builder},
     duplicates::CloseDuplicatesCleaner,
     operators::{
         CrossoverOperator, GaussianMutation, MutationOperator, RandomSamplingFloat,
@@ -177,7 +177,7 @@ fn test_invalid_params() {
         Err(e) => e,
     };
     match err {
-        AlgorithmMOOBuilderError::ValidationError(inner) => {
+        AlgorithmBuilderError::ValidationError(inner) => {
             let msg = inner.to_string();
             assert_eq!(msg, "Crossover rate must be between 0 and 1, got -1",);
         }

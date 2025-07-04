@@ -1,26 +1,29 @@
+#[macro_export]
 macro_rules! create_algorithm {
-    ($(#[$meta:meta])* $algo:ident, $selector:ty, $survivor:ty) => {
+    ($(#[$meta:meta])* $algorithm:ident, $selector:ty, $survivor:ty) => {
         use crate::{
-            algorithms::moo::{GeneticAlgorithmMOO, AlgorithmMOOBuilder, AlgorithmMOOBuilderError, AlgorithmError},
+            algorithms::{GeneticAlgorithm, AlgorithmBuilder, AlgorithmBuilderError, AlgorithmError},
             duplicates::PopulationCleaner,
             evaluator::{ConstraintsFn, FitnessFn},
             operators::{
-                CrossoverOperator, MutationOperator, SamplingOperator,
+                SelectionOperator, SurvivalOperator, CrossoverOperator, MutationOperator, SamplingOperator,
             },
         };
 
         $(#[$meta])*
         #[derive(Debug)]
-        pub struct $algo<S, Cross, Mut, F, G, DC>
+        pub struct $algorithm<S, Cross, Mut, F, G, DC>
         where
             S: SamplingOperator,
+            $selector: SelectionOperator<FDim = F::Dim>,
+            $survivor: SurvivalOperator<FDim = F::Dim>,
             Cross: CrossoverOperator,
             Mut: MutationOperator,
-            F: FitnessFn<Dim = ndarray::Ix2>,
+            F: FitnessFn,
             G: ConstraintsFn,
             DC: PopulationCleaner,
         {
-            pub inner: GeneticAlgorithmMOO<
+            pub inner: GeneticAlgorithm<
                 S,
                 $selector,
                 $survivor,
@@ -32,12 +35,14 @@ macro_rules! create_algorithm {
             >,
         }
 
-        impl<S, Cross, Mut, F, G, DC> $algo<S, Cross, Mut, F, G, DC>
+        impl<S, Cross, Mut, F, G, DC> $algorithm<S, Cross, Mut, F, G, DC>
         where
             S: SamplingOperator,
+            $selector: SelectionOperator<FDim = F::Dim>,
+            $survivor: SurvivalOperator<FDim = F::Dim>,
             Cross: CrossoverOperator,
             Mut: MutationOperator,
-            F: FitnessFn<Dim = ndarray::Ix2>,
+            F: FitnessFn,
             G: ConstraintsFn,
             DC: PopulationCleaner
         {
@@ -48,7 +53,7 @@ macro_rules! create_algorithm {
             /// Delegate `population` to the inner algorithm
             pub fn population(
                 &self,
-            ) -> Result<&crate::genetic::PopulationMOO<G::Dim>, crate::algorithms::AlgorithmError> {
+            ) -> Result<&crate::genetic::Population<F::Dim, G::Dim>, crate::algorithms::AlgorithmError> {
                 match &self.inner.population {
                     Some(v) => Ok(v),
                     None => Err(crate::algorithms::AlgorithmError::Initialization(
@@ -61,16 +66,18 @@ macro_rules! create_algorithm {
         }
 
         paste! {
-            pub struct [<$algo Builder>]<S, Cross, Mut, F, G, DC>
+            pub struct [<$algorithm Builder>]<S, Cross, Mut, F, G, DC>
             where
                 S: SamplingOperator,
+                $selector: SelectionOperator<FDim = F::Dim>,
+                $survivor: SurvivalOperator<FDim = F::Dim>,
                 Cross: CrossoverOperator,
                 Mut: MutationOperator,
-                F: FitnessFn<Dim = ndarray::Ix2>,
+                F: FitnessFn,
                 G: ConstraintsFn,
                 DC: PopulationCleaner,
             {
-                inner_builder: AlgorithmMOOBuilder<
+                inner_builder: AlgorithmBuilder<
                     S,
                     $selector,
                     $survivor,
@@ -82,12 +89,14 @@ macro_rules! create_algorithm {
                 >,
             }
 
-            impl<S, Cross, Mut, F, G, DC> [<$algo Builder>]<S, Cross, Mut, F, G, DC>
+            impl<S, Cross, Mut, F, G, DC> [<$algorithm Builder>]<S, Cross, Mut, F, G, DC>
             where
                 S: SamplingOperator,
+                $selector: SelectionOperator<FDim = F::Dim>,
+                $survivor: SurvivalOperator<FDim = F::Dim>,
                 Cross: CrossoverOperator,
                 Mut: MutationOperator,
-                F: FitnessFn<Dim = ndarray::Ix2>,
+                F: FitnessFn,
                 G: ConstraintsFn,
                 DC: PopulationCleaner,
             {
@@ -109,8 +118,8 @@ macro_rules! create_algorithm {
                 pub fn verbose(mut self, v: bool) -> Self { self.inner_builder = self.inner_builder.verbose(v); self }
                 pub fn seed(mut self, v: u64) -> Self { self.inner_builder = self.inner_builder.seed(v); self }
 
-                pub fn build(self) -> Result<$algo<S, Cross, Mut, F, G, DC>, AlgorithmMOOBuilderError> {
-                    Ok($algo {
+                pub fn build(self) -> Result<$algorithm<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
+                    Ok($algorithm {
                         inner: self.inner_builder.build()?,
                     })
                 }

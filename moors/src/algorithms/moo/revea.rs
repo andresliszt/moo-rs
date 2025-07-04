@@ -29,14 +29,14 @@
 //! * `frequency` – how often (in generations) the reference set is refreshed.
 //!
 
-use crate::operators::{
-    selection::moo::RandomSelection, survival::moo::ReveaReferencePointsSurvival,
+use crate::{
+    create_algorithm, selection::moo::RandomSelection, survival::moo::ReveaReferencePointsSurvival,
 };
 
 create_algorithm!(
     /// REVEA algorithm wrapper.
     ///
-    /// Thin facade around [`GeneticAlgorithmMOO`] pre-configured with
+    /// Thin facade around [`GeneticAlgorithm`] pre-configured with
     /// reference-vector survival and random parent selection.
     ///
     /// * **Selection:** [`RandomSelection`]
@@ -63,11 +63,11 @@ where
     F: FitnessFn<Dim = ndarray::Ix2>,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmMOOBuilder<S, RandomSelection, ReveaReferencePointsSurvival, Cross, Mut, F, G, DC>:
+    AlgorithmBuilder<S, RandomSelection, ReveaReferencePointsSurvival, Cross, Mut, F, G, DC>:
         Default,
 {
     fn default() -> Self {
-        let mut inner: AlgorithmMOOBuilder<
+        let mut inner: AlgorithmBuilder<
             S,
             RandomSelection,
             ReveaReferencePointsSurvival,

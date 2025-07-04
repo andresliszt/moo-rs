@@ -1,8 +1,8 @@
 use ndarray::{Array1, Array2, Axis};
 
 use moors::{
-    AlgorithmSOOBuilder, CloseDuplicatesCleaner, GaussianMutation, PopulationSOO,
-    RandomSamplingFloat, SimulatedBinaryCrossover, impl_constraints_fn,
+    AlgorithmBuilder, CloseDuplicatesCleaner, GaussianMutation, PopulationSOO, RandomSamplingFloat,
+    SimulatedBinaryCrossover, impl_constraints_fn,
     selection::soo::RankSelection,
     survival::soo::{FitnessConstraintsPenaltySurvival, FitnessSurvival},
 };
@@ -20,7 +20,7 @@ fn constraints_sphere(population: &Array2<f64>) -> Array1<f64> {
 
 #[test]
 fn test_ga_minimize_parabolid() {
-    let mut algorithm = AlgorithmSOOBuilder::default()
+    let mut algorithm = AlgorithmBuilder::default()
         .sampler(RandomSamplingFloat::new(-1.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.05, 0.1))
@@ -88,7 +88,7 @@ impl_constraints_fn!(
 // truncation we're using to compute constraints violations defaulted in 1e-6. With default as
 // 1e-4 this test passes. Investigate the truncation effect.
 fn test_minimize_projection_on_line() {
-    let mut algorithm = AlgorithmSOOBuilder::default()
+    let mut algorithm = AlgorithmBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.9, 0.1))
@@ -124,7 +124,7 @@ fn test_minimize_projection_on_line() {
 
 #[test]
 fn test_minimize_projection_on_line_constraints_penalty_survival() {
-    let mut algorithm = AlgorithmSOOBuilder::default()
+    let mut algorithm = AlgorithmBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.9, 0.1))

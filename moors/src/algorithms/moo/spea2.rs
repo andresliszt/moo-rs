@@ -20,7 +20,8 @@
 //! The default configuration keeps a secondary **archive** whose size equals
 //! the main population; truncation is handled by the k‑NN density measure.
 //!
-use crate::operators::{
+use crate::{
+    create_algorithm,
     selection::moo::RankAndScoringSelection,
     survival::moo::{Spea2KnnSurvival, SurvivalScoringComparison},
 };
@@ -28,15 +29,15 @@ use crate::operators::{
 create_algorithm!(
     /// SPEA-II algorithm wrapper.
     ///
-    /// This struct is a thin facade over [`GeneticAlgorithmMOO`] preset with
+    /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
     /// the SPEA-II survival and selection strategy.
     ///
     /// * **Selection:** [`RankAndScoringSelection`]
     /// * **Survival:**  [`Spea2KnnSurvival`] (elitist, k-nearest neighbors density)
     ///
     /// Construct it with [`Spea2Builder`](crate::algorithms::Spea2Builder).
-    /// After building, call [`run`](GeneticAlgorithmMOO::run)
-    /// and then [`population`](GeneticAlgorithmMOO::population) to retrieve the
+    /// After building, call [`run`](GeneticAlgorithm::run)
+    /// and then [`population`](GeneticAlgorithm::population) to retrieve the
     /// final non-dominated set.
     ///
     /// For algorithmic details, see:
@@ -57,11 +58,10 @@ where
     F: FitnessFn<Dim = ndarray::Ix2>,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmMOOBuilder<S, RankAndScoringSelection, Spea2KnnSurvival, Cross, Mut, F, G, DC>:
-        Default,
+    AlgorithmBuilder<S, RankAndScoringSelection, Spea2KnnSurvival, Cross, Mut, F, G, DC>: Default,
 {
     fn default() -> Self {
-        let mut inner: AlgorithmMOOBuilder<
+        let mut inner: AlgorithmBuilder<
             S,
             RankAndScoringSelection,
             Spea2KnnSurvival,

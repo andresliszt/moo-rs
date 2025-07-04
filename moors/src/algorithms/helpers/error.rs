@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::algorithms::AlgorithmMOOBuilderError;
+use crate::algorithms::AlgorithmBuilderError;
 use crate::evaluator::EvaluatorError;
 use crate::operators::evolve::EvolveError;
 
@@ -27,7 +27,7 @@ pub enum AlgorithmError {
     #[error("Error during evaluation: {0}")]
     Evaluator(#[from] EvaluatorError),
     #[error("Invalid parameter: {0}")]
-    ValidationError(#[from] AlgorithmMOOBuilderError),
+    ValidationError(#[from] AlgorithmBuilderError),
     #[error("Error during onitialization: {0}")]
     Initialization(#[from] InitializationError),
 }

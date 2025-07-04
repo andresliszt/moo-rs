@@ -1,87 +1,87 @@
-use ndarray::{Array1, Array2, Axis};
+use crate::genetic::{D12, Fitness};
+use ndarray::{ArrayView1, ArrayView2, Axis, Ix1, Ix2}; // your trait with the NDIM constant
 
-/// Prints the minimum objectives in a formatted table.
-///
-/// # Arguments
-///
-/// * `fitness` - Reference to the population fitness matrix.
-/// * `iteration_number` - The current iteration number.
-pub fn print_minimum_moo(fitness: &Array2<f64>, iteration_number: usize) {
-    // Calculate the minimum values for each column (objective)
-    let min_values = fitness.map_axis(Axis(0), |col| {
-        col.iter().copied().fold(f64::INFINITY, |a, b| a.min(b))
-    });
-
-    // Determine the number of objectives
-    let num_objectives = min_values.len();
-
-    // Define the width of each column (adjust as needed)
-    let column_width = 12;
-
-    // Generate the horizontal line
-    let horizontal_line = format!(
-        "+{}+",
-        std::iter::repeat("-".repeat(column_width))
-            .take(num_objectives)
-            .collect::<Vec<String>>()
-            .join("+")
-    );
-
-    // Generate the headers dynamically
-    let headers = (1..=num_objectives)
-        .map(|i| format!(" Min f_{} ", i))
-        .collect::<Vec<String>>()
-        .join("|");
-
-    // Generate the row of minimum values
-    let values = min_values
-        .iter()
-        .map(|val| format!(" {:<8.4} ", val))
-        .collect::<Vec<String>>()
-        .join("|");
-
-    // Print the iteration header
-    println!("Iteration {}:", iteration_number);
-
-    // Print the table
-    println!("{}", horizontal_line);
-    println!("|{}|", headers);
-    println!("{}", horizontal_line);
-    println!("|{}|", values);
-    println!("{}", horizontal_line);
-    println!(); // Blank line for separation
+/// A trait for printing the minimum fitness values.
+pub trait PrintMinimum {
+    /// Print the minimum fitness values for the current iteration.
+    fn print_minimum(&self, iteration: usize);
 }
 
-/// Prints the minimum fitness value for single-objective optimization (SOO) in a formatted table.
-///
-/// # Arguments
-///
-/// * `fitness` - Reference to a 1D array containing fitness values.
-/// * `iteration_number` - The current iteration number.
-pub fn print_minimum_soo(fitness: &Array1<f64>, iteration_number: usize) {
-    // Calculate the minimum fitness value
-    let min_value = fitness.iter().copied().fold(f64::INFINITY, |a, b| a.min(b));
-
-    // Define column width (adjust as needed)
-    let column_width = 12;
-
-    // Generate the horizontal line for one column
-    let horizontal_line = format!("+{}+", "-".repeat(column_width));
-
-    // Header label for the single objective
-    let header = format!(" Min f_1 ");
-
-    // Format the minimum value with 4 decimal places
+/// Helper for single-objective (1D) arrays
+fn print_minimum_1d(arr: &ArrayView1<f64>, iteration: usize) {
+    let min_value = arr.iter().copied().fold(f64::INFINITY, f64::min);
+    let w = 12;
+    let horiz = format!("+{}+", "-".repeat(w));
+    let header = " Min f ";
     let value = format!(" {:<8.4} ", min_value);
 
-    // Print the iteration header
-    println!("Iteration {}:", iteration_number);
-
-    // Print the table
-    println!("{}", horizontal_line);
+    println!("Iteration {}:", iteration);
+    println!("{}", horiz);
     println!("|{}|", header);
-    println!("{}", horizontal_line);
+    println!("{}", horiz);
     println!("|{}|", value);
-    println!("{}", horizontal_line);
-    println!(); // Blank line for separation
+    println!("{}", horiz);
+    println!();
+}
+
+/// Helper for multi-objective (2D) arrays
+fn print_minimum_2d(arr: &ArrayView2<f64>, iteration: usize) {
+    let mins = arr.map_axis(Axis(0), |col| {
+        col.iter().copied().fold(f64::INFINITY, f64::min)
+    });
+    let nobj = mins.len();
+    let w = 12;
+    let horiz = format!(
+        "+{}+",
+        std::iter::repeat("-".repeat(w))
+            .take(nobj)
+            .collect::<Vec<_>>()
+            .join("+")
+    );
+    let headers = (1..=nobj)
+        .map(|i| format!(" Min f_{} ", i))
+        .collect::<Vec<_>>()
+        .join("|");
+    let values = mins
+        .iter()
+        .map(|v| format!(" {:<8.4} ", v))
+        .collect::<Vec<_>>()
+        .join("|");
+
+    println!("Iteration {}:", iteration);
+    println!("{}", horiz);
+    println!("|{}|", headers);
+    println!("{}", horiz);
+    println!("|{}|", values);
+    println!("{}", horiz);
+    println!();
+}
+
+impl<D> PrintMinimum for Fitness<D>
+where
+    D: D12,
+{
+    fn print_minimum(&self, iteration: usize) {
+        match D::NDIM {
+            Some(1) => {
+                // Safe to cast to 1D
+                let view1 = &self.view().into_dimensionality::<Ix1>().unwrap();
+                print_minimum_1d(view1, iteration);
+            }
+            Some(2) => {
+                // Safe to cast to 2D
+                let view2 = &self.view().into_dimensionality::<Ix2>().unwrap();
+                print_minimum_2d(view2, iteration);
+            }
+            _ => panic!(
+                "PrintMinimum only supports 1D or 2D arrays, got {:?}",
+                D::NDIM
+            ),
+        }
+    }
+}
+
+/// Generic entry point: delegates to the trait implementation.
+pub fn algorithm_printer<T: PrintMinimum>(fitness: &T, iteration: usize) {
+    fitness.print_minimum(iteration);
 }
