@@ -47,8 +47,8 @@ create_algorithm!(
     ///   pp. 773–791, Oct. 2016.
     ///   DOI: 10.1109/TEVC.2015.2495854
     ///
-    /// Build via [`ReveaBuilder`](crate::algorithms::ReveaBuilder) or directly with
-    /// [`Revea::new`], then call `run()` and `population()` to obtain the final
+    /// Build via [`ReveaBuilder`](crate::algorithms::ReveaBuilder),
+    /// then call `run()` and `population()` to obtain the final
     /// Pareto approximation.
     Revea,
     RandomSelection,

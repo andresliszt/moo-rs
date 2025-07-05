@@ -3,7 +3,6 @@ use std::cmp::Ordering;
 use ndarray::{Array1, Array2, Axis};
 
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, PopulationMOO},
     helpers::linalg::cross_euclidean_distances_as_array,
     non_dominated_sorting::fast_non_dominated_sorting,
@@ -28,7 +27,6 @@ impl SurvivalOperator for Spea2KnnSurvival {
         population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         _rng: &mut impl RandomGenerator,
-        _algorithm_context: &AlgorithmContext,
     ) -> PopulationMOO<ConstrDim>
     where
         ConstrDim: D12,
@@ -193,7 +191,6 @@ mod tests {
     use super::*;
     use ndarray::array;
 
-    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::random::NoopRandomGenerator;
 
     #[test]
@@ -319,22 +316,19 @@ mod tests {
         //        F₂ = 2 + 0.4784689  ≈ 2.4784689
         let expected_raw = [0.4016064, 1.4784689, 2.4784689];
 
-        // 3) Run operate with capacity = 2
+        // Run operate with capacity = 2
         let mut rng = NoopRandomGenerator::new();
-        let ctx = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-        let survivors = Spea2KnnSurvival::new().operate(pop, 2, &mut rng, &ctx);
+        let survivors = Spea2KnnSurvival::new().operate(pop, 2, &mut rng);
 
-        // 4) Extract survivors’ survival_score fields
+        // Extract survivors’ survival_score fields
         let scores: Vec<f64> = survivors
             .survival_score
             .as_ref()
             .expect("survival_score must be set")
             .to_vec();
 
-        // 5) Underflow picks indices 0 and 1, so we expect
-        //    [expected_raw[0], expected_raw[1]]
+        // Underflow picks indices 0 and 1, so we expect
+        // [expected_raw[0], expected_raw[1]]
         assert_eq!(scores.len(), 2);
         assert!((scores[0] - expected_raw[0]).abs() < 1e-6,);
         assert!((scores[1] - expected_raw[1]).abs() < 1e-6);
@@ -349,10 +343,7 @@ mod tests {
 
         // Capacity = 2 → overflow branch
         let mut rng = NoopRandomGenerator::new();
-        let ctx = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-        let survivors = Spea2KnnSurvival::new().operate(pop, 2, &mut rng, &ctx);
+        let survivors = Spea2KnnSurvival::new().operate(pop, 2, &mut rng);
 
         // Expect exactly two survivors
         assert_eq!(survivors.len(), 2);
@@ -390,10 +381,7 @@ mod tests {
 
         // Capacity exactly equals population size (4) → no truncation
         let mut rng = NoopRandomGenerator::new();
-        let ctx = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-        let survivors = Spea2KnnSurvival::new().operate(pop, 4, &mut rng, &ctx);
+        let survivors = Spea2KnnSurvival::new().operate(pop, 4, &mut rng);
 
         // all individuals must survive
         assert_eq!(survivors.len(), 4);

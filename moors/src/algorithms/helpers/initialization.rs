@@ -39,7 +39,7 @@ impl Initialization {
         // we use num_survive = context.population_size, but this step is adding the ranking
         // and the survival scorer (if the algorithm needs them), so in the selection step
         // we have all we need. See: https://github.com/andresliszt/moo-rs/issues/145
-        population = survivor.operate(population, context.population_size, rng, &context);
+        population = survivor.operate(population, context.population_size, rng);
         Ok(population)
     }
 }

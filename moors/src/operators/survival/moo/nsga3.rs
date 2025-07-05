@@ -4,7 +4,6 @@ use ndarray::{Array1, Array2, Axis, s};
 use ndarray_stats::QuantileExt;
 
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, PopulationMOO},
     helpers::extreme_points::get_ideal,
     non_dominated_sorting::build_fronts,
@@ -94,7 +93,6 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
         population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         rng: &mut impl RandomGenerator,
-        _algorithm_context: &AlgorithmContext,
     ) -> PopulationMOO<ConstrDim>
     where
         ConstrDim: D12,
@@ -337,7 +335,6 @@ fn niching(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::array;
 
@@ -491,12 +488,8 @@ mod tests {
         let reference_points = Nsga3ReferencePoints::new(Array2::eye(2), false);
         let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);
         let mut rng = FakeRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
         // Set num_survive to 3 so that splitting must occur on the single front.
-        let survivors = survival_operator.operate(population, 3, &mut rng, &_context);
+        let survivors = survival_operator.operate(population, 3, &mut rng);
         assert_eq!(survivors.len(), 3, "Final survivors count should be 3");
 
         // Verify that each selected individual comes from the original front.
@@ -537,14 +530,10 @@ mod tests {
         let reference_points = Nsga3ReferencePoints::new(Array2::eye(2), false);
         let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);
         let mut rng = FakeRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
         // Total individuals if merged completely would be 7.
         // Set num_survive to 5 so that the first front (3 individuals) is completely taken
         // and 2 individuals are selected from the second front.
-        let survivors = survival_operator.operate(population, 5, &mut rng, &_context);
+        let survivors = survival_operator.operate(population, 5, &mut rng);
         assert_eq!(survivors.len(), 5, "Final survivors count should be 5");
 
         // Check that the survivors include all individuals from the first front.

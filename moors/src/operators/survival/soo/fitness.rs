@@ -3,7 +3,6 @@ use std::cmp::Ordering;
 use ndarray::Array1;
 
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, PopulationSOO},
     operators::survival::SurvivalOperator,
     random::RandomGenerator,
@@ -32,7 +31,6 @@ impl SurvivalOperator for FitnessSurvival {
         population: PopulationSOO<ConstrDim>,
         num_survive: usize,
         _rng: &mut impl RandomGenerator,
-        _algorithm_context: &AlgorithmContext,
     ) -> PopulationSOO<ConstrDim>
     where
         ConstrDim: D12,
@@ -78,8 +76,6 @@ mod tests {
     use crate::random::TestDummyRng;
     use ndarray::{Array2, array};
 
-    use crate::algorithms::helpers::AlgorithmContextBuilder;
-
     // A fake random generator; FitnessSurvival does not actually use RNG here,
     // but we need to satisfy the trait bound.
     struct FakeRandomGenerator {
@@ -112,13 +108,8 @@ mod tests {
         let fitness = array![0.8, 0.2, 0.5, 0.1];
         let pop = PopulationSOO::new_unconstrained(genes, fitness);
         let mut rng = FakeRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-
         let mut selector = FitnessSurvival;
-        let survived = selector.operate(pop, 2, &mut rng, &_context);
+        let survived = selector.operate(pop, 2, &mut rng);
 
         // survive_count = 2
         assert_eq!(survived.fitness.len(), 2);
@@ -143,13 +134,8 @@ mod tests {
         let constraints = array![0.0, 0.0, 10.0, 100.0];
         let pop = PopulationSOO::new(genes, fitness, constraints);
         let mut rng = FakeRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-
         let mut selector = FitnessSurvival;
-        let survived = selector.operate(pop, 2, &mut rng, &_context);
+        let survived = selector.operate(pop, 2, &mut rng);
         // survive_count = 2
         assert_eq!(survived.fitness.len(), 2);
         // Survived fitnesses should be [0.2, 0.8]
@@ -169,13 +155,8 @@ mod tests {
         let fitness = array![0.3, 0.1, 0.2];
         let pop = PopulationSOO::new_unconstrained(genes, fitness);
         let mut rng = FakeRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-
         let mut selector = FitnessSurvival;
-        let survived = selector.operate(pop, 5, &mut rng, &_context);
+        let survived = selector.operate(pop, 5, &mut rng);
 
         assert_eq!(survived.fitness.len(), 3);
         let expected_fitness = array![0.1, 0.2, 0.3];
@@ -192,13 +173,8 @@ mod tests {
         let fitness = array![0.42];
         let pop = PopulationSOO::new_unconstrained(genes, fitness);
         let mut rng = FakeRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-
         let mut selector = FitnessSurvival;
-        let survived = selector.operate(pop, 1, &mut rng, &_context);
+        let survived = selector.operate(pop, 1, &mut rng);
 
         assert_eq!(survived.fitness.len(), 1);
         assert_eq!(survived.fitness[0], 0.42);

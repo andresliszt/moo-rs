@@ -1,5 +1,4 @@
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, Fronts, FrontsExt, PopulationMOO},
     non_dominated_sorting::build_fronts,
     operators::survival::SurvivalOperator,
@@ -54,7 +53,6 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator<FDim = ndarray::Ix2> {
         &self,
         fronts: &mut Fronts<ConstrDim>,
         rng: &mut impl RandomGenerator,
-        algorithm_context: &AlgorithmContext,
     ) where
         ConstrDim: D12;
 
@@ -65,7 +63,6 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator<FDim = ndarray::Ix2> {
         population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         rng: &mut impl RandomGenerator,
-        algorithm_context: &AlgorithmContext,
     ) -> PopulationMOO<ConstrDim>
     where
         ConstrDim: D12,
@@ -73,7 +70,7 @@ pub trait FrontsAndRankingBasedSurvival: SurvivalOperator<FDim = ndarray::Ix2> {
         // Build fronts
         let mut fronts = build_fronts(population, num_survive);
         // Set survival score
-        self.set_front_survival_score(&mut fronts, rng, algorithm_context);
+        self.set_front_survival_score(&mut fronts, rng);
         // Drain all fronts.
         let drained = fronts.drain(..);
         let mut survivors_parts: Vec<PopulationMOO<ConstrDim>> = Vec::new();
@@ -126,18 +123,11 @@ impl<T: FrontsAndRankingBasedSurvival> SurvivalOperator for T {
         population: PopulationMOO<ConstrDim>,
         num_survive: usize,
         rng: &mut impl RandomGenerator,
-        algorithm_context: &AlgorithmContext,
     ) -> PopulationMOO<ConstrDim>
     where
         ConstrDim: D12,
     {
         // Delegate to the FrontsAndRankingBasedSurvival default implementation
-        <T as FrontsAndRankingBasedSurvival>::operate(
-            self,
-            population,
-            num_survive,
-            rng,
-            algorithm_context,
-        )
+        <T as FrontsAndRankingBasedSurvival>::operate(self, population, num_survive, rng)
     }
 }

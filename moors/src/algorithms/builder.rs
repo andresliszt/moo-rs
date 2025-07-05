@@ -255,7 +255,6 @@ where
             evaluated_population,
             self.context.population_size,
             &mut self.rng,
-            &self.context,
         );
         // Update the population attribute
         self.population = Some(survivors);

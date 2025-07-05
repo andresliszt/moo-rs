@@ -3,7 +3,6 @@ use std::f64::INFINITY;
 use ndarray::{Array1, Array2};
 
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, Fronts},
     operators::survival::moo::FrontsAndRankingBasedSurvival,
     random::RandomGenerator,
@@ -22,7 +21,6 @@ impl FrontsAndRankingBasedSurvival for Nsga2RankCrowdingSurvival {
         &self,
         fronts: &mut Fronts<ConstrDim>,
         _rng: &mut impl RandomGenerator,
-        _algorithm_context: &AlgorithmContext,
     ) where
         ConstrDim: D12,
     {
@@ -99,7 +97,6 @@ mod tests {
     use super::*;
     use ndarray::{Array2, Axis, array, concatenate};
 
-    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::genetic::PopulationMOO;
     use crate::random::NoopRandomGenerator;
 
@@ -195,11 +192,7 @@ mod tests {
 
         let selector = Nsga2RankCrowdingSurvival::new();
         let mut rng = NoopRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-        selector.set_front_survival_score(&mut fronts, &mut rng, &_context);
+        selector.set_front_survival_score(&mut fronts, &mut rng);
 
         let expected: Array1<f64> = array![
             std::f64::INFINITY,
@@ -220,11 +213,7 @@ mod tests {
         let num_survive = 3;
         let mut selector = Nsga2RankCrowdingSurvival;
         let mut _rng = NoopRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-        let new_population = selector.operate(population, num_survive, &mut _rng, &_context);
+        let new_population = selector.operate(population, num_survive, &mut _rng);
 
         // The resulting population should remain unchanged.
         assert_eq!(new_population.genes, genes);
@@ -267,11 +256,7 @@ mod tests {
 
         let mut selector = Nsga2RankCrowdingSurvival;
         let mut _rng = NoopRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-        let new_population = selector.operate(population, num_survive, &mut _rng, &_context);
+        let new_population = selector.operate(population, num_survive, &mut _rng);
 
         // The final population must have 4 individuals.
         assert_eq!(new_population.len(), num_survive);
