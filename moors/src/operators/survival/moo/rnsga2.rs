@@ -3,7 +3,6 @@ use std::cmp::Ordering;
 use ndarray::{Array1, Array2, ArrayView1, Axis};
 
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, Fronts},
     helpers::extreme_points::{get_ideal, get_nadir},
     operators::survival::moo::{FrontsAndRankingBasedSurvival, SurvivalScoringComparison},
@@ -37,7 +36,6 @@ impl FrontsAndRankingBasedSurvival for Rnsga2ReferencePointsSurvival {
         &self,
         fronts: &mut Fronts<ConstrDim>,
         rng: &mut impl RandomGenerator,
-        _algorithm_context: &AlgorithmContext,
     ) where
         ConstrDim: D12,
     {

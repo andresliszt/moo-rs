@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, Fronts},
     helpers::{
         extreme_points::get_ideal,
@@ -45,18 +44,11 @@ impl HyperPlaneNormalization for AgeMoeaHyperPlaneNormalization {
 #[derive(Debug, Clone)]
 pub struct AgeMoeaSurvival;
 
-impl AgeMoeaSurvival {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
 impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
     fn set_front_survival_score<ConstrDim>(
         &self,
         fronts: &mut Fronts<ConstrDim>,
         _rng: &mut impl RandomGenerator,
-        _algorithm_context: &AlgorithmContext,
     ) where
         ConstrDim: D12,
     {
@@ -308,7 +300,6 @@ pub fn assign_survival_scores_higher_front(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithms::helpers::AlgorithmContextBuilder;
     use crate::genetic::PopulationMOO;
     use crate::operators::survival::moo::helpers::HyperPlaneNormalization;
     use crate::random::NoopRandomGenerator;
@@ -466,13 +457,9 @@ mod tests {
         // Set the desired number of survivors (e.g., 4).
         let num_survive = 4;
 
-        let mut operator = AgeMoeaSurvival::new();
+        let mut operator = AgeMoeaSurvival;
         let mut rng = NoopRandomGenerator::new();
-        // create context (not used in the algorithm)
-        let _context = AlgorithmContextBuilder::default()
-            .build()
-            .expect("Failed to build context");
-        let survivors = operator.operate(population, num_survive, &mut rng, &_context);
+        let survivors = operator.operate(population, num_survive, &mut rng);
 
         assert_eq!(
             survivors.len(),

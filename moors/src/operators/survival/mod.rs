@@ -2,7 +2,6 @@ pub mod moo;
 pub mod soo;
 
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, Population},
     random::RandomGenerator,
 };
@@ -22,7 +21,6 @@ pub trait SurvivalOperator {
         population: Population<Self::FDim, ConstrDim>,
         num_survive: usize,
         rng: &mut impl RandomGenerator,
-        algorithm_context: &AlgorithmContext,
     ) -> Population<Self::FDim, ConstrDim>
     where
         ConstrDim: D12;

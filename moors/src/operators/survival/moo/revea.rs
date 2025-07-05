@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use ndarray::{Array1, Array2};
 
 use crate::{
-    algorithms::AlgorithmContext,
     genetic::{D12, PopulationMOO},
     helpers::{
         extreme_points::{get_ideal, get_nadir},
@@ -22,17 +21,30 @@ pub struct ReveaReferencePointsSurvival {
     initial_reference_points: Array2<f64>,
     alpha: f64,
     frequency: f64,
+    num_iterations: usize,
+    current_iteration: usize,
 }
 
 impl ReveaReferencePointsSurvival {
-    pub fn new(reference_points: Array2<f64>, alpha: f64, frequency: f64) -> Self {
+    pub fn new(
+        reference_points: Array2<f64>,
+        alpha: f64,
+        frequency: f64,
+        num_iterations: usize,
+    ) -> Self {
         let initial_reference_points = reference_points.clone();
         Self {
-            reference_points,
-            initial_reference_points,
-            alpha,
-            frequency,
+            reference_points: reference_points,
+            initial_reference_points: initial_reference_points,
+            alpha: alpha,
+            frequency: frequency,
+            num_iterations: num_iterations,
+            current_iteration: 0,
         }
+    }
+
+    fn set_current_iteration(&mut self) {
+        self.current_iteration += 1
     }
 }
 
@@ -44,7 +56,6 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
         population: PopulationMOO<ConstrDim>,
         _n_survive: usize,
         _rng: &mut impl RandomGenerator,
-        algorithm_context: &AlgorithmContext,
     ) -> PopulationMOO<ConstrDim>
     where
         ConstrDim: D12,
@@ -68,8 +79,8 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
             cosine_distances,
             gamma,
             num_objectives,
-            algorithm_context.current_iteration,
-            algorithm_context.num_iterations,
+            self.current_iteration,
+            self.num_iterations,
             self.alpha,
         );
         // Elitism Selection
@@ -89,14 +100,13 @@ impl SurvivalOperator for ReveaReferencePointsSurvival {
             }
         }
         // Update reference points if needed
-        if (algorithm_context.current_iteration as f64 / algorithm_context.num_iterations as f64)
-            % self.frequency
-            == 0.0
-        {
+        if (self.current_iteration as f64 / self.num_iterations as f64) % self.frequency == 0.0 {
             let new_reference_points =
                 update_reference_vectors(&z_min, &z_max, &self.initial_reference_points);
             self.reference_points = new_reference_points;
         }
+        // Update current interation
+        self.set_current_iteration();
         population.selected(&selected_indices)
     }
 }

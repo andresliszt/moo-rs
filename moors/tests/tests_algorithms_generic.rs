@@ -176,7 +176,8 @@ fn test_revea() {
     let rp = DanAndDenisReferencePoints::new(100, 2).generate();
     let alpha = 2.5;
     let frequency = 0.2;
-    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency);
+    let num_iterations = 100;
+    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency, num_iterations);
     let mut algorithm = ReveaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
@@ -188,7 +189,7 @@ fn test_revea() {
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
-        .num_iterations(100)
+        .num_iterations(num_iterations)
         .mutation_rate(0.1)
         .crossover_rate(0.95)
         .keep_infeasible(false)

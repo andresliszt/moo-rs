@@ -102,7 +102,8 @@ fn test_revea_dtlz2_three_objectives() {
     let rp = DanAndDenisReferencePoints::new(100, 3).generate();
     let alpha = 2.5;
     let frequency = 0.2;
-    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency);
+    let num_iterations = 200;
+    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency, num_iterations);
     impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
     // instantiate via builder
@@ -117,7 +118,7 @@ fn test_revea_dtlz2_three_objectives() {
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
-        .num_iterations(200)
+        .num_iterations(num_iterations)
         .mutation_rate(0.05)
         .crossover_rate(0.9)
         .keep_infeasible(false)
