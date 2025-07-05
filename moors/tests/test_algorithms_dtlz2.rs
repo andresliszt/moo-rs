@@ -6,7 +6,8 @@ use moors::{
     genetic::PopulationMOO,
     impl_constraints_fn,
     operators::{
-        GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
+        ArithmeticCrossover, GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
+        UniformRealMutation,
         survival::moo::{
             DanAndDenisReferencePoints, Nsga3ReferencePoints, Nsga3ReferencePointsSurvival,
             ReveaReferencePointsSurvival, StructuredReferencePoints,
@@ -107,8 +108,8 @@ fn test_revea_dtlz2_three_objectives() {
     // instantiate via builder
     let mut algorithm = ReveaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
-        .crossover(SimulatedBinaryCrossover::new(20.0))
-        .mutation(GaussianMutation::new(0.05, 0.1))
+        .crossover(ArithmeticCrossover)
+        .mutation(UniformRealMutation::new(0.5, 0.0, 1.0))
         .survivor(survivor)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)

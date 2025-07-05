@@ -117,14 +117,15 @@ pub use genetic::{
 pub use operators::selection;
 pub use operators::survival;
 pub use operators::{
-    AgeMoeaSurvival, BitFlipMutation, CrossoverOperator, DanAndDenisReferencePoints,
-    DisplacementMutation, ExponentialCrossover, FrontsAndRankingBasedSurvival, GaussianMutation,
-    MutationOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePoints,
-    Nsga3ReferencePointsSurvival, OrderCrossover, PermutationSampling, RandomSamplingBinary,
-    RandomSamplingFloat, RandomSamplingInt, RandomSelectionMOO, RankAndScoringSelectionMOO,
-    ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, SamplingOperator,
-    ScrambleMutation, SelectionOperator, SimulatedBinaryCrossover, SinglePointBinaryCrossover,
-    Spea2KnnSurvival, StructuredReferencePoints, SurvivalOperator, SwapMutation,
-    UniformBinaryCrossover, evolve::EvolveError,
+    AgeMoeaSurvival, ArithmeticCrossover, BitFlipMutation, CrossoverOperator,
+    DanAndDenisReferencePoints, DisplacementMutation, ExponentialCrossover,
+    FrontsAndRankingBasedSurvival, GaussianMutation, InversionMutation, MutationOperator,
+    Nsga2RankCrowdingSurvival, Nsga3ReferencePoints, Nsga3ReferencePointsSurvival, OrderCrossover,
+    PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
+    RandomSelectionMOO, RankAndScoringSelectionMOO, ReveaReferencePointsSurvival,
+    Rnsga2ReferencePointsSurvival, SamplingOperator, ScrambleMutation, SelectionOperator,
+    SimulatedBinaryCrossover, SinglePointBinaryCrossover, Spea2KnnSurvival,
+    StructuredReferencePoints, SurvivalOperator, SwapMutation, TwoPointBinaryCrossover,
+    UniformBinaryCrossover, UniformBinaryMutation, UniformRealMutation, evolve::EvolveError,
 };
 pub use random::{MOORandomGenerator, NoopRandomGenerator, RandomGenerator, TestDummyRng};

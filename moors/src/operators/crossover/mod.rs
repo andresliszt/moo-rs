@@ -2,17 +2,21 @@ use ndarray::{Array1, Array2};
 
 use crate::random::RandomGenerator;
 
+mod arithmetic;
 mod exponential;
 mod order;
 mod sbx;
 mod single_point;
-mod uniform_binary;
+mod two_points;
+mod uniform;
 
+pub use arithmetic::ArithmeticCrossover;
 pub use exponential::ExponentialCrossover;
 pub use order::OrderCrossover;
 pub use sbx::SimulatedBinaryCrossover;
 pub use single_point::SinglePointBinaryCrossover;
-pub use uniform_binary::UniformBinaryCrossover;
+pub use two_points::TwoPointBinaryCrossover;
+pub use uniform::UniformBinaryCrossover;
 
 pub trait CrossoverOperator {
     fn n_offsprings_per_crossover(&self) -> usize {

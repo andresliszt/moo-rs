@@ -74,13 +74,14 @@ pub mod selection;
 pub mod survival;
 
 pub use crossover::{
-    CrossoverOperator, ExponentialCrossover, OrderCrossover, SimulatedBinaryCrossover,
-    SinglePointBinaryCrossover, UniformBinaryCrossover,
+    ArithmeticCrossover, CrossoverOperator, ExponentialCrossover, OrderCrossover,
+    SimulatedBinaryCrossover, SinglePointBinaryCrossover, TwoPointBinaryCrossover,
+    UniformBinaryCrossover,
 };
 pub use evolve::{Evolve, EvolveBuilder, EvolveError};
 pub use mutation::{
-    BitFlipMutation, DisplacementMutation, GaussianMutation, MutationOperator, ScrambleMutation,
-    SwapMutation,
+    BitFlipMutation, DisplacementMutation, GaussianMutation, InversionMutation, MutationOperator,
+    ScrambleMutation, SwapMutation, UniformBinaryMutation, UniformRealMutation,
 };
 pub use sampling::{
     PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
