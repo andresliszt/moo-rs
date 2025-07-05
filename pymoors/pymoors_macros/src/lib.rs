@@ -234,7 +234,6 @@ pub fn py_operator_duplicates(input: TokenStream) -> TokenStream {
 /// For each variant this attribute will:
 /// - Generate `impl From<Type> for MutationOperatorDispatcher`
 /// - Implement `moors::operators::MutationOperator` by delegating `mutate(...)`
-/// - Implement `moors::operators::GeneticOperator` by delegating `name()`
 /// - Emit `py_operator_mutation!(Type)` for each Rust‐native operator
 /// - Add a constructor
 ///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
@@ -287,32 +286,18 @@ pub fn register_py_operators_mutation(_attr: TokenStream, item: TokenStream) -> 
         impl moors::operators::MutationOperator for #enum_ident {
             fn mutate<'a>(
                 &self,
-                individual: moors::genetic::IndividualGenesMut<'a>,
+                individual: ndarray::ArrayViewMut1<'a, f64>,
                 rng: &mut impl moors::random::RandomGenerator,
             ) {
                 match self { #(#mutate_match)* }
             }
             fn operate(
                 &self,
-                population: &Array2<f64>,
+                population: &mut ndarray::Array2<f64>,
                 mutation_rate: f64,
                 rng: &mut impl moors::random::RandomGenerator,
             ) {
                 match self { #(#operate_match)* }
-            }
-        }
-    };
-
-    // GeneticOperator impl
-    let name_match = ops.iter().map(|(var, _)| {
-        quote! {
-            #enum_ident::#var(inner) => inner.name(),
-        }
-    });
-    let genetic_impl = quote! {
-        impl moors::operators::GeneticOperator for #enum_ident {
-            fn name(&self) -> String {
-                match self { #(#name_match)* }
             }
         }
     };
@@ -365,7 +350,6 @@ pub fn register_py_operators_mutation(_attr: TokenStream, item: TokenStream) -> 
         #input_enum
         #(#from_impls)*
         #mutation_impl
-        #genetic_impl
         #(#macro_calls)*
         #ctor_impl
     })
@@ -379,7 +363,6 @@ pub fn register_py_operators_mutation(_attr: TokenStream, item: TokenStream) -> 
 /// variant this attribute will:
 /// - Generate `impl From<Type> for CrossoverEnumDispatcher`
 /// - Implement `moors::operators::CrossoverOperator` by delegating `crossover(...)`
-/// - Implement `moors::operators::GeneticOperator` by delegating `name()`
 /// - Emit a call to `py_operator_crossover!(Type)` so the Python wrapper is registered
 /// - Add an associated constructor:
 ///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
@@ -428,33 +411,20 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
         impl moors::operators::CrossoverOperator for #enum_ident {
             fn crossover(
                 &self,
-                parent_a: &Array1<f64>,
-                parent_b: &Array1<f64>,
+                parent_a: &ndarray::Array1<f64>,
+                parent_b: &ndarray::Array1<f64>,
                 rng: &mut impl moors::random::RandomGenerator,
-            ) -> (Array1<f64>, Array1<f64>) {
+            ) -> (ndarray::Array1<f64>, ndarray::Array1<f64>) {
                 match self { #(#crossover_match)* }
             }
             fn operate(
                 &self,
-                parents_a: &Array2<f64>,
-                parents_b: &Array2<f64>,
+                parents_a: &ndarray::Array2<f64>,
+                parents_b: &ndarray::Array2<f64>,
                 crossover_rate: f64,
                 rng: &mut impl moors::random::RandomGenerator,
-            ) -> Array2<f64> {
+            ) -> ndarray::Array2<f64> {
                 match self { #(#operate_match)* }
-            }
-        }
-    };
-    // impl GeneticOperator by forwarding .name()
-    let name_match = ops.iter().map(|(var, _)| {
-        quote! {
-            #enum_ident::#var(inner) => inner.name(),
-        }
-    });
-    let genetic_impl = quote! {
-        impl moors::operators::GeneticOperator for #enum_ident {
-            fn name(&self) -> String {
-                match self { #(#name_match)* }
             }
         }
     };
@@ -506,7 +476,6 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
         #input_enum               // keep user enum unchanged
         #(#from_impls)*
         #crossover_impl
-        #genetic_impl
         #(#macro_calls)*
         #ctor_impl
     })
@@ -521,7 +490,6 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
 /// - Generate `impl From<Type> for SamplingOperatorDispatcher`
 /// - Implement `moors::operators::SamplingOperator` by delegating
 ///   `sample_individual(num_vars, rng)`
-/// - Implement `moors::operators::GeneticOperator` by delegating `name()`
 /// - Emit a call to `py_operator_sampling!(Type)` so that the Python wrapper is registered
 /// - Add an associated constructor:
 ///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
@@ -573,7 +541,7 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
                 &self,
                 num_vars: usize,
                 rng: &mut impl moors::random::RandomGenerator
-            ) -> moors::genetic::IndividualGenes {
+            ) -> ndarray::Array1<f64> {
                 match self { #(#sample_match)* }
             }
             fn operate(
@@ -581,22 +549,8 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
                 population_size: usize,
                 num_vars: usize,
                 rng: &mut impl moors::random::RandomGenerator
-            ) -> moors::genetic::PopulationGenes {
+            ) -> ndarray::Array2<f64> {
                 match self { #(#operate_match)* }
-            }
-        }
-    };
-
-    // impl GeneticOperator by delegating name()
-    let name_match = ops.iter().map(|(var, _)| {
-        quote! {
-            #enum_ident::#var(inner) => inner.name(),
-        }
-    });
-    let genetic_impl = quote! {
-        impl moors::operators::GeneticOperator for #enum_ident {
-            fn name(&self) -> String {
-                match self { #(#name_match)* }
             }
         }
     };
@@ -648,7 +602,6 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
         #input_enum
         #(#from_impls)*
         #sampling_impl
-        #genetic_impl
         #(#macro_calls)*
         #ctor_impl
     })
@@ -701,9 +654,9 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
         impl moors::duplicates::PopulationCleaner for #enum_ident {
             fn remove(
                 &self,
-                population: &moors::genetic::PopulationGenes,
-                reference: Option<&moors::genetic::PopulationGenes>,
-            ) -> moors::genetic::PopulationGenes {
+                population: ndarray::Array2<f64>,
+                reference: Option<&ndarray::Array2<f64>>,
+            ) -> ndarray::Array2<f64> {
                 match self { #(#remove_arms)* }
             }
         }
@@ -789,7 +742,7 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
             pub fn run(&mut self) -> pyo3::PyResult<()> {
                 self.algorithm
                     .run()
-                    .map_err(|e| MultiObjectiveAlgorithmErrorWrapper(e.into()))?;
+                    .map_err(|e| AlgorithmErrorWrapper(e.into()))?;
                 Ok(())
             }
 

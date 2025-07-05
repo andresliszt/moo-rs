@@ -1,4 +1,4 @@
-use moors::operators::survival::reference_points::{
+use moors::{
     DanAndDenisReferencePoints, StructuredReferencePoints,
 };
 use ndarray::Array2;

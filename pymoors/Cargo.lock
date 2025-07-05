@@ -803,9 +803,9 @@ dependencies = [
 
 [[package]]
 name = "moors"
-version = "0.2.0"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "701635f99ba7b183c8939b49b0019b46494d3715fba068401af84f797a0152b2"
+checksum = "dd51c47a5ec17505dbe6d061b97c3fb1161dffbe69fc7f8635fc3d409a907e5b"
 dependencies = [
  "derive_builder",
  "faer",

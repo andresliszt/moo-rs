@@ -2,23 +2,30 @@ use numpy::PyArrayMethods;
 use pyo3::prelude::*;
 
 use moors::{
-    duplicates::{CloseDuplicatesCleaner, ExactDuplicatesCleaner, PopulationCleaner},
-    operators::{
-        CrossoverOperator, MutationOperator,
-        crossover::{
-            exponential::ExponentialCrossover, order::OrderCrossover,
-            sbx::SimulatedBinaryCrossover, single_point::SinglePointBinaryCrossover,
-            uniform_binary::UniformBinaryCrossover,
-        },
-        mutation::{
-            bitflip::BitFlipMutation, displacement::DisplacementMutation,
-            gaussian::GaussianMutation, scramble::ScrambleMutation, swap::SwapMutation,
-        },
-        sampling::{
-            PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
-            SamplingOperator,
-        },
-    },
+    BitFlipMutation,
+    // Duplicates cleaner
+    CloseDuplicatesCleaner,
+    // Crossover
+    CrossoverOperator,
+    DisplacementMutation,
+    ExactDuplicatesCleaner,
+    ExponentialCrossover,
+    GaussianMutation,
+    // Mutation
+    MutationOperator,
+    OrderCrossover,
+    PermutationSampling,
+    PopulationCleaner,
+    RandomSamplingBinary,
+    RandomSamplingFloat,
+    RandomSamplingInt,
+    // Sampling
+    SamplingOperator,
+    ScrambleMutation,
+    SimulatedBinaryCrossover,
+    SinglePointBinaryCrossover,
+    SwapMutation,
+    UniformBinaryCrossover,
 };
 
 use pymoors_macros::{
