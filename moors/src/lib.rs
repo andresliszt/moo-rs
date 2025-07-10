@@ -101,7 +101,6 @@ pub mod non_dominated_sorting;
 pub mod operators;
 mod private;
 pub mod random;
-
 pub use algorithms::{
     AgeMoea, AgeMoeaBuilder, AlgorithmBuilder, AlgorithmBuilderError, AlgorithmError,
     GeneticAlgorithm, InitializationError, Nsga2, Nsga2Builder, Nsga3, Nsga3Builder, Revea,
@@ -114,6 +113,7 @@ pub use evaluator::{ConstraintsFn, EvaluatorError, FitnessFn, NoConstraints};
 pub use genetic::{
     Individual, IndividualMOO, IndividualSOO, Population, PopulationMOO, PopulationSOO,
 };
+pub use helpers::linalg::cross_euclidean_distances;
 pub use operators::selection;
 pub use operators::survival;
 pub use operators::{
