@@ -5,10 +5,11 @@ use moors::{
     BitFlipMutation,
     // Duplicates cleaner
     CloseDuplicatesCleaner,
+    ExactDuplicatesCleaner,
+    NoDuplicatesCleaner,
     // Crossover
     CrossoverOperator,
     DisplacementMutation,
-    ExactDuplicatesCleaner,
     ExponentialCrossover,
     GaussianMutation,
     // Mutation
@@ -75,6 +76,7 @@ pub enum SamplingOperatorDispatcher {
 pub enum DuplicatesCleanerDispatcher {
     ExactDuplicatesCleaner(ExactDuplicatesCleaner),
     CloseDuplicatesCleaner(CloseDuplicatesCleaner),
+    NoDuplicatesCleaner(NoDuplicatesCleaner)
 }
 
 // --------------------------------------------------------------------------------

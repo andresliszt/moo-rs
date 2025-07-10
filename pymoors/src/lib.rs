@@ -27,24 +27,26 @@ pub use py_operators::{
 };
 pub use py_reference_points::PyDanAndDenisReferencePoints;
 
-use faer_ext::IntoNdarray;
-use moors::helpers::linalg::cross_euclidean_distances;
-use numpy::ToPyArray;
+// use faer_ext::IntoNdarray;
+// use moors::helpers::linalg::cross_euclidean_distances;
+// use numpy::ToPyArray;
 
-#[pyfunction]
-#[pyo3(name = "cross_euclidean_distances")]
-/// This function will never be exposed to the users, its going to be used
-/// for benchmarking against scipy cdist method
-pub fn cross_euclidean_distances_py<'py>(
-    py: Python<'py>,
-    data: numpy::PyReadonlyArray2<'py, f64>,
-    reference: numpy::PyReadonlyArray2<'py, f64>,
-) -> Bound<'py, numpy::PyArray2<f64>> {
-    let data = data.as_array().to_owned();
-    let reference = reference.as_array().to_owned();
-    let result = cross_euclidean_distances(&data, &reference);
-    result.as_ref().into_ndarray().to_pyarray(py)
-}
+// TODO: Uncomment the function below once cross_euclidean_distances is exposed to python
+
+// #[pyfunction]
+// #[pyo3(name = "cross_euclidean_distances")]
+// /// This function will never be exposed to the users, its going to be used
+// /// for benchmarking against scipy cdist method
+// pub fn cross_euclidean_distances_py<'py>(
+//     py: Python<'py>,
+//     data: numpy::PyReadonlyArray2<'py, f64>,
+//     reference: numpy::PyReadonlyArray2<'py, f64>,
+// ) -> Bound<'py, numpy::PyArray2<f64>> {
+//     let data = data.as_array().to_owned();
+//     let reference = reference.as_array().to_owned();
+//     let result = cross_euclidean_distances(&data, &reference);
+//     result.as_ref().into_ndarray().to_pyarray(py)
+// }
 
 /// Root module `pymoors` that includes all classes.
 #[pymodule]
@@ -86,7 +88,7 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("InitializationError", _py.get_type::<InitializationError>())?;
 
     // Functions
-    let _ = m.add_function(wrap_pyfunction!(cross_euclidean_distances_py, m)?);
+    // let _ = m.add_function(wrap_pyfunction!(cross_euclidean_distances_py, m)?);
 
     // Rerefence points
     m.add_class::<PyDanAndDenisReferencePoints>()?;

@@ -1,6 +1,4 @@
-use moors::{
-    DanAndDenisReferencePoints, StructuredReferencePoints,
-};
+use moors::{DanAndDenisReferencePoints, StructuredReferencePoints};
 use ndarray::Array2;
 use numpy::{IntoPyArray, PyArray2};
 use pyo3::exceptions::PyTypeError;

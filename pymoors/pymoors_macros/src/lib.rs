@@ -654,7 +654,7 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
         impl moors::duplicates::PopulationCleaner for #enum_ident {
             fn remove(
                 &self,
-                population: ndarray::Array2<f64>,
+                population:ndarray::Array2<f64>,
                 reference: Option<&ndarray::Array2<f64>>,
             ) -> ndarray::Array2<f64> {
                 match self { #(#remove_arms)* }
@@ -677,20 +677,28 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
         }
     });
     let ctor_impl = quote! {
-        impl #enum_ident {
-            /// Convert a Python-side duplicates operator into this dispatcher.
-            pub fn from_python_operator(
-                py_obj: pyo3::PyObject
-            ) -> pyo3::PyResult<Self> {
-                pyo3::Python::with_gil(|py| {
-                    #(#extract_arms)*
-                    Err(pyo3::exceptions::PyValueError::new_err(
-                        "Could not extract a valid duplicates operator",
-                    ))
-                })
+            impl #enum_ident {
+                /// Convert an optional Python-side duplicates operator into this dispatcher.
+                /// If `py_obj_opt` is `None`, returns the `NoDuplicatesCleaner` variant.
+                pub fn from_python_operator(
+                    py_obj_opt: Option<pyo3::PyObject>
+                ) -> pyo3::PyResult<Self> {
+                    // Early return for no-op cleaner
+                    if py_obj_opt.is_none() {
+                        return Ok(
+                            #enum_ident::NoDuplicatesCleaner(NoDuplicatesCleaner)
+                        );
+                    }
+                    let py_obj = py_obj_opt.unwrap();
+                    pyo3::Python::with_gil(|py| {
+                        #(#extract_arms)*
+                        Err(pyo3::exceptions::PyValueError::new_err(
+                            "Could not extract a valid duplicates operator",
+                        ))
+                    })
+                }
             }
-        }
-    };
+        };
 
     // Emit the original enum plus all generated code
     TokenStream::from(quote! {
@@ -756,18 +764,18 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
                 let population = self
                     .algorithm
                     .population()
-                    .map_err(|e| MultiObjectiveAlgorithmErrorWrapper(e.into()))?;
+                    .map_err(|e| AlgorithmErrorWrapper(e.into()))?;
                 let py_genes = population.genes.to_pyarray(py);
                 let py_fitness = population.fitness.to_pyarray(py);
+                let py_constraints = population.constraints.to_pyarray(py);
 
                 let py_rank = if let Some(ref r) = population.rank {
                     r.to_pyarray(py).into_py(py)
                 } else {
                     py.None().into_py(py)
                 };
-
-                let py_constraints = if let Some(ref c) = population.constraints {
-                    c.to_pyarray(py).into_py(py)
+                let py_survival_score = if let Some(ref r) = population.survival_score {
+                    r.to_pyarray(py).into_py(py)
                 } else {
                     py.None().into_py(py)
                 };
@@ -777,6 +785,7 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
                 kwargs.set_item("fitness", py_fitness)?;
                 kwargs.set_item("rank", py_rank)?;
                 kwargs.set_item("constraints", py_constraints)?;
+                kwargs.set_item("survival_score", py_survival_score)?;
 
                 let py_instance = population_class.call((), Some(&kwargs))?;
                 Ok(py_instance.into_py(py))

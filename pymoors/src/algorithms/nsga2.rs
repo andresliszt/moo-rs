@@ -1,13 +1,10 @@
-use moors::algorithms::Nsga2;
+use moors::{Nsga2, Nsga2Builder};
 use numpy::ToPyArray;
 use pymoors_macros::py_algorithm_impl;
 use pyo3::prelude::*;
 
-use crate::py_error::MultiObjectiveAlgorithmErrorWrapper;
-use crate::py_fitness_and_constraints::{
-    PyConstraintsFn, PyFitnessFn, create_population_constraints_closure,
-    create_population_fitness_closure,
-};
+use crate::py_error::AlgorithmErrorWrapper;
+use crate::py_fitness_and_constraints::{PyConstraintsFnWrapper, PyFitnessFnWrapper};
 use crate::py_operators::{
     CrossoverOperatorDispatcher, DuplicatesCleanerDispatcher, MutationOperatorDispatcher,
     SamplingOperatorDispatcher,
@@ -19,8 +16,8 @@ pub struct PyNsga2 {
         SamplingOperatorDispatcher,
         CrossoverOperatorDispatcher,
         MutationOperatorDispatcher,
-        PyFitnessFn,
-        PyConstraintsFn,
+        PyFitnessFnWrapper,
+        PyConstraintsFnWrapper,
         DuplicatesCleanerDispatcher,
     >,
 }
@@ -82,17 +79,26 @@ impl PyNsga2 {
         } else {
             None
         };
-        // Build the mandatory population-level fitness closure.
-        let fitness_closure = create_population_fitness_closure(fitness_fn)?;
-        // Build the optional constraints closure.
-        let constraints_closure = if let Some(py_obj) = constraints_fn {
-            Some(create_population_constraints_closure(py_obj)?)
-        } else {
-            None
-        };
+        // Build the mandatory population-level fitness.
+        let fitness = PyFitnessFnWrapper::new(fitness_fn);
+        // Build the optional constraints.
+        let constraints =
+            PyConstraintsFnWrapper::from_python_constraints(constraints_fn, lower_bound, upper_bound);
+            
 
         // Build the NSGA2 algorithm instance.
-        let algorithm = Nsga2::new(
+        let algorithm = Nsga2Builder::default().sampler(sampler).
+        crossover(crossover).
+        mutation(mutation).duplicates_cleaner(duplicates_cleaner).
+        
+        
+        
+        
+        
+        
+        
+        
+        new(
             sampler,
             crossover,
             mutation,
