@@ -61,7 +61,7 @@ pub trait PopulationCleaner {
 }
 
 /// A no-op cleaner for the “default” case:
-#[derive(Debug, Default)]
+#[derive(Debug, Clone)]
 pub struct NoDuplicatesCleaner;
 
 impl PopulationCleaner for NoDuplicatesCleaner {
