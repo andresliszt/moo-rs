@@ -34,13 +34,13 @@
 use std::marker::PhantomData;
 
 use derive_builder::Builder;
-use ndarray::{Axis, concatenate};
+use ndarray::{concatenate, Axis};
 
 use crate::{
     algorithms::helpers::{
-        AlgorithmContext, AlgorithmContextBuilder, AlgorithmError,
-        initialization::Initialization,
-        validators::{validate_bounds, validate_positive, validate_probability},
+        initialization::Initialization, validators::{validate_bounds, validate_positive, validate_probability}, AlgorithmContext,
+        AlgorithmContextBuilder,
+        AlgorithmError,
     },
     duplicates::{NoDuplicatesCleaner, PopulationCleaner},
     evaluator::{ConstraintsFn, Evaluator, EvaluatorBuilder, FitnessFn, NoConstraints},
@@ -259,6 +259,21 @@ where
         // Update the population attribute
         self.population = Some(survivors);
 
+        Ok(())
+    }
+
+    pub fn initialize(&mut self) -> Result<(), AlgorithmError> {
+        // Create the first Population
+        let initial_population = Initialization::initialize(
+            &self.sampler,
+            &mut self.survivor,
+            &self.evaluator,
+            &self.evolve.duplicates_cleaner,
+            &mut self.rng,
+            &self.context,
+        )?;
+        // Update population attribute
+        self.population = Some(initial_population);
         Ok(())
     }
 
