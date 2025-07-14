@@ -227,7 +227,7 @@ where
     G: ConstraintsFn,
     DC: PopulationCleaner,
 {
-    fn next(&mut self) -> Result<(), AlgorithmError> {
+    pub fn next(&mut self) -> Result<(), AlgorithmError> {
         let ref_pop = self.population.as_ref().unwrap();
         // Obtain offspring genes.
         let offspring_genes = self
