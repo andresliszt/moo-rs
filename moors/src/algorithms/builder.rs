@@ -34,13 +34,13 @@
 use std::marker::PhantomData;
 
 use derive_builder::Builder;
-use ndarray::{Axis, concatenate};
+use ndarray::{concatenate, Axis};
 
 use crate::{
     algorithms::helpers::{
-        AlgorithmContext, AlgorithmContextBuilder, AlgorithmError,
-        initialization::Initialization,
-        validators::{validate_bounds, validate_positive, validate_probability},
+        initialization::Initialization, validators::{validate_bounds, validate_positive, validate_probability}, AlgorithmContext,
+        AlgorithmContextBuilder,
+        AlgorithmError,
     },
     duplicates::{NoDuplicatesCleaner, PopulationCleaner},
     evaluator::{ConstraintsFn, Evaluator, EvaluatorBuilder, FitnessFn, NoConstraints},
@@ -251,7 +251,7 @@ where
         let combined_genes = concatenate(Axis(0), &[ref_pop.genes.view(), offspring_genes.view()])
             .expect("Failed to concatenate current population genes with offspring genes");
         // Evaluate the fitness and constraints and create Population
-        let evaluated_population = self.evaluator.evaluate(combined_genes)?;
+        let evaluated_population = self.evaluator.evaluate(combined_genes, self.context_id)?;
 
         // Select survivors to the next iteration population
         let survivors = self.survivor.operate(

@@ -8,7 +8,7 @@ use derive_builder::Builder;
 use ndarray::{Array2, ArrayBase, Axis, Dimension, OwnedRepr};
 use thiserror::Error;
 
-use crate::genetic::{D01, D12, Population};
+use crate::genetic::{Population, D01, D12};
 
 pub trait ConstraintsFn
 where
@@ -57,18 +57,18 @@ where
     <Self::Dim as Dimension>::Smaller: D01,
 {
     type Dim: D12;
-    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim>;
+    fn call(&self, genes: &Array2<f64>, context_id: usize) -> ArrayBase<OwnedRepr<f64>, Self::Dim>;
 }
 
 impl<F, Dim> FitnessFn for F
 where
-    F: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Dim>,
+    F: Fn(&Array2<f64>, usize) -> ArrayBase<OwnedRepr<f64>, Dim>,
     Dim: D12,
     <Dim as Dimension>::Smaller: D01,
 {
     type Dim = Dim;
-    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Dim> {
-        (self)(genes)
+    fn call(&self, genes: &Array2<f64>, context_id: usize) -> ArrayBase<OwnedRepr<f64>, Dim> {
+        (self)(genes, context_id)
     }
 }
 
@@ -107,8 +107,9 @@ where
     pub fn evaluate(
         &self,
         genes: Array2<f64>,
+        context_id: usize,
     ) -> Result<Population<F::Dim, G::Dim>, EvaluatorError> {
-        let fitness = self.fitness.call(&genes);
+        let fitness = self.fitness.call(&genes, context_id);
         let constraints = self.constraints.call(&genes);
         let mut evaluated_population = Population::new(genes, fitness, constraints);
 
@@ -141,7 +142,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::{Array1, Array2, Axis, array, concatenate};
+    use ndarray::{array, concatenate, Array1, Array2, Axis};
 
     use crate::NoConstraints;
 
@@ -150,20 +151,20 @@ mod tests {
     // ──────────────────────────────────────────────────────────────────────────
 
     /// One-objective fitness (sphere) → N × 1 column
-    fn fitness_2d_single(genes: &Array2<f64>) -> Array2<f64> {
+    fn fitness_2d_single(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
         genes // genes: N × d
             .map_axis(Axis(1), |ind| ind.iter().map(|&x| x * x).sum::<f64>())
             .insert_axis(Axis(1)) // N × 1
     }
 
     /// Same sphere but returned as a flat vector (N elements)
-    fn fitness_1d(genes: &Array2<f64>) -> Array1<f64> {
+    fn fitness_1d(genes: &Array2<f64>, _context_id: usize) -> Array1<f64> {
         genes.map_axis(Axis(1), |ind| ind.iter().map(|&x| x * x).sum::<f64>())
     }
 
     /// Two objectives:
     ///   f₀ = Σ x²   |   f₁ = Σ |x|
-    fn fitness_2d_two_obj(genes: &Array2<f64>) -> Array2<f64> {
+    fn fitness_2d_two_obj(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
         let f0 = genes
             .map_axis(Axis(1), |ind| ind.iter().map(|&x| x * x).sum::<f64>())
             .insert_axis(Axis(1));
@@ -204,7 +205,7 @@ mod tests {
             .expect("Builder failed");
 
         let genes = array![[1.0, 2.0], [3.0, 4.0], [0.0, 0.0]];
-        let fit = eval.evaluate(genes).unwrap().fitness;
+        let fit = eval.evaluate(genes, 0).unwrap().fitness;
 
         // Each row keeps its sphere value in a single column
         let expected = array![[5.0], [25.0], [0.0]];
@@ -229,7 +230,7 @@ mod tests {
             /* idx 2 */
             [5.0, 6.0], // Σ=11 → c0 =  1 (will be infeasible when filtering)
         ];
-        let c = eval.evaluate(genes).unwrap().constraints;
+        let c = eval.evaluate(genes, 0).unwrap().constraints;
 
         let expected = array![[-7.0, -1.0, -2.0], [-3.0, -3.0, -4.0], [1.0, -5.0, -6.0],];
         assert_eq!(c, expected);
@@ -245,7 +246,7 @@ mod tests {
             .expect("Builder failed");
 
         let genes = array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
-        let pop = eval.evaluate(genes).unwrap();
+        let pop = eval.evaluate(genes, 0).unwrap();
         assert_eq!(
             pop.genes.nrows(),
             3,
@@ -270,7 +271,7 @@ mod tests {
             /* 0 OK  */ [1.0, 2.0], // Σ=3  (feasible)
             /* 1 BAD */ [6.0, 5.0], // Σ=11 (violates c0)
         ];
-        let pop = eval.evaluate(genes).unwrap();
+        let pop = eval.evaluate(genes, 0).unwrap();
 
         assert_eq!(pop.genes.nrows(), 1, "Second row violates Σx - 10 ≤ 0");
         assert_eq!(pop.fitness, array![5.0]);
@@ -293,7 +294,7 @@ mod tests {
             /* 0 OK  */ [2.0, 3.0], // Σ=5  (feasible)
             /* 1 BAD */ [5.0, 6.0], // Σ=11 (violates)
         ];
-        let pop = eval.evaluate(genes).unwrap();
+        let pop = eval.evaluate(genes, 0).unwrap();
 
         assert_eq!(pop.genes.nrows(), 1);
         assert_eq!(pop.fitness, array![13.0]); // 2²+3²=13
@@ -319,7 +320,7 @@ mod tests {
 
         // Every candidate violates constraints (Σ>10)
         let genes = array![[6.0, 6.0], [5.5, 6.0], [6.0, 100.0]];
-        let err = eval.evaluate(genes).unwrap_err();
+        let err = eval.evaluate(genes, 0).unwrap_err();
         assert!(
             matches!(err, EvaluatorError::NoFeasibleIndividuals),
             "When no rows survive, Evaluator must return the dedicated error"
@@ -339,7 +340,7 @@ mod tests {
             .expect("Builder failed");
 
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
-        let fit = eval.evaluate(genes).unwrap().fitness;
+        let fit = eval.evaluate(genes, 0).unwrap().fitness;
 
         // Row-wise expected values: [Σx², Σ|x|]
         let expected = array![[5.0, 3.0], [25.0, 7.0]];

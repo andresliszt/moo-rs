@@ -32,7 +32,7 @@ impl Initialization {
         genes = duplicates_cleaner.remove(genes, None);
         // Do the first evaluation
         let mut population = evaluator
-            .evaluate(genes)
+            .evaluate(genes, context.context_id)
             .map_err(InitializationError::from)?;
         // Validate first individual
         // this step is very important. All members of the population survive, because
@@ -91,7 +91,9 @@ mod tests {
             .build()
             .expect("Builder failed");
 
-        let fitness_fn = |genes: &Array2<f64>| dummy_fitness(genes, context.population_size, 2);
+        let fitness_fn = |genes: &Array2<f64>, _context_id: usize| {
+            dummy_fitness(genes, context.population_size, 2)
+        };
         let constraints_fn =
             |genes: &Array2<f64>| dummy_constraints(genes, context.population_size, 2);
         let evaluator = EvaluatorBuilder::default()
