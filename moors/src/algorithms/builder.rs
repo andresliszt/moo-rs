@@ -100,6 +100,7 @@ pub struct GeneticAlgorithmParams<
     verbose: bool,
     #[builder(setter(strip_option), default = "None")]
     seed: Option<u64>,
+    context_id: usize,
 }
 
 impl<S, Sel, Sur, Cross, Mut, F, G, DC> AlgorithmBuilder<S, Sel, Sur, Cross, Mut, F, G, DC>
@@ -189,6 +190,7 @@ where
             verbose: params.verbose,
             rng: rng,
             phantom: PhantomData,
+            context_id: params.context_id,
         })
     }
 }
@@ -214,6 +216,7 @@ where
     verbose: bool,
     rng: MOORandomGenerator,
     phantom: PhantomData<S>,
+    context_id: usize,
 }
 
 impl<S, Sel, Sur, Cross, Mut, F, G, DC> GeneticAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
