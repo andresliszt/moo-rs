@@ -49,15 +49,19 @@ macro_rules! create_algorithm {
             pub fn run(&mut self) -> Result<(), AlgorithmError> {
                 self.inner.run()
             }
-            
+
             pub fn next(&mut self) -> Result<(), AlgorithmError> {
                 self.inner.next()
             }
-            
+
             pub fn initialize(&mut self) -> Result<(), AlgorithmError> {
                 self.inner.next()
             }
-            
+
+            pub fn set_current_iteration(&mut self, current_iter: usize) {
+                self.inner.set_current_iteration(current_iter);
+            }
+
             /// Delegate `population` to the inner algorithm
             pub fn population(
                 &self,
