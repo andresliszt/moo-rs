@@ -2,29 +2,23 @@ use numpy::PyArrayMethods;
 use pyo3::prelude::*;
 
 use moors::{
-    CloseDuplicatesCleaner,
-    // Crossover
-    CrossoverOperator,
     ArithmeticCrossover,
+    BitFlipMutation,
+    CloseDuplicatesCleaner,
+    CrossoverOperator,
     DisplacementMutation,
     ExactDuplicatesCleaner,
     ExponentialCrossover,
     GaussianMutation,
-    // Mutation
-    MutationOperator,
-    // UniformRealMutation, TODO: Need to implement Debug
-    UniformBinaryMutation,
     InversionMutation,
-    BitFlipMutation,
+    MutationOperator,
     NoDuplicatesCleaner,
     OrderCrossover,
     PermutationSampling,
-    // Duplicates Cleaner
     PopulationCleaner,
     RandomSamplingBinary,
     RandomSamplingFloat,
     RandomSamplingInt,
-    // Sampling
     SamplingOperator,
     ScrambleMutation,
     SimulatedBinaryCrossover,
@@ -32,6 +26,8 @@ use moors::{
     SwapMutation,
     TwoPointBinaryCrossover,
     UniformBinaryCrossover,
+    // UniformRealMutation, TODO: Need to implement Debug
+    UniformBinaryMutation,
 };
 
 use pymoors_macros::{

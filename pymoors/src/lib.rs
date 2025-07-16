@@ -9,10 +9,10 @@ pub mod py_fitness_and_constraints;
 pub mod py_operators;
 pub mod py_reference_points;
 
-use pyo3::prelude::*;
 use faer_ext::IntoNdarray;
 use moors::cross_euclidean_distances;
 use numpy::ToPyArray;
+use pyo3::prelude::*;
 
 pub use algorithms::agemoea::PyAgeMoea;
 pub use algorithms::nsga2::PyNsga2;
@@ -23,15 +23,13 @@ pub use algorithms::spea2::PySpea2;
 pub use py_error::{InitializationError, InvalidParameterError, NoFeasibleIndividualsError};
 pub use py_operators::{
     PyArithmeticCrossover, PyBitFlipMutation, PyCloseDuplicatesCleaner, PyDisplacementMutation,
-    PyExactDuplicatesCleaner, PyExponentialCrossover, PyGaussianMutation, PyInversionMutation, PyUniformBinaryMutation,
+    PyExactDuplicatesCleaner, PyExponentialCrossover, PyGaussianMutation, PyInversionMutation,
     PyOrderCrossover, PyPermutationSampling, PyRandomSamplingBinary, PyRandomSamplingFloat,
     PyRandomSamplingInt, PyScrambleMutation, PySimulatedBinaryCrossover,
     PySinglePointBinaryCrossover, PySwapMutation, PyTwoPointBinaryCrossover,
-    PyUniformBinaryCrossover,
+    PyUniformBinaryCrossover, PyUniformBinaryMutation,
 };
 pub use py_reference_points::PyDanAndDenisReferencePoints;
-
-
 
 #[pyfunction]
 #[pyo3(name = "cross_euclidean_distances")]
