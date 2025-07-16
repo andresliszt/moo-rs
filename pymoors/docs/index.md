@@ -42,7 +42,7 @@ A multi-objective optimization problem can be formulated in a generic mathematic
 Where:
 - \( x \) represents the set of decision variables.
 - \( f_i(x) \) are the objective functions.
-- \( g_i(x) \leq 0 \) and \( h_j(x) = 0 \) represent the **constraints** of the problem (e.g., resource limits, quality requirements, etc.).
+- \( g_i(x) \leq 0 \) and \( h_j(x) = 0 \) represent the **constraints_fn** of the problem (e.g., resource limits, quality requirements, etc.).
 
 Unlike single-objective optimization, here we seek to optimize *all* objectives simultaneously. However, in practice, there is no single “best” solution for *all* objectives. Instead, we look for a set of solutions known as the **Pareto front** or **Pareto set**.
 

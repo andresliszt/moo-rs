@@ -1,6 +1,5 @@
 import pytest
 
-
 from pymoors import available_operators
 
 

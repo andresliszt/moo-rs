@@ -1,15 +1,15 @@
 from typing import Annotated, Callable, Protocol, TypeAlias, TypeVar
+
 import numpy as np
 import numpy.typing as npt
-
 
 DType = TypeVar("DType", bound=np.generic)
 
 OneDArray: TypeAlias = Annotated[npt.NDArray[DType], "ndim=1"]
 TwoDArray: TypeAlias = Annotated[npt.NDArray[DType], "ndim=2"]
 
-FitnessPopulationCallable: TypeAlias = Callable[[TwoDArray], TwoDArray]
-ConstraintsPopulationCallable: TypeAlias = Callable[[TwoDArray], TwoDArray]
+FitnessCallable: TypeAlias = Callable[[TwoDArray], TwoDArray]
+ConstraintsCallable: TypeAlias = Callable[[TwoDArray], TwoDArray]
 
 
 class CrossoverProtocol(Protocol):

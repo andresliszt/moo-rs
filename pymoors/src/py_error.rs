@@ -1,5 +1,5 @@
-use moors::AlgorithmError;
 use moors::EvaluatorError;
+use moors::{AlgorithmBuilderError, AlgorithmError};
 use pyo3::PyErr;
 use pyo3::create_exception;
 use pyo3::exceptions::{PyException, PyRuntimeError};
@@ -59,5 +59,12 @@ impl From<AlgorithmErrorWrapper> for PyErr {
             AlgorithmError::ValidationError(_) => InvalidParameterError::new_err(msg),
             _ => PyRuntimeError::new_err(msg),
         }
+    }
+}
+
+impl From<AlgorithmBuilderError> for AlgorithmErrorWrapper {
+    fn from(err: AlgorithmBuilderError) -> Self {
+        // first into AlgorithmError, then wrap
+        AlgorithmErrorWrapper(err.into())
     }
 }

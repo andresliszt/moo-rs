@@ -10,6 +10,9 @@ pub mod py_operators;
 pub mod py_reference_points;
 
 use pyo3::prelude::*;
+use faer_ext::IntoNdarray;
+use moors::cross_euclidean_distances;
+use numpy::ToPyArray;
 
 pub use algorithms::agemoea::PyAgeMoea;
 pub use algorithms::nsga2::PyNsga2;
@@ -19,34 +22,31 @@ pub use algorithms::rnsga2::PyRnsga2;
 pub use algorithms::spea2::PySpea2;
 pub use py_error::{InitializationError, InvalidParameterError, NoFeasibleIndividualsError};
 pub use py_operators::{
-    PyBitFlipMutation, PyCloseDuplicatesCleaner, PyDisplacementMutation, PyExactDuplicatesCleaner,
-    PyExponentialCrossover, PyGaussianMutation, PyOrderCrossover, PyPermutationSampling,
-    PyRandomSamplingBinary, PyRandomSamplingFloat, PyRandomSamplingInt, PyScrambleMutation,
-    PySimulatedBinaryCrossover, PySinglePointBinaryCrossover, PySwapMutation,
+    PyArithmeticCrossover, PyBitFlipMutation, PyCloseDuplicatesCleaner, PyDisplacementMutation,
+    PyExactDuplicatesCleaner, PyExponentialCrossover, PyGaussianMutation, PyInversionMutation, PyUniformBinaryMutation,
+    PyOrderCrossover, PyPermutationSampling, PyRandomSamplingBinary, PyRandomSamplingFloat,
+    PyRandomSamplingInt, PyScrambleMutation, PySimulatedBinaryCrossover,
+    PySinglePointBinaryCrossover, PySwapMutation, PyTwoPointBinaryCrossover,
     PyUniformBinaryCrossover,
 };
 pub use py_reference_points::PyDanAndDenisReferencePoints;
 
-// use faer_ext::IntoNdarray;
-// use moors::helpers::linalg::cross_euclidean_distances;
-// use numpy::ToPyArray;
 
-// TODO: Uncomment the function below once cross_euclidean_distances is exposed to python
 
-// #[pyfunction]
-// #[pyo3(name = "cross_euclidean_distances")]
-// /// This function will never be exposed to the users, its going to be used
-// /// for benchmarking against scipy cdist method
-// pub fn cross_euclidean_distances_py<'py>(
-//     py: Python<'py>,
-//     data: numpy::PyReadonlyArray2<'py, f64>,
-//     reference: numpy::PyReadonlyArray2<'py, f64>,
-// ) -> Bound<'py, numpy::PyArray2<f64>> {
-//     let data = data.as_array().to_owned();
-//     let reference = reference.as_array().to_owned();
-//     let result = cross_euclidean_distances(&data, &reference);
-//     result.as_ref().into_ndarray().to_pyarray(py)
-// }
+#[pyfunction]
+#[pyo3(name = "cross_euclidean_distances")]
+/// This function will never be exposed to the users, its going to be used
+/// for benchmarking against scipy cdist method
+pub fn cross_euclidean_distances_py<'py>(
+    py: Python<'py>,
+    data: numpy::PyReadonlyArray2<'py, f64>,
+    reference: numpy::PyReadonlyArray2<'py, f64>,
+) -> Bound<'py, numpy::PyArray2<f64>> {
+    let data = data.as_array().to_owned();
+    let reference = reference.as_array().to_owned();
+    let result = cross_euclidean_distances(&data, &reference);
+    result.as_ref().into_ndarray().to_pyarray(py)
+}
 
 /// Root module `pymoors` that includes all classes.
 #[pymodule]
@@ -61,10 +61,12 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Add classes from operators
     m.add_class::<PyBitFlipMutation>()?;
+    m.add_class::<PyInversionMutation>()?;
     m.add_class::<PySwapMutation>()?;
     m.add_class::<PyGaussianMutation>()?;
     m.add_class::<PyScrambleMutation>()?;
     m.add_class::<PyDisplacementMutation>()?;
+    m.add_class::<PyUniformBinaryMutation>()?;
     m.add_class::<PyRandomSamplingBinary>()?;
     m.add_class::<PyRandomSamplingFloat>()?;
     m.add_class::<PyRandomSamplingInt>()?;
@@ -76,6 +78,8 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyExactDuplicatesCleaner>()?;
     m.add_class::<PyCloseDuplicatesCleaner>()?;
     m.add_class::<PySimulatedBinaryCrossover>()?;
+    m.add_class::<PyArithmeticCrossover>()?;
+    m.add_class::<PyTwoPointBinaryCrossover>()?;
     // Py Errors
     m.add(
         "NoFeasibleIndividualsError",

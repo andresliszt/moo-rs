@@ -1,6 +1,6 @@
 import numpy as np
 
-from pymoors import ExactDuplicatesCleaner, CloseDuplicatesCleaner
+from pymoors import CloseDuplicatesCleaner, ExactDuplicatesCleaner
 
 # 1729 is the most beautiful number, is the smallest number that can be written as the sum of two cubes
 # in the two different ways: 10**3 + 9**3 = 12**3 + 1**3 = 1729

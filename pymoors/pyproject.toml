@@ -52,6 +52,7 @@ linting = [
     { include-group = "dev" },
     "pyright",
     "ruff",
+    "isort",
     "pytest"
 ]
 docs = [

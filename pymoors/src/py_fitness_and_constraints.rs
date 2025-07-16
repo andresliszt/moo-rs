@@ -4,7 +4,7 @@ use ndarray::Array2;
 use numpy::{PyArray2, PyArrayMethods, ToPyArray};
 use pyo3::prelude::*;
 
-/// A Python‑backed fitness function for 2D arrays (`Ix2`).
+/// A Python‑backed fitness_fn function for 2D arrays (`Ix2`).
 ///
 /// This struct wraps a Python callable that accepts a 2D NumPy array
 /// (`ndarray::Array2<f64>`) and returns a 2D NumPy array of floats.
@@ -14,7 +14,7 @@ pub struct PyFitnessFnWrapper {
 }
 
 impl PyFitnessFnWrapper {
-    pub fn new(py_fitness_fn: PyObject) -> Self {
+    pub fn from_python_fitness(py_fitness_fn: PyObject) -> Self {
         Self { py_fitness_fn }
     }
 }
@@ -30,7 +30,7 @@ impl FitnessFn for PyFitnessFnWrapper {
             let result = self
                 .py_fitness_fn
                 .call1(py, (py_input,))
-                .expect("Failed to call Python fitness function");
+                .expect("Failed to call Python fitness_fn function");
             // Downcast to PyArray2<f64>
             let py_array = result
                 .downcast_bound::<PyArray2<f64>>(py)
@@ -41,7 +41,7 @@ impl FitnessFn for PyFitnessFnWrapper {
     }
 }
 
-/// A Python‑backed constraints function for 2D arrays (`Ix2`).
+/// A Python‑backed constraints_fn function for 2D arrays (`Ix2`).
 ///
 /// Wraps a Python callable that accepts a 2D NumPy array and returns a
 /// 2D NumPy array of constraint values. Optional bounds can be provided.
@@ -84,7 +84,7 @@ impl ConstraintsFn for PyConstraints {
             let result = self
                 .py_constraints_fn
                 .call1(py, (py_input,))
-                .expect("Failed to call Python constraints function");
+                .expect("Failed to call Python constraints_fn function");
             // Downcast to PyArray2<f64>
             let py_array = result
                 .downcast_bound::<PyArray2<f64>>(py)
@@ -109,20 +109,23 @@ pub enum PyConstraintsFnWrapper {
 }
 
 impl PyConstraintsFnWrapper {
-    pub fn from_python_constraints(
-        pyobj: Option<PyObject>,
-        lower_bound: Option<f64>,
-        upper_bound: Option<f64>,
-    ) -> PyConstraintsFnWrapper {
+    pub fn from_python_constraints(pyobj: Option<PyObject>) -> PyConstraintsFnWrapper {
         if let Some(py_obj) = pyobj {
-            return PyConstraintsFnWrapper::Python(PyConstraints::new(
-                py_obj,
-                lower_bound,
-                upper_bound,
-            ));
+            Python::with_gil(|py| {
+                let any = py_obj.bind(py);
+                let lb = any
+                    .getattr("lower_bound")
+                    .and_then(|v| v.extract::<f64>())
+                    .ok();
+                let ub = any
+                    .getattr("upper_bound")
+                    .and_then(|v| v.extract::<f64>())
+                    .ok();
+                PyConstraintsFnWrapper::Python(PyConstraints::new(py_obj, lb, ub))
+            })
         } else {
-            return PyConstraintsFnWrapper::None(NoConstraints);
-        };
+            PyConstraintsFnWrapper::None(NoConstraints)
+        }
     }
 }
 

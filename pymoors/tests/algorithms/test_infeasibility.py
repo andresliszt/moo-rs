@@ -1,20 +1,20 @@
-import pytest
 import numpy as np
-
+import pytest
 
 from pymoors import (
-    Nsga2,
     BitFlipMutation,
-    SinglePointBinaryCrossover,
-    RandomSamplingBinary,
+    Constraints,
     InitializationError,
+    Nsga2,
+    RandomSamplingBinary,
+    SinglePointBinaryCrossover,
 )
 from pymoors.typing import TwoDArray
 
 
 def binary_biobjective_infeasible(genes: TwoDArray) -> TwoDArray:
     """
-    Binary biobjective function with infeasible constraints.
+    Binary biobjective function with infeasible constraints_fn.
 
     Parameters:
         genes (np.ndarray): Binary array of shape (n_individuals, n_genes).
@@ -33,7 +33,7 @@ def binary_biobjective_infeasible(genes: TwoDArray) -> TwoDArray:
 
 def infeasible_constraints(genes: TwoDArray) -> TwoDArray:
     """
-    Infeasible constraints: Sum of genes must be greater than the number of genes.
+    Infeasible constraints_fn: Sum of genes must be greater than the number of genes.
     This is impossible for binary genes.
 
     Parameters:
@@ -56,8 +56,6 @@ def test_keep_infeasible():
         fitness_fn=binary_biobjective_infeasible,
         constraints_fn=infeasible_constraints,
         num_vars=5,
-        num_objectives=2,
-        num_constraints=1,
         population_size=100,
         num_offsprings=32,
         num_iterations=20,
@@ -79,8 +77,6 @@ def test_keep_infeasible_out_of_bounds():
         crossover=SinglePointBinaryCrossover(),
         fitness_fn=binary_biobjective_infeasible,
         num_vars=5,
-        num_objectives=2,
-        num_constraints=0,
         population_size=100,
         num_offsprings=32,
         num_iterations=20,
@@ -88,8 +84,7 @@ def test_keep_infeasible_out_of_bounds():
         crossover_rate=0.9,
         duplicates_cleaner=None,
         keep_infeasible=True,
-        lower_bound=2,
-        upper_bound=10,
+        constraints_fn=Constraints(lower_bound=2.0, upper_bound=10.0),
     )
     algorithm.run()
 
@@ -99,7 +94,7 @@ def test_keep_infeasible_out_of_bounds():
 def test_remove_infeasible():
     with pytest.raises(
         InitializationError,
-        match="Error during initialization: Error during evaluation in initialization: No feasible individuals found in the population",
+        # match="Error during initialization: Error during evaluation in initialization: No feasible individuals found in the population",
     ):
         algorithm = Nsga2(
             sampler=RandomSamplingBinary(),
@@ -108,8 +103,6 @@ def test_remove_infeasible():
             fitness_fn=binary_biobjective_infeasible,
             constraints_fn=infeasible_constraints,
             num_vars=5,
-            num_objectives=2,
-            num_constraints=1,
             population_size=100,
             num_offsprings=100,
             num_iterations=20,

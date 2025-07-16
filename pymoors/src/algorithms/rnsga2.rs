@@ -1,19 +1,17 @@
-use moors::algorithms::Rnsga2;
+use moors::{Rnsga2, Rnsga2Builder, Rnsga2ReferencePointsSurvival};
 use numpy::ToPyArray;
 use pymoors_macros::py_algorithm_impl;
 use pyo3::prelude::*;
 
-use crate::py_error::MultiObjectiveAlgorithmErrorWrapper;
-use crate::py_fitness_and_constraints::{
-    PyConstraintsFn, PyFitnessFn, create_population_constraints_closure,
-    create_population_fitness_closure,
-};
+use crate::py_error::AlgorithmErrorWrapper;
+use crate::py_fitness_and_constraints::{PyConstraintsFnWrapper, PyFitnessFnWrapper};
 use crate::py_operators::{
     CrossoverOperatorDispatcher, DuplicatesCleanerDispatcher, MutationOperatorDispatcher,
     SamplingOperatorDispatcher,
 };
 
-use numpy::{PyArray2, PyArrayMethods};
+use ndarray::Array2;
+use numpy::{PyArray2, PyArrayMethods, PyReadonlyArray2};
 
 #[pyclass(name = "Rnsga2")]
 pub struct PyRnsga2 {
@@ -21,8 +19,8 @@ pub struct PyRnsga2 {
         SamplingOperatorDispatcher,
         CrossoverOperatorDispatcher,
         MutationOperatorDispatcher,
-        PyFitnessFn,
-        PyConstraintsFn,
+        PyFitnessFnWrapper,
+        PyConstraintsFnWrapper,
         DuplicatesCleanerDispatcher,
     >,
 }
@@ -42,7 +40,6 @@ impl PyRnsga2 {
         fitness_fn,
         num_vars,
         population_size,
-        num_objectives,
         num_offsprings,
         num_iterations,
         epsilon = 0.001,
@@ -52,20 +49,16 @@ impl PyRnsga2 {
         verbose=true,
         duplicates_cleaner=None,
         constraints_fn=None,
-        num_constraints=0,
-        lower_bound=None,
-        upper_bound=None,
         seed=None,
     ))]
-    pub fn py_new<'py>(
-        reference_points: &Bound<'py, PyArray2<f64>>,
+    pub fn new(
+        reference_points: Py<PyArray2<f64>>,
         sampler: PyObject,
         crossover: PyObject,
         mutation: PyObject,
         fitness_fn: PyObject,
         num_vars: usize,
         population_size: usize,
-        num_objectives: usize,
         num_offsprings: usize,
         num_iterations: usize,
         epsilon: f64,
@@ -75,63 +68,58 @@ impl PyRnsga2 {
         verbose: bool,
         duplicates_cleaner: Option<PyObject>,
         constraints_fn: Option<PyObject>,
-        num_constraints: usize,
-        // Optional lower bound for each gene.
-        lower_bound: Option<f64>,
-        // Optional upper bound for each gene.
-        upper_bound: Option<f64>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
-        // Unwrap the genetic operators
+        let rp = reference_points_from_python(reference_points);
+        let survival = Rnsga2ReferencePointsSurvival::new(rp, epsilon);
+
+        // Unwrap the operator objects using the previously generated unwrap functions.
         let sampler = SamplingOperatorDispatcher::from_python_operator(sampler)?;
         let crossover = CrossoverOperatorDispatcher::from_python_operator(crossover)?;
         let mutation = MutationOperatorDispatcher::from_python_operator(mutation)?;
-        let duplicates = if let Some(py_obj) = duplicates_cleaner {
-            Some(DuplicatesCleanerDispatcher::from_python_operator(py_obj)?)
-        } else {
-            None
-        };
+        let duplicates_cleaner =
+            DuplicatesCleanerDispatcher::from_python_operator(duplicates_cleaner)?;
+        // Build the mandatory population-level fitness_fn.
+        let fitness_fn = PyFitnessFnWrapper::from_python_fitness(fitness_fn);
+        // Build the optional constraints_fn.
+        let constraints_fn = PyConstraintsFnWrapper::from_python_constraints(constraints_fn);
 
-        // Build the MANDATORY population-level fitness closure
-        let fitness_closure = create_population_fitness_closure(fitness_fn)?;
+        // Build the NSGA2 algorithm instance.
+        let mut builder = Rnsga2Builder::default()
+            .sampler(sampler)
+            .crossover(crossover)
+            .mutation(mutation)
+            .survivor(survival)
+            .duplicates_cleaner(duplicates_cleaner)
+            .fitness_fn(fitness_fn)
+            .constraints_fn(constraints_fn)
+            .num_iterations(num_iterations)
+            .num_vars(num_vars)
+            .population_size(population_size)
+            .num_offsprings(num_offsprings)
+            .mutation_rate(mutation_rate)
+            .crossover_rate(crossover_rate)
+            .keep_infeasible(keep_infeasible)
+            .verbose(verbose);
 
-        // Build OPTIONAL population-level constraints closure
-        let constraints_closure = if let Some(py_obj) = constraints_fn {
-            Some(create_population_constraints_closure(py_obj)?)
-        } else {
-            None
-        };
+        if let Some(seed) = seed {
+            builder = builder.seed(seed)
+        }
 
-        // Convert PyArray2 to Array2
-        let rp = reference_points.to_owned_array();
-
-        let algorithm = Rnsga2::new(
-            rp,
-            epsilon,
-            sampler,
-            crossover,
-            mutation,
-            duplicates,
-            fitness_closure,
-            num_vars,
-            num_objectives,
-            num_constraints,
-            population_size,
-            num_offsprings,
-            num_iterations,
-            mutation_rate,
-            crossover_rate,
-            keep_infeasible,
-            verbose,
-            constraints_closure,
-            lower_bound,
-            upper_bound,
-            seed,
-        )
-        .map_err(MultiObjectiveAlgorithmErrorWrapper)?;
+        let algorithm = builder.build().map_err(AlgorithmErrorWrapper::from)?;
 
         Ok(PyRnsga2 {
             algorithm: algorithm,
         })
     }
+}
+
+/// Auxiliary function: grabs the GIL, borrows the array as read‑only,
+/// and clones it into an `ndarray::Array2<f64>`.
+fn reference_points_from_python(reference_points: Py<PyArray2<f64>>) -> Array2<f64> {
+    Python::with_gil(|py| {
+        let array_ref: &Bound<'_, PyArray2<f64>> = reference_points.bind(py);
+        let readonly: PyReadonlyArray2<f64> = array_ref.readonly();
+        readonly.as_array().to_owned()
+    })
 }

@@ -201,7 +201,7 @@ fn generate_py_operator_duplicates(inner: Ident) -> proc_macro2::TokenStream {
                         .map_err(|_| pyo3::exceptions::PyValueError::new_err("Reference numpy array must be 2D."))
                 })
                 .transpose()?;
-            let clean_population = self.inner.remove(&population, reference.as_ref());
+            let clean_population = self.inner.remove(population, reference.as_ref());
             Ok(numpy::ToPyArray::to_pyarray(&clean_population, py))
         }
     };
@@ -677,28 +677,28 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
         }
     });
     let ctor_impl = quote! {
-            impl #enum_ident {
-                /// Convert an optional Python-side duplicates operator into this dispatcher.
-                /// If `py_obj_opt` is `None`, returns the `NoDuplicatesCleaner` variant.
-                pub fn from_python_operator(
-                    py_obj_opt: Option<pyo3::PyObject>
-                ) -> pyo3::PyResult<Self> {
-                    // Early return for no-op cleaner
-                    if py_obj_opt.is_none() {
-                        return Ok(
-                            #enum_ident::NoDuplicatesCleaner(NoDuplicatesCleaner)
-                        );
-                    }
-                    let py_obj = py_obj_opt.unwrap();
-                    pyo3::Python::with_gil(|py| {
-                        #(#extract_arms)*
-                        Err(pyo3::exceptions::PyValueError::new_err(
-                            "Could not extract a valid duplicates operator",
-                        ))
-                    })
+        impl #enum_ident {
+            /// Convert an optional Python-side duplicates operator into this dispatcher.
+            /// If `py_obj_opt` is `None`, returns the `NoDuplicatesCleaner` variant.
+            pub fn from_python_operator(
+                py_obj_opt: Option<pyo3::PyObject>
+            ) -> pyo3::PyResult<Self> {
+                // Early return for no-op cleaner
+                if py_obj_opt.is_none() {
+                    return Ok(
+                        #enum_ident::NoDuplicatesCleaner(NoDuplicatesCleaner)
+                    );
                 }
+                let py_obj = py_obj_opt.unwrap();
+                pyo3::Python::with_gil(|py| {
+                    #(#extract_arms)*
+                    Err(pyo3::exceptions::PyValueError::new_err(
+                        "Could not extract a valid duplicates operator",
+                    ))
+                })
             }
-        };
+        }
+    };
 
     // Emit the original enum plus all generated code
     TokenStream::from(quote! {
@@ -779,14 +779,17 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
                 } else {
                     py.None().into_py(py)
                 };
-
+                let py_survival_score = if let Some(ref r) = population.survival_score {
+                    r.to_pyarray(py).into_py(py)
+                } else {
+                    py.None().into_py(py)
+                };
                 let kwargs = pyo3::types::PyDict::new(py);
                 kwargs.set_item("genes", py_genes)?;
                 kwargs.set_item("fitness", py_fitness)?;
                 kwargs.set_item("rank", py_rank)?;
                 kwargs.set_item("constraints", py_constraints)?;
                 kwargs.set_item("survival_score", py_survival_score)?;
-
                 let py_instance = population_class.call((), Some(&kwargs))?;
                 Ok(py_instance.into_py(py))
             }

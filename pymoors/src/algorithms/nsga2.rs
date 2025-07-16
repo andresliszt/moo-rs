@@ -34,7 +34,6 @@ impl PyNsga2 {
         fitness_fn,
         num_vars,
         population_size,
-        num_objectives,
         num_offsprings,
         num_iterations,
         mutation_rate=0.1,
@@ -43,9 +42,6 @@ impl PyNsga2 {
         verbose=true,
         duplicates_cleaner=None,
         constraints_fn=None,
-        num_constraints=0,
-        lower_bound=None,
-        upper_bound=None,
         seed=None
     ))]
     #[allow(clippy::too_many_arguments)]
@@ -56,7 +52,6 @@ impl PyNsga2 {
         fitness_fn: PyObject,
         num_vars: usize,
         population_size: usize,
-        num_objectives: usize,
         num_offsprings: usize,
         num_iterations: usize,
         mutation_rate: f64,
@@ -65,61 +60,41 @@ impl PyNsga2 {
         verbose: bool,
         duplicates_cleaner: Option<PyObject>,
         constraints_fn: Option<PyObject>,
-        num_constraints: usize,
-        lower_bound: Option<f64>,
-        upper_bound: Option<f64>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
         // Unwrap the operator objects using the previously generated unwrap functions.
         let sampler = SamplingOperatorDispatcher::from_python_operator(sampler)?;
         let crossover = CrossoverOperatorDispatcher::from_python_operator(crossover)?;
         let mutation = MutationOperatorDispatcher::from_python_operator(mutation)?;
-        let duplicates_cleaner = if let Some(py_obj) = duplicates_cleaner {
-            Some(DuplicatesCleanerDispatcher::from_python_operator(py_obj)?)
-        } else {
-            None
-        };
-        // Build the mandatory population-level fitness.
-        let fitness = PyFitnessFnWrapper::new(fitness_fn);
-        // Build the optional constraints.
-        let constraints =
-            PyConstraintsFnWrapper::from_python_constraints(constraints_fn, lower_bound, upper_bound);
-            
+        let duplicates_cleaner =
+            DuplicatesCleanerDispatcher::from_python_operator(duplicates_cleaner)?;
+        // Build the mandatory population-level fitness_fn.
+        let fitness_fn = PyFitnessFnWrapper::from_python_fitness(fitness_fn);
+        // Build the optional constraints_fn.
+        let constraints_fn = PyConstraintsFnWrapper::from_python_constraints(constraints_fn);
 
         // Build the NSGA2 algorithm instance.
-        let algorithm = Nsga2Builder::default().sampler(sampler).
-        crossover(crossover).
-        mutation(mutation).duplicates_cleaner(duplicates_cleaner).
-        
-        
-        
-        
-        
-        
-        
-        
-        new(
-            sampler,
-            crossover,
-            mutation,
-            duplicates_cleaner,
-            fitness_closure,
-            num_vars,
-            num_objectives,
-            num_constraints,
-            population_size,
-            num_offsprings,
-            num_iterations,
-            mutation_rate,
-            crossover_rate,
-            keep_infeasible,
-            verbose,
-            constraints_closure,
-            lower_bound,
-            upper_bound,
-            seed,
-        )
-        .map_err(MultiObjectiveAlgorithmErrorWrapper)?;
+        let mut builder = Nsga2Builder::default()
+            .sampler(sampler)
+            .crossover(crossover)
+            .mutation(mutation)
+            .duplicates_cleaner(duplicates_cleaner)
+            .fitness_fn(fitness_fn)
+            .constraints_fn(constraints_fn)
+            .num_iterations(num_iterations)
+            .num_vars(num_vars)
+            .population_size(population_size)
+            .num_offsprings(num_offsprings)
+            .mutation_rate(mutation_rate)
+            .crossover_rate(crossover_rate)
+            .keep_infeasible(keep_infeasible)
+            .verbose(verbose);
+
+        if let Some(seed) = seed {
+            builder = builder.seed(seed)
+        }
+
+        let algorithm = builder.build().map_err(AlgorithmErrorWrapper::from)?;
 
         Ok(PyNsga2 {
             algorithm: algorithm,

@@ -53,7 +53,7 @@ Constraints in an optimization problem are optional. They are defined using a si
 
 !!! warning "Feasibility of an Individual"
 
-    In **pymoors**, an individual in the population is considered **feasible** if and only if all constraints are less than or equal to 0.
+    In **pymoors**, an individual in the population is considered **feasible** if and only if all constraints_fn are less than or equal to 0.
 
     In the following subsections, we will explain how to consider other types of inequalities.
 
@@ -64,7 +64,7 @@ Below is an example constraint function. In this example, we enforce a simple co
 import numpy as np
 from pymoors.typing import TwoDArray
 
-def constraints(genes: TwoDArray) -> TwoDArray:
+def constraints_fn(genes: TwoDArray) -> TwoDArray:
     # Define a threshold for the sum of genes
     threshold = 10
 
@@ -98,13 +98,13 @@ The use of `reshape(-1, 1)` is crucial for ensuring that the output always has t
 
 ## Handling Constraints: Greater than 0 and Equality Constraints
 
-In some optimization problems, constraints might be defined as either inequalities of the form `g(genes) > 0` or as equality constraints `g(genes) = 0`. In pymoors, since feasibility is determined by having all constraint values $≤ 0$, we handle these cases as follows:
+In some optimization problems, constraints_fn might be defined as either inequalities of the form `g(genes) > 0` or as equality constraints_fn `g(genes) = 0`. In pymoors, since feasibility is determined by having all constraint values $≤ 0$, we handle these cases as follows:
 
 - **Inequalities (`g(genes) > 0`):**
   This case is trivial to convert. Simply multiply the output of your constraint function by -1 to transform it into the standard form (`g(genes) <= 0`).
 
 - **Equality Constraints (`g(genes) = 0`) with Tolerance:**
-  Equality constraints are typically managed by allowing a small tolerance, `epsilon`, around 0. A common approach is to construct a penalty function by computing the squared deviation `(g(genes) - epsilon)²`. This squared term penalizes any deviation from the desired equality, while the tolerance `epsilon` provides some leeway for numerical imprecision.
+  Equality constraints_fn are typically managed by allowing a small tolerance, `epsilon`, around 0. A common approach is to construct a penalty function by computing the squared deviation `(g(genes) - epsilon)²`. This squared term penalizes any deviation from the desired equality, while the tolerance `epsilon` provides some leeway for numerical imprecision.
 
 ### Example: Equality Constraint with Epsilon Tolerance
 

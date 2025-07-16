@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from pymoors.schemas import Individual, Population
 
 
@@ -43,7 +44,7 @@ def test_population_length():
     rank = np.array([0, 1, 2])
     constraints = np.array([[0.0, -0.1], [0.0, 0.1], [-0.2, 0.0]])
 
-    pop = Population(genes, fitness, rank, constraints)
+    pop = Population(genes=genes, fitness=fitness, rank=rank, constraints=constraints)
     assert len(pop) == 3
 
 
@@ -58,7 +59,7 @@ def test_population_best():
     )
     rank = np.array([0, 0, 1])
 
-    pop = Population(genes, fitness, rank, None)
+    pop = Population(genes=genes, fitness=fitness, rank=rank)
     assert len(pop.best) == 2
     assert len(pop.best_as_population) == 2
     assert isinstance(pop.best_as_population, Population)
@@ -75,7 +76,7 @@ def test_population_best_no_rank():
         ]
     )
 
-    pop = Population(genes, fitness, None, None)
+    pop = Population(genes=genes, fitness=fitness)
     assert len(pop.best) == 3
     assert len(pop.best_as_population) == 3
     assert isinstance(pop.best_as_population, Population)
@@ -87,7 +88,7 @@ def test_population_getitem():
     rank = np.array([0, 1, 2])
     constraints = np.array([[0.0, -0.1], [0.0, 0.1], [-0.2, 0.0]])
 
-    pop = Population(genes, fitness, rank, constraints)
+    pop = Population(genes=genes, fitness=fitness, rank=rank, constraints=constraints)
 
     # Test single indexing
     individual = pop[0]
@@ -118,7 +119,7 @@ def test_population_raises_value_error_for_length_mismatch():
     with pytest.raises(
         ValueError, match="genes and fitness arrays must have the same lenght"
     ):
-        Population(genes, fitness, rank, constraints)
+        Population(genes=genes, fitness=fitness, rank=rank, constraints=constraints)
 
 
 def test_population_raises_value_error_for_constraints_mismatch():
@@ -130,7 +131,7 @@ def test_population_raises_value_error_for_constraints_mismatch():
     with pytest.raises(
         ValueError, match="constraints must have the same length as genes"
     ):
-        Population(genes, fitness, rank, constraints)
+        Population(genes=genes, fitness=fitness, rank=rank, constraints=constraints)
 
 
 def test_population_raises_value_error_for_rank_mismatch():
@@ -139,4 +140,4 @@ def test_population_raises_value_error_for_rank_mismatch():
     rank = np.array([0, 1, 2, 3])
 
     with pytest.raises(ValueError, match="rank must have the same length as genes"):
-        Population(genes, fitness, rank, None)
+        Population(genes=genes, fitness=fitness, rank=rank)

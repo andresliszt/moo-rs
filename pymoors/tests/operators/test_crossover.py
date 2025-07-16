@@ -9,11 +9,11 @@ import numpy as np
 import pytest
 
 from pymoors import (
-    UniformBinaryCrossover,
     ExponentialCrossover,
-    SinglePointBinaryCrossover,
     OrderCrossover,
     SimulatedBinaryCrossover,
+    SinglePointBinaryCrossover,
+    UniformBinaryCrossover,
 )
 
 

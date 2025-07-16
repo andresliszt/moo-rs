@@ -9,10 +9,10 @@ import pytest
 
 from pymoors import (
     BitFlipMutation,
-    SwapMutation,
-    GaussianMutation,
     DisplacementMutation,
+    GaussianMutation,
     ScrambleMutation,
+    SwapMutation,
 )
 
 
