@@ -4,12 +4,12 @@
 //! evolutionary algorithm in *moors*—from initial sampling to final Pareto
 //! archive.  They are intentionally *minimal* (pure `ndarray` wrappers) so they
 //! can be inspected, cloned, or serialised without pulling extra dependencies.
+use crate::private::{SealedD01, SealedD12};
 use ndarray::{
     Array1, Array2, ArrayBase, ArrayView, ArrayView1, Axis, Dimension, Ix0, Ix1, Ix2, OwnedRepr,
     RemoveAxis, concatenate,
 };
-
-use crate::private::{SealedD01, SealedD12};
+use num_traits::Zero;
 
 pub type Constraints<D> = ArrayBase<OwnedRepr<f64>, D>;
 pub type Fitness<D> = ArrayBase<OwnedRepr<f64>, D>;
@@ -69,10 +69,10 @@ where
         Self {
             genes,
             fitness,
-            constraints: constraints,
+            constraints,
             rank: None,
             survival_score: None,
-            constraint_violation_totals: constraint_violation_totals,
+            constraint_violation_totals,
         }
     }
 
@@ -161,7 +161,7 @@ where
         Self {
             genes,
             fitness,
-            constraints: constraints,
+            constraints,
             rank: None,
             survival_score: None,
             constraint_violation_totals: constraint_violation,
@@ -184,15 +184,14 @@ where
         let survival_score = self.survival_score.as_ref().map(|s| s[idx]);
         let constraint_violation_totals =
             self.constraint_violation_totals.as_ref().map(|cv| cv[idx]);
-        let individual = Individual {
-            genes: genes,
-            fitness: fitness,
-            constraints: constraints,
-            rank: rank,
-            survival_score: survival_score,
-            constraint_violation_totals: constraint_violation_totals,
-        };
-        individual
+        Individual {
+            genes,
+            fitness,
+            constraints,
+            rank,
+            survival_score,
+            constraint_violation_totals,
+        }
     }
     /// Returns a new `Population` containing only the individuals at the specified indices.
     pub fn selected(&self, indices: &[usize]) -> Self {
@@ -221,6 +220,10 @@ where
     /// Returns the number of individuals in the population.
     pub fn len(&self) -> usize {
         self.genes.nrows()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.genes.nrows().is_zero()
     }
 
     /// Returns a new `Population` containing only the individuals with rank = 0.

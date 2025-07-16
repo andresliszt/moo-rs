@@ -34,13 +34,13 @@
 use std::marker::PhantomData;
 
 use derive_builder::Builder;
-use ndarray::{concatenate, Axis};
+use ndarray::{Axis, concatenate};
 
 use crate::{
     algorithms::helpers::{
-        initialization::Initialization, validators::{validate_bounds, validate_positive, validate_probability}, AlgorithmContext,
-        AlgorithmContextBuilder,
-        AlgorithmError,
+        AlgorithmContext, AlgorithmContextBuilder, AlgorithmError,
+        initialization::Initialization,
+        validators::{validate_bounds, validate_positive, validate_probability},
     },
     duplicates::{NoDuplicatesCleaner, PopulationCleaner},
     evaluator::{ConstraintsFn, Evaluator, EvaluatorBuilder, FitnessFn, NoConstraints},
@@ -100,6 +100,7 @@ pub struct GeneticAlgorithmParams<
     verbose: bool,
     #[builder(setter(strip_option), default = "None")]
     seed: Option<u64>,
+    #[builder(default = "0")]
     context_id: usize,
 }
 
@@ -163,6 +164,7 @@ where
             .num_iterations(params.num_iterations)
             .lower_bound(lb)
             .upper_bound(ub)
+            .context_id(params.context_id)
             .build()
             .expect("Params already validated in build_params");
 
@@ -184,13 +186,12 @@ where
             population: None,
             sampler: params.sampler,
             survivor: params.survivor,
-            evolve: evolve,
-            evaluator: evaluator,
-            context: context,
+            evolve,
+            evaluator,
+            context,
             verbose: params.verbose,
-            rng: rng,
+            rng,
             phantom: PhantomData,
-            context_id: params.context_id,
         })
     }
 }
@@ -216,7 +217,6 @@ where
     verbose: bool,
     rng: MOORandomGenerator,
     phantom: PhantomData<S>,
-    context_id: usize,
 }
 
 impl<S, Sel, Sur, Cross, Mut, F, G, DC> GeneticAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>
@@ -251,7 +251,9 @@ where
         let combined_genes = concatenate(Axis(0), &[ref_pop.genes.view(), offspring_genes.view()])
             .expect("Failed to concatenate current population genes with offspring genes");
         // Evaluate the fitness and constraints and create Population
-        let evaluated_population = self.evaluator.evaluate(combined_genes, self.context_id)?;
+        let evaluated_population = self
+            .evaluator
+            .evaluate(combined_genes, self.context.context_id)?;
 
         // Select survivors to the next iteration population
         let survivors = self.survivor.operate(
@@ -308,7 +310,7 @@ where
                     }
                 }
                 Err(AlgorithmError::Evolve(err @ EvolveError::EmptyMatingResult)) => {
-                    println!("Warning: {}. Terminating the algorithm early.", err);
+                    println!("Warning: {err}. Terminating the algorithm early.");
                     break;
                 }
                 Err(e) => return Err(e),

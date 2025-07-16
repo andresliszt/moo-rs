@@ -15,6 +15,12 @@ impl ExactDuplicatesCleaner {
     }
 }
 
+impl Default for ExactDuplicatesCleaner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PopulationCleaner for ExactDuplicatesCleaner {
     fn remove(&self, population: Array2<f64>, reference: Option<&Array2<f64>>) -> Array2<f64> {
         let ncols = population.ncols();

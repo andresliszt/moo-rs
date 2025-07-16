@@ -53,8 +53,6 @@
 //!
 //! ---
 //!
-use std::usize;
-
 use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -153,6 +151,12 @@ impl RngCore for TestDummyRng {
 
 pub struct NoopRandomGenerator {
     dummy: TestDummyRng,
+}
+
+impl Default for NoopRandomGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl NoopRandomGenerator {

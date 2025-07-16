@@ -7,8 +7,7 @@ pub(in crate::algorithms) fn validate_probability(
 ) -> Result<(), AlgorithmBuilderError> {
     if !(0.0..=1.0).contains(&value) {
         return Err(AlgorithmBuilderError::ValidationError(format!(
-            "{} must be between 0 and 1, got {}",
-            name, value
+            "{name} must be between 0 and 1, got {value}"
         )));
     }
     Ok(())
@@ -21,8 +20,7 @@ pub(in crate::algorithms) fn validate_positive(
 ) -> Result<(), AlgorithmBuilderError> {
     if value == 0 {
         return Err(AlgorithmBuilderError::ValidationError(format!(
-            "{} must be greater than 0",
-            name
+            "{name} must be greater than 0"
         )));
     }
     Ok(())
@@ -34,8 +32,7 @@ pub(in crate::algorithms) fn validate_bounds(
 ) -> Result<(), AlgorithmBuilderError> {
     if lower_bound >= upper_bound {
         return Err(AlgorithmBuilderError::ValidationError(format!(
-            "Lower bound ({}) must be less than upper bound ({})",
-            lower_bound, upper_bound
+            "Lower bound ({lower_bound}) must be less than upper bound ({upper_bound})"
         )));
     }
     Ok(())

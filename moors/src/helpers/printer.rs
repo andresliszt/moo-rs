@@ -13,14 +13,14 @@ fn print_minimum_1d(arr: &ArrayView1<f64>, iteration: usize) {
     let w = 12;
     let horiz = format!("+{}+", "-".repeat(w));
     let header = " Min f ";
-    let value = format!(" {:<8.4} ", min_value);
+    let value = format!(" {min_value:<8.4} ");
 
-    println!("Iteration {}:", iteration);
-    println!("{}", horiz);
-    println!("|{}|", header);
-    println!("{}", horiz);
-    println!("|{}|", value);
-    println!("{}", horiz);
+    println!("Iteration {iteration}:");
+    println!("{horiz}");
+    println!("|{header}|");
+    println!("{horiz}");
+    println!("|{value}|");
+    println!("{horiz}");
     println!();
 }
 
@@ -39,21 +39,21 @@ fn print_minimum_2d(arr: &ArrayView2<f64>, iteration: usize) {
             .join("+")
     );
     let headers = (1..=nobj)
-        .map(|i| format!(" Min f_{} ", i))
+        .map(|i| format!(" Min f_{i} "))
         .collect::<Vec<_>>()
         .join("|");
     let values = mins
         .iter()
-        .map(|v| format!(" {:<8.4} ", v))
+        .map(|v| format!(" {v:<8.4} "))
         .collect::<Vec<_>>()
         .join("|");
 
-    println!("Iteration {}:", iteration);
-    println!("{}", horiz);
-    println!("|{}|", headers);
-    println!("{}", horiz);
-    println!("|{}|", values);
-    println!("{}", horiz);
+    println!("Iteration {iteration}:");
+    println!("{horiz}");
+    println!("|{headers}|");
+    println!("{horiz}");
+    println!("|{values}|");
+    println!("{horiz}");
     println!();
 }
 

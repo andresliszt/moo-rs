@@ -8,7 +8,7 @@ use moors::{
 use ndarray::{Array1, Array2, Axis, stack};
 
 /// Binary bi‐objective fitness: [sum(x), sum(1−x)]
-fn fitness_binary_biobj(genes: &Array2<f64>) -> Array2<f64> {
+fn fitness_binary_biobj(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
     let f1 = genes.sum_axis(Axis(1));
     let ones = Array2::from_elem(genes.raw_dim(), 1.0);
     let f2 = (&ones - genes).sum_axis(Axis(1));

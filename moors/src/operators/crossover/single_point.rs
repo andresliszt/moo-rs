@@ -13,6 +13,12 @@ impl SinglePointBinaryCrossover {
     }
 }
 
+impl Default for SinglePointBinaryCrossover {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CrossoverOperator for SinglePointBinaryCrossover {
     fn crossover(
         &self,

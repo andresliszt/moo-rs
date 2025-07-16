@@ -12,7 +12,7 @@ use moors::{
     },
 };
 
-fn dummy_fitness(genes: &Array2<f64>) -> Array2<f64> {
+fn dummy_fitness(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
     // just f(x) = x
     genes.clone()
 }

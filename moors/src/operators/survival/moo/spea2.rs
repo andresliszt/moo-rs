@@ -19,6 +19,12 @@ impl Spea2KnnSurvival {
     }
 }
 
+impl Default for Spea2KnnSurvival {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SurvivalOperator for Spea2KnnSurvival {
     type FDim = ndarray::Ix2;
 
@@ -66,7 +72,7 @@ impl SurvivalOperator for Spea2KnnSurvival {
         // Assign the score
         let selected_scores: Array1<f64> = raw_fitness.select(Axis(0), &s);
         // ignore Result
-        _ = survivors.set_survival_score(selected_scores);
+        survivors.set_survival_score(selected_scores);
         survivors
     }
 }

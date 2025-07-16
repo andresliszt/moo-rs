@@ -34,7 +34,7 @@ pub struct FitnessConstraintsPenaltySurvival {
 impl FitnessConstraintsPenaltySurvival {
     pub fn new(constraints_penalty: f64) -> Self {
         Self {
-            constraints_penalty: constraints_penalty,
+            constraints_penalty,
         }
     }
 }

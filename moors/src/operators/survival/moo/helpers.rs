@@ -15,7 +15,7 @@ pub trait HyperPlaneNormalization {
     fn compute_hyperplane_intercepts(&self, population_fitness: &Array2<f64>) -> Array1<f64> {
         let m = population_fitness.ncols();
         // Compute Z_max
-        let z_max = self.compute_extreme_points(&population_fitness);
+        let z_max = self.compute_extreme_points(population_fitness);
         // We have to use faer  solver --- We don't use ndarray-linalg due that is not maintained
         let z_max_faer = z_max.view().into_faer();
 
@@ -30,13 +30,13 @@ pub trait HyperPlaneNormalization {
             .unwrap();
         if solution_ndarray.iter().any(|&x| !x.is_finite() || x <= 0.0) {
             // this is the case for singullar matrices
-            get_nadir(&population_fitness)
+            get_nadir(population_fitness)
         } else {
             // Calculate intercepts as 1 / a.
             let intercept = solution_ndarray.mapv(|val| 1.0 / val);
             // Additional check: if the computed intercept is less than the observed maximum,
             // use the observed maximum (fallback to min-max).
-            let fallback = get_nadir(&population_fitness);
+            let fallback = get_nadir(population_fitness);
             let combined: Vec<f64> = intercept
                 .iter()
                 .zip(fallback.iter())

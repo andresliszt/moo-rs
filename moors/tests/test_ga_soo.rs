@@ -8,7 +8,7 @@ use moors::{
 };
 
 /// Simple minimization of 1 - (x**2 + y**2 + z**2)
-fn fitness_sphere(population: &Array2<f64>) -> Array1<f64> {
+fn fitness_sphere(population: &Array2<f64>, _context_id: usize) -> Array1<f64> {
     // For each row [x, y, z], compute 1 - x^2 + y^2 + z^2
     population.map_axis(Axis(1), |row| 1.0 - row.dot(&row))
 }
@@ -62,7 +62,7 @@ fn test_ga_minimize_parabolid() {
 /// Subject to the equality constraint x + y = 1.
 /// The optimal solution is the point on the line closest to the origin, (0.5, 0.5).
 
-fn fitness_quadratic(population: &Array2<f64>) -> Array1<f64> {
+fn fitness_quadratic(population: &Array2<f64>, _context_id: usize) -> Array1<f64> {
     // Compute f = x² + y² for each row [x, y]
     population.map_axis(Axis(1), |row| row.dot(&row))
 }

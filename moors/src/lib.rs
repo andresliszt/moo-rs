@@ -41,7 +41,7 @@
 //! const CAPACITY: f64 = 15.0;
 //!
 //! /// Multi‑objective fitness ⇒ [−total_value, total_weight]
-//! fn fitness(pop_genes: &Array2<f64>) -> Array2<f64> {
+//! fn fitness(pop_genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
 //!     let w = Array1::from_vec(WEIGHTS.into());
 //!     let v = Array1::from_vec(VALUES.into());
 //!     let total_v = pop_genes.dot(&v);

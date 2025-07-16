@@ -17,7 +17,7 @@ impl MutationOperator for InversionMutation {
             std::mem::swap(&mut start, &mut end);
         }
         // Reverse the segment between start and end, inclusive
-        for k in 0..((end - start + 1) / 2) {
+        for k in 0..(end - start).div_ceil(2) {
             let i = start + k;
             let j = end - k;
             let tmp = individual[i];

@@ -10,7 +10,7 @@
 //! 2. **Crowding‑distance preservation** → density estimator used as a
 //!    secondary key to maintain diversity without extra parameters.
 
-//! In *moors*, NSGA‑II is wired from reusable operator bricks:
+//!    In *moors*, NSGA‑II is wired from reusable operator bricks:
 //!
 //! * **Selection:** [`RankAndScoringSelection`]
 //! * **Survival:**  [`Nsga2RankCrowdingSurvival`] (rank + crowding distance)

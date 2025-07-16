@@ -76,14 +76,13 @@ pub trait CrossoverOperator {
         }
 
         // Create PopulationGenes directly from the flat vectors
-        let offspring_population = Array2::<f64>::from_shape_vec(
+        Array2::<f64>::from_shape_vec(
             (
                 self.n_offsprings_per_crossover() * population_size,
                 num_genes,
             ),
             flat_offspring,
         )
-        .expect("Failed to create offspring population");
-        offspring_population
+        .expect("Failed to create offspring population")
     }
 }

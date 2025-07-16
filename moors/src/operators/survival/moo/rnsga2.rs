@@ -158,7 +158,7 @@ fn assign_crowding_distance_to_inner_front(
     nadir: &Array1<f64>,
     ideal: &Array1<f64>,
 ) -> Array1<f64> {
-    distance_to_reference(&front_fitness, &reference_points, &weights, &ideal, &nadir)
+    distance_to_reference(front_fitness, reference_points, weights, ideal, nadir)
 }
 
 fn assign_crowding_distance_splitting_front(
@@ -172,9 +172,9 @@ fn assign_crowding_distance_splitting_front(
 ) -> Array1<f64> {
     let num_front_individuals = front_fitness.nrows();
     let mut crowding = assign_crowding_distance_to_inner_front(
-        &front_fitness,
-        &reference_points,
-        &weights,
+        front_fitness,
+        reference_points,
+        weights,
         nadir,
         ideal,
     );
@@ -191,15 +191,19 @@ fn assign_crowding_distance_splitting_front(
         let mut group = vec![i];
         visited[i] = true;
         let sol_i = front_fitness.row(i);
-        for j in (i + 1)..num_front_individuals {
-            if !visited[j] {
+        for (j, item) in visited
+            .iter_mut()
+            .enumerate()
+            .take(num_front_individuals)
+            .skip(i + 1)
+        {
+            if !*item {
                 let sol_j = front_fitness.row(j);
-                let sum_diff = weighted_normalized_euclidean_distance(
-                    &sol_i, &sol_j, &weights, &ideal, &nadir,
-                );
+                let sum_diff =
+                    weighted_normalized_euclidean_distance(&sol_i, &sol_j, weights, ideal, nadir);
                 if sum_diff <= epsilon {
                     group.push(j);
-                    visited[j] = true;
+                    *item = true;
                 }
             }
         }

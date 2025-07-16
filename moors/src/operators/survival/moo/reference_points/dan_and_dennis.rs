@@ -23,7 +23,7 @@ impl StructuredReferencePoints for DanAndDenisReferencePoints {
     /// The procedure is:
     /// 1. Estimate H using `choose_h(population_size, m)`.
     /// 2. Generate all combinations of nonnegative integers (h₁, h₂, …, hₘ) that satisfy:
-    ///      h₁ + h₂ + ... + hₘ = H.
+    ///    h₁ + h₂ + ... + hₘ = H.
     /// 3. Normalize each combination by dividing each component by H to get a point on the simplex.
     ///
     /// The function returns an Array2<f64> where each row is a reference point.

@@ -11,7 +11,7 @@ use moors::{
 use rstest::rstest;
 
 /// A trivial fitness function that just clones the genes matrix.
-fn dummy_fitness(genes: &Array2<f64>) -> Array2<f64> {
+fn dummy_fitness(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
     genes.clone()
 }
 

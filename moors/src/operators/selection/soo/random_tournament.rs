@@ -11,6 +11,12 @@ impl RandomSelection {
     }
 }
 
+impl Default for RandomSelection {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SelectionOperator for RandomSelection {
     type FDim = ndarray::Ix1;
 

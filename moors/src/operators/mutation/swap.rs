@@ -12,6 +12,12 @@ impl SwapMutation {
     }
 }
 
+impl Default for SwapMutation {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// In a typical permutation-based setup, each row is an array of distinct values.
 /// The "swap" mutation picks two indices at random and swaps them.
 impl MutationOperator for SwapMutation {

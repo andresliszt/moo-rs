@@ -22,11 +22,10 @@ pub fn faer_dot_from_array(x: &Array2<f64>, y: &Array2<f64>) -> Mat<f64> {
 }
 
 pub fn faer_squared_norm(x: MatRef<f64>) -> Mat<f64> {
-    let x_norm = Mat::from_fn(x.nrows(), 1, |i, _| {
+    Mat::from_fn(x.nrows(), 1, |i, _| {
         let row = x.row(i);
         row * row.transpose()
-    });
-    x_norm
+    })
 }
 
 pub fn faer_dot_and_norms(x: &Array2<f64>, y: &Array2<f64>) -> (Mat<f64>, Mat<f64>, Mat<f64>) {
@@ -76,8 +75,7 @@ pub fn cross_p_distances(data: &Array2<f64>, reference: &Array2<f64>, p: f64) ->
     let diff = data_expanded - reference_expanded;
 
     // Compute the sum of |x - y|^p along the feature dimension (axis 2)
-    let dists_p = diff.mapv(|x| x.abs().powf(p)).sum_axis(Axis(2));
-    dists_p
+    diff.mapv(|x| x.abs().powf(p)).sum_axis(Axis(2))
 }
 
 #[cfg(test)]

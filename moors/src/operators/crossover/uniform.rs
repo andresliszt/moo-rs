@@ -13,6 +13,12 @@ impl UniformBinaryCrossover {
     }
 }
 
+impl Default for UniformBinaryCrossover {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CrossoverOperator for UniformBinaryCrossover {
     fn crossover(
         &self,

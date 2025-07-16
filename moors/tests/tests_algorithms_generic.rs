@@ -15,7 +15,7 @@ use moors::{
 /// Bi-objective fitness:
 /// f₁ = x² + y²
 /// f₂ = (x−1)² + (y−1)²
-fn fitness_biobjective(population_genes: &Array2<f64>) -> Array2<f64> {
+fn fitness_biobjective(population_genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
     let x = population_genes.column(0);
     let y = population_genes.column(1);
     let f1 = &x * &x + &y * &y;

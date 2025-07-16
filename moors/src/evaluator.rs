@@ -8,7 +8,7 @@ use derive_builder::Builder;
 use ndarray::{Array2, ArrayBase, Axis, Dimension, OwnedRepr};
 use thiserror::Error;
 
-use crate::genetic::{Population, D01, D12};
+use crate::genetic::{D01, D12, Population};
 
 pub trait ConstraintsFn
 where
@@ -119,7 +119,7 @@ where
             let mut feasible_indices: Vec<usize> = (0..n).collect();
 
             // Filter individuals that do not satisfy the constraints function (if provided).
-            if evaluated_population.constraints.len() > 0 {
+            if !evaluated_population.constraints.is_empty() {
                 feasible_indices.retain(|&i| {
                     evaluated_population
                         .constraints
@@ -142,7 +142,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::{array, concatenate, Array1, Array2, Axis};
+    use ndarray::{Array1, Array2, Axis, array, concatenate};
 
     use crate::NoConstraints;
 

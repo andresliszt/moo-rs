@@ -13,6 +13,12 @@ impl DisplacementMutation {
     }
 }
 
+impl Default for DisplacementMutation {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MutationOperator for DisplacementMutation {
     fn mutate<'a>(&self, mut individual: ArrayViewMut1<'a, f64>, rng: &mut impl RandomGenerator) {
         let n = individual.len();

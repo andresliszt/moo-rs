@@ -15,7 +15,7 @@ const CAPACITY: f64 = 15.0;
 
 /// Compute multi-objective fitness [–total_value, total_weight]
 /// Returns an Array2<f64> of shape (population_size, 2)
-fn fitness_knapsack(population_genes: &Array2<f64>) -> Array2<f64> {
+fn fitness_knapsack(population_genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
     // lift our fixed arrays into Array1 for dot products
     let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
     let values_arr = Array1::from_vec(VALUES.to_vec());

@@ -26,9 +26,9 @@ impl SelectionOperator for RankSelection {
         }
 
         match p1.rank.cmp(&p2.rank) {
-            std::cmp::Ordering::Less => return DuelResult::LeftWins,
-            std::cmp::Ordering::Greater => return DuelResult::RightWins,
-            std::cmp::Ordering::Equal => return DuelResult::Tie,
+            std::cmp::Ordering::Less => DuelResult::LeftWins,
+            std::cmp::Ordering::Greater => DuelResult::RightWins,
+            std::cmp::Ordering::Equal => DuelResult::Tie,
         }
     }
 }

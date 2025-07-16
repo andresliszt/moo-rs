@@ -64,7 +64,7 @@ pub trait SelectionOperator {
         let total_needed = n_crossovers * self.n_parents_per_crossover() * self.pressure();
         let mut all_indices = Vec::with_capacity(total_needed);
 
-        let n_perms = (total_needed + population_size - 1) / population_size; // Ceil division
+        let n_perms = total_needed.div_ceil(population_size); // Ceil division
         for _ in 0..n_perms {
             let mut perm: Vec<usize> = (0..population_size).collect();
             rng.shuffle_vec_usize(&mut perm);

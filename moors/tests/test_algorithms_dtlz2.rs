@@ -19,7 +19,7 @@ use moors::{
 /// f1 = cos(π/2 ⋅ x0) ⋅ cos(π/2 ⋅ x1)
 /// f2 = cos(π/2 ⋅ x0) ⋅ sin(π/2 ⋅ x1)
 /// f3 = sin(π/2 ⋅ x0)
-fn fitness_dtlz2_3obj(pop: &Array2<f64>) -> Array2<f64> {
+fn fitness_dtlz2_3obj(pop: &Array2<f64>, _context_id: usize) -> Array2<f64> {
     let half_pi = std::f64::consts::PI / 2.0;
     let x0 = pop.column(0).mapv(|v| v * half_pi);
     let x1 = pop.column(1).mapv(|v| v * half_pi);

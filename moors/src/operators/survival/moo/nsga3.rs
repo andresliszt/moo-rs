@@ -124,7 +124,7 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
                     // Determine the base population for the splitting front.
                     // If no accumulated population exists, use the current front as st.
                     let (st, n_complete) = match &survivors {
-                        Some(acc) => (PopulationMOO::merge(&acc, &front), acc.len()),
+                        Some(acc) => (PopulationMOO::merge(acc, &front), acc.len()),
                         None => (front, 0),
                     };
                     let z_min = get_ideal(&st.fitness);
@@ -182,7 +182,7 @@ fn asf(x: &Array1<f64>, w: &Array1<f64>) -> f64 {
     // Compute the element-wise ratio: f'_i(x) / w_i.
     let ratios = x / w;
     // The ASF is the maximum of these ratios.
-    ratios.fold(std::f64::MIN, |acc, &val| acc.max(val))
+    ratios.fold(f64::MIN, |acc, &val| acc.max(val))
 }
 
 /// Associates each solution s (each row in st) with the reference w (each row in zr)
@@ -258,9 +258,9 @@ fn compute_niche_counts(assignments: &[usize], n_references: usize) -> Vec<usize
 /// A vector of solution indices (Pt+1) that have been selected for the next population.
 fn niching(
     mut n_remaining: usize,
-    niche_counts: &mut Vec<usize>,
-    assignments: &Vec<usize>,
-    distances: &Vec<f64>,
+    niche_counts: &mut [usize],
+    assignments: &[usize],
+    distances: &[f64],
     splitting_front: &mut Vec<usize>,
     rng: &mut impl RandomGenerator,
 ) -> Vec<usize> {

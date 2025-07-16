@@ -12,6 +12,12 @@ impl PermutationSampling {
     }
 }
 
+impl Default for PermutationSampling {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SamplingOperator for PermutationSampling {
     /// Generates a single individual of length `num_vars` where the genes
     /// are a shuffled permutation of the integers [0, 1, 2, ..., num_vars - 1].

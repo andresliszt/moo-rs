@@ -12,6 +12,12 @@ impl ScrambleMutation {
     }
 }
 
+impl Default for ScrambleMutation {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MutationOperator for ScrambleMutation {
     fn mutate<'a>(&self, mut individual: ArrayViewMut1<'a, f64>, rng: &mut impl RandomGenerator) {
         let n = individual.len();

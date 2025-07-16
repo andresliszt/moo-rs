@@ -13,6 +13,12 @@ impl OrderCrossover {
     }
 }
 
+impl Default for OrderCrossover {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CrossoverOperator for OrderCrossover {
     fn crossover(
         &self,

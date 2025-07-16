@@ -12,6 +12,12 @@ impl RandomSamplingBinary {
     }
 }
 
+impl Default for RandomSamplingBinary {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SamplingOperator for RandomSamplingBinary {
     fn sample_individual(&self, num_vars: usize, rng: &mut impl RandomGenerator) -> Array1<f64> {
         (0..num_vars)

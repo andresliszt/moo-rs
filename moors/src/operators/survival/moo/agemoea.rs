@@ -66,14 +66,10 @@ impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
             // In this case, return a survival score vect or with the same number of elements as front_fitness,
             // filled entirely with infinity.
             if central_point.iter().all(|&x| x == 0.0) {
-                first_front
-                    .set_survival_score(Array1::from_elem(first_front.len(), std::f64::INFINITY));
+                first_front.set_survival_score(Array1::from_elem(first_front.len(), f64::INFINITY));
                 // Process the remaining fronts with the standard function
                 for front in other_fronts.iter_mut() {
-                    front.set_survival_score(Array1::from_elem(
-                        first_front.len(),
-                        std::f64::INFINITY,
-                    ))
+                    front.set_survival_score(Array1::from_elem(first_front.len(), f64::INFINITY))
                 }
             } else {
                 let p = compute_exponent_p(&central_point);
@@ -177,9 +173,9 @@ fn proximity(normalized_individual_fitness: &ArrayView1<f64>, p: f64) -> f64 {
 /// are immediately assigned a score of +∞. Then, using two sets:
 ///   - The considered set (initially the extreme solutions)
 ///   - The remaining set (all other solutions)
-/// the diversity for each candidate in the remaining set is computed as the sum of
-/// the smallest and the second-smallest distances (using the L_p norm) from that candidate
-/// to the solutions in the considered set. The candidate's value is defined as:
+///     the diversity for each candidate in the remaining set is computed as the sum of
+///     the smallest and the second-smallest distances (using the L_p norm) from that candidate
+///     to the solutions in the considered set. The candidate's value is defined as:
 ///
 ///     value[S] = diversity[S] / proximity[S]
 ///
@@ -229,8 +225,8 @@ fn assign_survival_scores_first_front(
     // Precompute proximities for each solution using the proximity function.
     // Here, proximity(S) is defined as the L_p norm of solution S.
     let mut proximities = vec![0.0; num_solutions];
-    for i in 0..num_solutions {
-        proximities[i] = proximity(&normalized_front_fitness.row(i), p);
+    for (i, item) in proximities.iter_mut().enumerate().take(num_solutions) {
+        *item = proximity(&normalized_front_fitness.row(i), p);
     }
 
     // Compute the pairwise distance matrix using the L_p norm.

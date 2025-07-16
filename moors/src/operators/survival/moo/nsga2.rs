@@ -1,5 +1,3 @@
-use std::f64::INFINITY;
-
 use ndarray::{Array1, Array2};
 
 use crate::{
@@ -13,6 +11,12 @@ pub struct Nsga2RankCrowdingSurvival;
 impl Nsga2RankCrowdingSurvival {
     pub fn new() -> Self {
         Self {}
+    }
+}
+
+impl Default for Nsga2RankCrowdingSurvival {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -46,10 +50,10 @@ fn crowding_distance(population_fitness: &Array2<f64>) -> Array1<f64> {
     if num_individuals <= 2 {
         let mut distances = Array1::zeros(num_individuals);
         if num_individuals > 0 {
-            distances[0] = INFINITY; // Boundary individuals
+            distances[0] = f64::INFINITY; // Boundary individuals
         }
         if num_individuals > 1 {
-            distances[num_individuals - 1] = INFINITY;
+            distances[num_individuals - 1] = f64::INFINITY;
         }
         return distances;
     }
@@ -71,8 +75,8 @@ fn crowding_distance(population_fitness: &Array2<f64>) -> Array1<f64> {
         });
 
         // Assign INFINITY to border. TODO: Not sure if worst should have infinity
-        distances[sorted_indices[0]] = INFINITY;
-        distances[sorted_indices[num_individuals - 1]] = INFINITY;
+        distances[sorted_indices[0]] = f64::INFINITY;
+        distances[sorted_indices[num_individuals - 1]] = f64::INFINITY;
 
         // Get min and max values for normalization
         let min_value = objective_values[sorted_indices[0]];
@@ -145,7 +149,7 @@ mod tests {
         let distances = crowding_distance(&population_fitness);
 
         // Expected: single individual has INFINITY
-        let expected = array![INFINITY];
+        let expected = array![f64::INFINITY];
 
         assert_eq!(distances.as_slice().unwrap(), expected.as_slice().unwrap());
     }
@@ -159,7 +163,7 @@ mod tests {
         let distances = crowding_distance(&population_fitness);
 
         // Expected: both are corner individuals with INFINITY
-        let expected = array![INFINITY, INFINITY];
+        let expected = array![f64::INFINITY, f64::INFINITY];
 
         assert_eq!(distances.as_slice().unwrap(), expected.as_slice().unwrap());
     }
@@ -173,7 +177,7 @@ mod tests {
         let distances = crowding_distance(&population_fitness);
 
         // Expected: all distances should remain zero except for the first
-        let expected = array![INFINITY, 0.0, 0.0, 0.0, INFINITY];
+        let expected = array![f64::INFINITY, 0.0, 0.0, 0.0, f64::INFINITY];
 
         assert_eq!(distances.as_slice().unwrap(), expected.as_slice().unwrap());
     }

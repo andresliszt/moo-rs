@@ -34,11 +34,11 @@ impl ReveaReferencePointsSurvival {
     ) -> Self {
         let initial_reference_points = reference_points.clone();
         Self {
-            reference_points: reference_points,
-            initial_reference_points: initial_reference_points,
-            alpha: alpha,
-            frequency: frequency,
-            num_iterations: num_iterations,
+            reference_points,
+            initial_reference_points,
+            alpha,
+            frequency,
+            num_iterations,
             current_iteration: 0,
         }
     }
@@ -153,7 +153,7 @@ fn compute_sub_population(cosine_distances: &faer::Mat<f64>) -> Vec<Vec<usize>> 
             .into_iter()
             .enumerate()
             .fold(HashMap::new(), |mut map, (i, ref_index)| {
-                map.entry(ref_index).or_insert_with(Vec::new).push(i);
+                map.entry(ref_index).or_default().push(i);
                 map
             });
 
@@ -170,7 +170,7 @@ fn compute_sub_population(cosine_distances: &faer::Mat<f64>) -> Vec<Vec<usize>> 
 ///   gamma_{t, j} = min { inner_products(i, j) for all i != j }
 ///  This is the equation (10) in the presented paper
 fn compute_gamma(reference_points: &Array2<f64>) -> Vec<f64> {
-    let inner_products = faer_dot_from_array(&reference_points, &reference_points);
+    let inner_products = faer_dot_from_array(reference_points, reference_points);
     let n = inner_products.nrows();
     (0..n)
         .map(|j| {
@@ -210,7 +210,6 @@ fn compute_angle_penalized_distances(
 /// - `z_min`: The minimum objective values for the current population
 /// - `z_max`: The maximum objective values for the current population
 /// - `current_reference_points`: The current reference vector set Vₜ (dimensions: N x M).
-
 ///
 /// # Returns
 /// A new reference vector set Vₜ₊₁ for the next generation.
