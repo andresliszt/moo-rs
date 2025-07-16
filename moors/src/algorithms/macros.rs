@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! create_algorithm {
     ($(#[$meta:meta])* $algorithm:ident, $selector:ty, $survivor:ty) => {
-        use crate::{
+        use $crate::{
             algorithms::{AlgorithmBuilder, AlgorithmBuilderError, AlgorithmError, GeneticAlgorithm},
             duplicates::PopulationCleaner,
             evaluator::{ConstraintsFn, FitnessFn},
@@ -50,12 +50,12 @@ macro_rules! create_algorithm {
                 self.inner.run()
             }
 
-            pub fn next(&mut self) -> Result<(), AlgorithmError> {
-                self.inner.next()
+            pub fn next_pop(&mut self) -> Result<(), AlgorithmError> {
+                self.inner.next_pop()
             }
 
             pub fn initialize(&mut self) -> Result<(), AlgorithmError> {
-                self.inner.next()
+                self.inner.next_pop()
             }
 
             pub fn set_current_iteration(&mut self, current_iter: usize) {
@@ -65,11 +65,11 @@ macro_rules! create_algorithm {
             /// Delegate `population` to the inner algorithm
             pub fn population(
                 &self,
-            ) -> Result<&crate::genetic::Population<F::Dim, G::Dim>, crate::algorithms::AlgorithmError> {
+            ) -> Result<&$crate::genetic::Population<F::Dim, G::Dim>, $crate::algorithms::AlgorithmError> {
                 match &self.inner.population {
                     Some(v) => Ok(v),
-                    None => Err(crate::algorithms::AlgorithmError::Initialization(
-                        crate::algorithms::InitializationError::NotInitializated(
+                    None => Err($crate::algorithms::AlgorithmError::Initialization(
+                        $crate::algorithms::InitializationError::NotInitializated(
                             "population is not set".into(),
                         ),
                     )),

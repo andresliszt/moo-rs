@@ -144,6 +144,7 @@ where
         Ok(())
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn build(
         self,
     ) -> Result<GeneticAlgorithm<S, Sel, Sur, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
@@ -230,7 +231,7 @@ where
     G: ConstraintsFn,
     DC: PopulationCleaner,
 {
-    pub fn next(&mut self) -> Result<(), AlgorithmError> {
+    pub fn next_pop(&mut self) -> Result<(), AlgorithmError> {
         let ref_pop = self.population.as_ref().unwrap();
         // Obtain offspring genes.
         let offspring_genes = self
@@ -300,7 +301,7 @@ where
         self.population = Some(initial_population);
 
         for current_iter in 0..self.context.num_iterations {
-            match self.next() {
+            match self.next_pop() {
                 Ok(()) => {
                     if self.verbose {
                         algorithm_printer(

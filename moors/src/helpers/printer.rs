@@ -31,13 +31,8 @@ fn print_minimum_2d(arr: &ArrayView2<f64>, iteration: usize) {
     });
     let nobj = mins.len();
     let w = 12;
-    let horiz = format!(
-        "+{}+",
-        std::iter::repeat("-".repeat(w))
-            .take(nobj)
-            .collect::<Vec<_>>()
-            .join("+")
-    );
+    let s = vec!["-".repeat(w); nobj].join("+");
+    let horiz = format!("+{s}+",);
     let headers = (1..=nobj)
         .map(|i| format!(" Min f_{i} "))
         .collect::<Vec<_>>()
