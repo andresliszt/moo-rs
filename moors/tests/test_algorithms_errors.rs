@@ -17,7 +17,7 @@ fn dummy_fitness(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
     genes.clone()
 }
 
-fn dummy_constraints(genes: &Array2<f64>) -> Array2<f64> {
+fn dummy_constraints(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
     // g(x) =  1 - x
     1.0 - genes.clone()
 }
@@ -82,12 +82,10 @@ fn test_no_feasible_in_evaluation() {
     let counter: Cell<usize> = Cell::new(0);
     // this is a simple clousure, in the first and second call)all individuals are feasible because
     // g(x) < 0, but int the third and go on they aren't due that we multiply by a -1 factor
-    let constraints_fn = move |genes: &Array2<f64>| -> Array2<f64> {
+    let constraints_fn = move |genes: &Array2<f64>, _context_id: usize| -> Array2<f64> {
         let idx = counter.get();
         counter.set(idx + 1);
-
-        let base = dummy_constraints(genes);
-
+        let base = dummy_constraints(genes, 0);
         if idx == 0 { base } else { -base }
     };
 
@@ -124,7 +122,9 @@ fn test_no_feasible_in_initialization() {
     // When is not possible to get at leaste one feasible individual
     // in any iteration, an error is raised. This is same scenario than above
     // but the error happens in the initialization step
-    let constraints_fn = move |genes: &Array2<f64>| -> Array2<f64> { -dummy_constraints(genes) };
+    let constraints_fn = move |genes: &Array2<f64>, context_id: usize| -> Array2<f64> {
+        -dummy_constraints(genes, context_id)
+    };
 
     let mut nsga2 = Nsga2Builder::default()
         .fitness_fn(dummy_fitness)

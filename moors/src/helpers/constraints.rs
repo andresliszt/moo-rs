@@ -117,7 +117,7 @@ macro_rules! impl_constraints_fn {
         impl $crate::ConstraintsFn for $name {
             type Dim = ndarray::Ix2;
 
-            fn call(&self, genes: &ndarray::Array2<f64>) -> ndarray::Array2<f64> {
+            fn call(&self, genes: &ndarray::Array2<f64>, _context_id: usize) -> ndarray::Array2<f64> {
                 use ndarray::{concatenate, Axis};
 
                 let mut mats: Vec<ndarray::Array2<f64>> = Vec::new();
@@ -177,8 +177,7 @@ mod tests {
     fn inequalities_only() {
         let genes = array![[0.0, 0.0], [1.0, 1.0]]; // 2 × 2
         impl_constraints_fn!(MyConstr, ineq = [g1, g2]); // closure (genes) -> Array2
-        let res = MyConstr.call(&genes); // 2 × 2
-
+        let res = MyConstr.call(&genes, 0); // 2 × 2
         let expect = array![[-1.0, -1.0], [1.0, 1.0]];
         assert_eq!(res.shape(), &[2, 2]);
         assert_eq!(res, expect);
@@ -194,7 +193,7 @@ mod tests {
         ];
         // g1, g2,  |g3|-ε
         impl_constraints_fn!(MyConstr, ineq = [g1, g2], eq = [g3]);
-        let res = MyConstr.call(&genes); // 2 × 3
+        let res = MyConstr.call(&genes, 0); // 2 × 3
 
         // Build expected matrix by hand
         let mut exp = Array2::<f64>::zeros((2, 3));
@@ -213,14 +212,12 @@ mod tests {
     fn equalities_only() {
         let genes = array![[2.0, 2.0], [0.5, 1.5]]; // 2 × 2
         impl_constraints_fn!(EqOnly, eq = [g3]);
-        let res = EqOnly.call(&genes); // 2 × 1
-
+        let res = EqOnly.call(&genes, 0); // 2 × 1
         const EPS: f64 = 1e-6;
         // |g3| - ε = |x - y| - ε
         let mut exp = Array2::<f64>::zeros((2, 1));
         exp[[0, 0]] = -EPS; // |2–2|−ε = 0−ε
         exp[[1, 0]] = 1.0 - EPS; // |0.5–1.5|−ε = 1−ε
-
         assert_eq!(res, exp);
     }
 
@@ -228,8 +225,7 @@ mod tests {
     fn lower_bound_only() {
         let genes = array![[1.0, 3.0], [0.0, 2.0]];
         impl_constraints_fn!(LowOnly, lower_bound = 2.0);
-        let res = LowOnly.call(&genes); // 2 × 2
-
+        let res = LowOnly.call(&genes, 0); // 2 × 2
         // lower_bound - genes = 2 - genes
         let mut exp = Array2::<f64>::zeros((2, 2));
         exp[[0, 0]] = 2.0 - 1.0;
@@ -243,8 +239,7 @@ mod tests {
     fn upper_bound_only() {
         let genes = array![[1.0, 3.0], [0.0, 2.0]];
         impl_constraints_fn!(UpOnly, upper_bound = 3.0);
-        let res = UpOnly.call(&genes); // 2 × 2
-
+        let res = UpOnly.call(&genes, 0); // 2 × 2
         // genes - upper_bound = genes - 3
         let mut exp = Array2::<f64>::zeros((2, 2));
         exp[[0, 0]] = 1.0 - 3.0;
@@ -265,7 +260,7 @@ mod tests {
             lower_bound = 1.0,
             upper_bound = 2.0
         );
-        let res = AllC.call(&genes); // 2 × 4
+        let res = AllC.call(&genes, 0); // 2 × 4
         let mut exp = Array2::<f64>::zeros((2, 6));
         // row 0 (genes = [0.0, 1.0])
         exp[[0, 0]] = 0.0; // g1: 0+1-1

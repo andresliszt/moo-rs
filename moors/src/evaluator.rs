@@ -16,7 +16,7 @@ where
     <Self::Dim as Dimension>::Smaller: D01,
 {
     type Dim: D12;
-    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim>;
+    fn call(&self, genes: &Array2<f64>, context_id: usize) -> ArrayBase<OwnedRepr<f64>, Self::Dim>;
     fn lower_bound(&self) -> Option<f64> {
         None
     }
@@ -27,13 +27,13 @@ where
 
 impl<G, Dim> ConstraintsFn for G
 where
-    G: Fn(&Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Dim>,
+    G: Fn(&Array2<f64>, usize) -> ArrayBase<OwnedRepr<f64>, Dim>,
     Dim: D12,
     <Dim as Dimension>::Smaller: D01,
 {
     type Dim = Dim;
-    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Dim> {
-        (self)(genes)
+    fn call(&self, genes: &Array2<f64>, context_id: usize) -> ArrayBase<OwnedRepr<f64>, Dim> {
+        self(genes, context_id)
     }
 }
 
@@ -46,7 +46,11 @@ pub struct NoConstraints;
 impl ConstraintsFn for NoConstraints {
     type Dim = ndarray::Ix2;
 
-    fn call(&self, genes: &Array2<f64>) -> ArrayBase<OwnedRepr<f64>, Self::Dim> {
+    fn call(
+        &self,
+        genes: &Array2<f64>,
+        _context_id: usize,
+    ) -> ArrayBase<OwnedRepr<f64>, Self::Dim> {
         let n = genes.nrows();
         Array2::zeros((n, 0))
     }
@@ -68,7 +72,7 @@ where
 {
     type Dim = Dim;
     fn call(&self, genes: &Array2<f64>, context_id: usize) -> ArrayBase<OwnedRepr<f64>, Dim> {
-        (self)(genes, context_id)
+        self(genes, context_id)
     }
 }
 
@@ -110,7 +114,7 @@ where
         context_id: usize,
     ) -> Result<Population<F::Dim, G::Dim>, EvaluatorError> {
         let fitness = self.fitness.call(&genes, context_id);
-        let constraints = self.constraints.call(&genes);
+        let constraints = self.constraints.call(&genes, context_id);
         let mut evaluated_population = Population::new(genes, fitness, constraints);
 
         if !self.keep_infeasible {
@@ -177,7 +181,7 @@ mod tests {
     /// Multiple constraints:
     ///   c₀ = Σx – 10  (≤ 0)              • global resource limit
     ///   cᵢ = –xᵢ        (≤ 0)            • every gene must be ≥ 0
-    fn constraints_multi(genes: &Array2<f64>) -> Array2<f64> {
+    fn constraints_multi(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> {
         let c0 = genes
             .sum_axis(Axis(1))
             .mapv(|s| s - 10.0)
@@ -187,7 +191,7 @@ mod tests {
     }
 
     /// Single constraint: c = Σx – 10 ≤ 0
-    fn constraints_single(genes: &Array2<f64>) -> Array1<f64> {
+    fn constraints_single(genes: &Array2<f64>, _context_id: usize) -> Array1<f64> {
         genes.sum_axis(Axis(1)).mapv(|s| s - 10.0)
     }
 

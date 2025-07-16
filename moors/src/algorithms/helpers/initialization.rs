@@ -94,8 +94,9 @@ mod tests {
         let fitness_fn = |genes: &Array2<f64>, _context_id: usize| {
             dummy_fitness(genes, context.population_size, 2)
         };
-        let constraints_fn =
-            |genes: &Array2<f64>| dummy_constraints(genes, context.population_size, 2);
+        let constraints_fn = |genes: &Array2<f64>, _context_id: usize| {
+            dummy_constraints(genes, context.population_size, 2)
+        };
         let evaluator = EvaluatorBuilder::default()
             .fitness(fitness_fn)
             .constraints(constraints_fn)

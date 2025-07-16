@@ -13,7 +13,7 @@ fn fitness_sphere(population: &Array2<f64>, _context_id: usize) -> Array1<f64> {
     population.map_axis(Axis(1), |row| 1.0 - row.dot(&row))
 }
 
-fn constraints_sphere(population: &Array2<f64>) -> Array1<f64> {
+fn constraints_sphere(population: &Array2<f64>, _context_id: usize) -> Array1<f64> {
     // For each row [x, y, z], compute x^2 + y^2 + z^2 - 1 <= 0
     population.map_axis(Axis(1), |row| row.dot(&row)) - 1.0
 }

@@ -2,12 +2,12 @@ extern crate moors;
 
 use std::time::Duration;
 
-use codspeed_criterion_compat::{black_box, criterion_group, criterion_main, Criterion};
-use ndarray::{stack, Array2, Axis};
+use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion_main};
+use ndarray::{Array2, Axis, stack};
 
 use moors::{
-    impl_constraints_fn, CloseDuplicatesCleaner, GaussianMutation, Nsga2Builder,
-    RandomSamplingFloat, SimulatedBinaryCrossover,
+    CloseDuplicatesCleaner, GaussianMutation, Nsga2Builder, RandomSamplingFloat,
+    SimulatedBinaryCrossover, impl_constraints_fn,
 };
 
 /// ZDT1 test function:

@@ -16,7 +16,7 @@ fn fitness_binary_biobj(genes: &Array2<f64>, _context_id: usize) -> Array2<f64> 
 }
 
 /// Infeasible constraint: num_vars - sum(x) + 1 > 0 for all individuals ⇒ always infeasible
-fn constraints_always_infeasible(genes: &Array2<f64>) -> Array1<f64> {
+fn constraints_always_infeasible(genes: &Array2<f64>, _context_id: usize) -> Array1<f64> {
     let n = genes.ncols() as f64;
     let sum = genes.sum_axis(Axis(1));
     let c = sum.mapv(|s| n - s + 1.0);

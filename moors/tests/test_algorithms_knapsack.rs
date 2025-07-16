@@ -27,7 +27,7 @@ fn fitness_knapsack(population_genes: &Array2<f64>, _context_id: usize) -> Array
     stack(Axis(1), &[(-&total_values).view(), total_weights.view()]).expect("stack failed")
 }
 
-fn constraints_knapsack(population_genes: &Array2<f64>) -> Array1<f64> {
+fn constraints_knapsack(population_genes: &Array2<f64>, _context_id: usize) -> Array1<f64> {
     // build a 1-D array of weights in one shot
     let weights_arr = Array1::from_vec(WEIGHTS.to_vec());
 
