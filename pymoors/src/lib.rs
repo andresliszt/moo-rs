@@ -9,27 +9,24 @@ pub mod py_fitness_and_constraints;
 pub mod py_operators;
 pub mod py_reference_points;
 
+use faer_ext::IntoNdarray;
+use moors::cross_euclidean_distances;
+use numpy::ToPyArray;
 use pyo3::prelude::*;
 
-pub use algorithms::agemoea::PyAgeMoea;
-pub use algorithms::nsga2::PyNsga2;
-pub use algorithms::nsga3::PyNsga3;
-pub use algorithms::revea::PyRevea;
-pub use algorithms::rnsga2::PyRnsga2;
-pub use algorithms::spea2::PySpea2;
+pub use algorithms::{
+    PyAgeMoea, PyGeneticAlgorithmSOO, PyNsga2, PyNsga3, PyRevea, PyRnsga2, PySpea2,
+};
 pub use py_error::{InitializationError, InvalidParameterError, NoFeasibleIndividualsError};
 pub use py_operators::{
-    PyBitFlipMutation, PyCloseDuplicatesCleaner, PyDisplacementMutation, PyExactDuplicatesCleaner,
-    PyExponentialCrossover, PyGaussianMutation, PyOrderCrossover, PyPermutationSampling,
-    PyRandomSamplingBinary, PyRandomSamplingFloat, PyRandomSamplingInt, PyScrambleMutation,
-    PySimulatedBinaryCrossover, PySinglePointBinaryCrossover, PySwapMutation,
-    PyUniformBinaryCrossover,
+    PyArithmeticCrossover, PyBitFlipMutation, PyCloseDuplicatesCleaner, PyDisplacementMutation,
+    PyExactDuplicatesCleaner, PyExponentialCrossover, PyGaussianMutation, PyInversionMutation,
+    PyOrderCrossover, PyPermutationSampling, PyRandomSamplingBinary, PyRandomSamplingFloat,
+    PyRandomSamplingInt, PyScrambleMutation, PySimulatedBinaryCrossover,
+    PySinglePointBinaryCrossover, PySwapMutation, PyTwoPointBinaryCrossover,
+    PyUniformBinaryCrossover, PyUniformBinaryMutation,
 };
 pub use py_reference_points::PyDanAndDenisReferencePoints;
-
-use faer_ext::IntoNdarray;
-use moors::helpers::linalg::cross_euclidean_distances;
-use numpy::ToPyArray;
 
 #[pyfunction]
 #[pyo3(name = "cross_euclidean_distances")]
@@ -56,13 +53,16 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAgeMoea>()?;
     m.add_class::<PyRevea>()?;
     m.add_class::<PySpea2>()?;
+    m.add_class::<PyGeneticAlgorithmSOO>()?;
 
     // Add classes from operators
     m.add_class::<PyBitFlipMutation>()?;
+    m.add_class::<PyInversionMutation>()?;
     m.add_class::<PySwapMutation>()?;
     m.add_class::<PyGaussianMutation>()?;
     m.add_class::<PyScrambleMutation>()?;
     m.add_class::<PyDisplacementMutation>()?;
+    m.add_class::<PyUniformBinaryMutation>()?;
     m.add_class::<PyRandomSamplingBinary>()?;
     m.add_class::<PyRandomSamplingFloat>()?;
     m.add_class::<PyRandomSamplingInt>()?;
@@ -74,6 +74,8 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyExactDuplicatesCleaner>()?;
     m.add_class::<PyCloseDuplicatesCleaner>()?;
     m.add_class::<PySimulatedBinaryCrossover>()?;
+    m.add_class::<PyArithmeticCrossover>()?;
+    m.add_class::<PyTwoPointBinaryCrossover>()?;
     // Py Errors
     m.add(
         "NoFeasibleIndividualsError",

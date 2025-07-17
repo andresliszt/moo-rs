@@ -9,11 +9,13 @@ import numpy as np
 import pytest
 
 from pymoors import (
-    UniformBinaryCrossover,
+    ArithmeticCrossover,
     ExponentialCrossover,
-    SinglePointBinaryCrossover,
     OrderCrossover,
     SimulatedBinaryCrossover,
+    SinglePointBinaryCrossover,
+    TwoPointBinaryCrossover,
+    UniformBinaryCrossover,
 )
 
 
@@ -26,6 +28,8 @@ from pymoors import (
         (ExponentialCrossover, {"exponential_crossover_rate": 0.7}),
         (SinglePointBinaryCrossover, {}),
         (SimulatedBinaryCrossover, {"distribution_index": 2}),
+        (ArithmeticCrossover, {}),
+        (TwoPointBinaryCrossover, {}),
     ],
 )
 def test_crossover_exposed_methods(operator_class, kwargs):

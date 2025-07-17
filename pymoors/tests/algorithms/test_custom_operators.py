@@ -60,8 +60,6 @@ def test_algorithm_with_custom_operators():
         crossover=CustomBinaryCrossover(),
         fitness_fn=dummy_fitness,
         num_vars=5,
-        num_objectives=5,
-        num_constraints=0,
         population_size=100,
         num_offsprings=32,
         num_iterations=20,

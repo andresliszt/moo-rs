@@ -2,23 +2,32 @@ use numpy::PyArrayMethods;
 use pyo3::prelude::*;
 
 use moors::{
-    duplicates::{CloseDuplicatesCleaner, ExactDuplicatesCleaner, PopulationCleaner},
-    operators::{
-        CrossoverOperator, MutationOperator,
-        crossover::{
-            exponential::ExponentialCrossover, order::OrderCrossover,
-            sbx::SimulatedBinaryCrossover, single_point::SinglePointBinaryCrossover,
-            uniform_binary::UniformBinaryCrossover,
-        },
-        mutation::{
-            bitflip::BitFlipMutation, displacement::DisplacementMutation,
-            gaussian::GaussianMutation, scramble::ScrambleMutation, swap::SwapMutation,
-        },
-        sampling::{
-            PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
-            SamplingOperator,
-        },
-    },
+    ArithmeticCrossover,
+    BitFlipMutation,
+    CloseDuplicatesCleaner,
+    CrossoverOperator,
+    DisplacementMutation,
+    ExactDuplicatesCleaner,
+    ExponentialCrossover,
+    GaussianMutation,
+    InversionMutation,
+    MutationOperator,
+    NoDuplicatesCleaner,
+    OrderCrossover,
+    PermutationSampling,
+    PopulationCleaner,
+    RandomSamplingBinary,
+    RandomSamplingFloat,
+    RandomSamplingInt,
+    SamplingOperator,
+    ScrambleMutation,
+    SimulatedBinaryCrossover,
+    SinglePointBinaryCrossover,
+    SwapMutation,
+    TwoPointBinaryCrossover,
+    UniformBinaryCrossover,
+    // UniformRealMutation, TODO: Need to implement Debug
+    UniformBinaryMutation,
 };
 
 use pymoors_macros::{
@@ -39,6 +48,9 @@ pub enum MutationOperatorDispatcher {
     GaussianMutation(GaussianMutation),
     ScrambleMutation(ScrambleMutation),
     SwapMutation(SwapMutation),
+    InversionMutation(InversionMutation),
+    UniformBinaryMutation(UniformBinaryMutation),
+
     CustomPyMutationOperatorWrapper(CustomPyMutationOperatorWrapper),
 }
 
@@ -50,6 +62,9 @@ pub enum CrossoverOperatorDispatcher {
     SimulatedBinaryCrossover(SimulatedBinaryCrossover),
     SinglePointBinaryCrossover(SinglePointBinaryCrossover),
     UniformBinaryCrossover(UniformBinaryCrossover),
+    ArithmeticCrossover(ArithmeticCrossover),
+    TwoPointBinaryCrossover(TwoPointBinaryCrossover),
+
     CustomPyCrossoverOperatorWrapper(CustomPyCrossoverOperatorWrapper),
 }
 
@@ -68,6 +83,7 @@ pub enum SamplingOperatorDispatcher {
 pub enum DuplicatesCleanerDispatcher {
     ExactDuplicatesCleaner(ExactDuplicatesCleaner),
     CloseDuplicatesCleaner(CloseDuplicatesCleaner),
+    NoDuplicatesCleaner(NoDuplicatesCleaner),
 }
 
 // --------------------------------------------------------------------------------
@@ -149,6 +165,26 @@ impl PyScrambleMutation {
     }
 }
 
+#[pymethods]
+impl PyInversionMutation {
+    #[new]
+    pub fn new() -> Self {
+        Self {
+            inner: InversionMutation,
+        }
+    }
+}
+
+#[pymethods]
+impl PyUniformBinaryMutation {
+    #[new]
+    pub fn new(gene_mutation_rate: f64) -> Self {
+        Self {
+            inner: UniformBinaryMutation::new(gene_mutation_rate),
+        }
+    }
+}
+
 // --------------------------------------------------------------------------------
 // Crossover new/getters
 // --------------------------------------------------------------------------------
@@ -208,6 +244,26 @@ impl PyUniformBinaryCrossover {
     pub fn new() -> Self {
         Self {
             inner: UniformBinaryCrossover::new(),
+        }
+    }
+}
+
+#[pymethods]
+impl PyArithmeticCrossover {
+    #[new]
+    pub fn new() -> Self {
+        Self {
+            inner: ArithmeticCrossover,
+        }
+    }
+}
+
+#[pymethods]
+impl PyTwoPointBinaryCrossover {
+    #[new]
+    pub fn new() -> Self {
+        Self {
+            inner: TwoPointBinaryCrossover,
         }
     }
 }

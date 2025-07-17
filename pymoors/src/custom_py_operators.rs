@@ -1,12 +1,8 @@
-use ndarray::{Axis, s};
+use ndarray::{Array1, Array2, ArrayViewMut1, Axis, s};
 use numpy::{IntoPyArray, PyArray2, PyArrayMethods};
 use pyo3::prelude::*;
 
-use moors::{
-    genetic::{IndividualGenes, IndividualGenesMut, PopulationGenes},
-    operators::{CrossoverOperator, GeneticOperator, MutationOperator, SamplingOperator},
-    random::RandomGenerator,
-};
+use moors::{CrossoverOperator, MutationOperator, RandomGenerator, SamplingOperator};
 
 fn select_individuals_idx(
     population_size: usize,
@@ -36,20 +32,14 @@ pub struct CustomPyMutationOperatorWrapper {
     pub inner: PyObject,
 }
 
-impl GeneticOperator for CustomPyMutationOperatorWrapper {
-    fn name(&self) -> String {
-        "CustomPyMutationOperatorWrapper".into()
-    }
-}
-
 impl MutationOperator for CustomPyMutationOperatorWrapper {
-    fn mutate<'a>(&self, mut _individual: IndividualGenesMut<'a>, _rng: &mut impl RandomGenerator) {
+    fn mutate<'a>(&self, mut _individual: ArrayViewMut1<'a, f64>, _rng: &mut impl RandomGenerator) {
         unimplemented!("Custom mutation operator overwrites operate method only")
     }
 
     fn operate(
         &self,
-        population: &mut PopulationGenes,
+        population: &mut Array2<f64>,
         mutation_rate: f64,
         rng: &mut impl RandomGenerator,
     ) {
@@ -105,32 +95,23 @@ pub struct CustomPyCrossoverOperatorWrapper {
     pub inner: PyObject,
 }
 
-impl GeneticOperator for CustomPyCrossoverOperatorWrapper {
-    fn name(&self) -> String {
-        "CustomPyCrossoverOperatorWrapper".into()
-    }
-}
-
 impl CrossoverOperator for CustomPyCrossoverOperatorWrapper {
     fn crossover(
         &self,
-        _parent_a: &IndividualGenes,
-        _parent_b: &IndividualGenes,
+        _parent_a: &Array1<f64>,
+        _parent_b: &Array1<f64>,
         _rng: &mut impl RandomGenerator,
-    ) -> (
-        moors::genetic::IndividualGenes,
-        moors::genetic::IndividualGenes,
-    ) {
+    ) -> (Array1<f64>, Array1<f64>) {
         unimplemented!("Custom crossover operator overwrites operate method only")
     }
 
     fn operate(
         &self,
-        parents_a: &PopulationGenes,
-        parents_b: &PopulationGenes,
+        parents_a: &Array2<f64>,
+        parents_b: &Array2<f64>,
         cossover_rate: f64,
         rng: &mut impl RandomGenerator,
-    ) -> PopulationGenes {
+    ) -> Array2<f64> {
         Python::with_gil(|py| {
             let population_size = parents_a.nrows();
             // Build the mask with the mutation rate
@@ -184,18 +165,8 @@ pub struct CustomPySamplingOperatorWrapper {
     pub inner: PyObject,
 }
 
-impl GeneticOperator for CustomPySamplingOperatorWrapper {
-    fn name(&self) -> String {
-        "CustomPySamplingOperatorWrapper".into()
-    }
-}
-
 impl SamplingOperator for CustomPySamplingOperatorWrapper {
-    fn sample_individual(
-        &self,
-        _num_vars: usize,
-        _rng: &mut impl RandomGenerator,
-    ) -> IndividualGenes {
+    fn sample_individual(&self, _num_vars: usize, _rng: &mut impl RandomGenerator) -> Array1<f64> {
         unimplemented!("Custom sampling operator overwrites operate method only")
     }
 
@@ -204,7 +175,7 @@ impl SamplingOperator for CustomPySamplingOperatorWrapper {
         _population_size: usize,
         _num_vars: usize,
         _rng: &mut impl RandomGenerator,
-    ) -> PopulationGenes {
+    ) -> Array2<f64> {
         Python::with_gil(|py| {
             // Call the Python-side operate method
             let sample = self

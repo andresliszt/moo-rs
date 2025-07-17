@@ -63,7 +63,7 @@ algorithm = Nsga2(
     sampler=RandomSamplingBinary(),
     crossover=SinglePointBinaryCrossover(),
     mutation=BitFlipMutation(gene_mutation_rate=0.5),
-    fitness_fn=knapsack_fitness,
+    fitness=knapsack_fitness,
     constraints_fn=knapsack_constraint,
     duplicates_cleaner=ExactDuplicatesCleaner(),
     num_vars=5,
@@ -91,8 +91,8 @@ array([[ -7., -15.],
        [ -7.,  -6.],
        [ -6., -13.],
        ...])
-# Get constraints evaluation
->>> pop.constraints
+# Get constraints_fn evaluation
+>>> pop.constraints_fn
 array([[ 0.],
        [-1.],
        [ 0.],
@@ -107,7 +107,7 @@ array([0, 1, 1, 2, ...], dtype=uint64)
 array([1., 0., 0., 1., 1.])
 >>> pop.best[0].fitness
 array([ -7., -15.])
->>> pop.best[0].constraints
+>>> pop.best[0].constraints_fn
 array([0.])
 ```
 

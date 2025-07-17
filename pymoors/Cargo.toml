@@ -21,7 +21,7 @@ ordered-float = "5.0.0"
 rayon = "1.10.0"
 ndarray-stats = "0.6.0"
 pymoors_macros = { path = "pymoors_macros"}
-moors = "0.1.3"
+moors = "0.2.4"
 faer-ext = { version = "0.5.0", features = ["ndarray"] }
 faer = "0.21.9"
 

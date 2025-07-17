@@ -1,6 +1,5 @@
-pub mod agemoea;
-pub mod nsga2;
-pub mod nsga3;
-pub mod revea;
-pub mod rnsga2;
-pub mod spea2;
+mod moo;
+mod soo;
+
+pub use moo::{PyAgeMoea, PyNsga2, PyNsga3, PyRevea, PyRnsga2, PySpea2};
+pub use soo::PyGeneticAlgorithmSOO;

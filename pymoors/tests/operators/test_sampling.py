@@ -9,10 +9,10 @@ import numpy as np
 import pytest
 
 from pymoors import (
-    RandomSamplingBinary,
-    RandomSamplingInt,
-    RandomSamplingFloat,
     PermutationSampling,
+    RandomSamplingBinary,
+    RandomSamplingFloat,
+    RandomSamplingInt,
 )
 
 

@@ -1,23 +1,23 @@
-import pytest
 import numpy as np
+import pytest
 
 from pymoors import (
-    RandomSamplingFloat,
-    GaussianMutation,
-    SimulatedBinaryCrossover,
     AgeMoea,
-    Nsga2,
-    Nsga3,
-    Rnsga2,
-    Revea,
-    Spea2,
     DanAndDenisReferencePoints,
     ExactDuplicatesCleaner,
+    GaussianMutation,
+    Nsga2,
+    Nsga3,
+    RandomSamplingFloat,
+    Revea,
+    Rnsga2,
+    SimulatedBinaryCrossover,
+    Spea2,
 )
 from pymoors.typing import TwoDArray
 
 
-def fitness(population_genes: TwoDArray) -> TwoDArray:
+def fitness_fn(population_genes: TwoDArray) -> TwoDArray:
     x = population_genes[:, 0]
     y = population_genes[:, 1]
     z = population_genes[:, 2]
@@ -32,17 +32,13 @@ def common_kwargs():
         "sampler": RandomSamplingFloat(min=0.0, max=1.0),
         "crossover": SimulatedBinaryCrossover(distribution_index=15),
         "mutation": GaussianMutation(gene_mutation_rate=0.1, sigma=0.05),
-        "fitness_fn": fitness,
+        "fitness_fn": fitness_fn,
         "num_vars": 3,  # We have 2 variables: x,y
-        "num_objectives": 2,
-        "num_constraints": 0,
         "population_size": 100,
         "num_offsprings": 10,
         "num_iterations": 10,
         "mutation_rate": 0.1,
         "crossover_rate": 0.9,
-        "lower_bound": 0,
-        "upper_bound": 1,
     }
 
 
@@ -120,7 +116,6 @@ def test_init_full_args(algorithm_class, algorithm_specific_kwargs, common_kwarg
         "keep_infeasible": True,
         "seed": 1,
     }
-    common_kwargs["num_constraints"] = 1
     _ = algorithm_class(**common_kwargs, **algorithm_specific_kwargs, **extra_args)
     # TODO: Enable once the attribute is created
     # assert algorithm.initialized = False

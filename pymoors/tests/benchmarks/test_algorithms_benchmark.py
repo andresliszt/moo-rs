@@ -1,14 +1,14 @@
 import numpy as np
 
 from pymoors import (
+    CloseDuplicatesCleaner,
+    Constraints,
+    GaussianMutation,
     Nsga2,
     RandomSamplingFloat,
-    GaussianMutation,
-    CloseDuplicatesCleaner,
     SimulatedBinaryCrossover,
 )
-from pymoors.typing import TwoDArray, OneDArray
-
+from pymoors.typing import OneDArray, TwoDArray
 
 N_VARS: int = 10
 
@@ -25,12 +25,12 @@ def f2(x: OneDArray) -> float:
 
 def fitness_biobjective(population_genes: TwoDArray) -> TwoDArray:
     population_size = population_genes.shape[0]
-    fitness = np.zeros((population_size, 2), dtype=float)
+    fitness_fn = np.zeros((population_size, 2), dtype=float)
     for i in range(population_size):
         x = population_genes[i]
-        fitness[i, 0] = f1(x)
-        fitness[i, 1] = f2(x)
-    return fitness
+        fitness_fn[i, 0] = f1(x)
+        fitness_fn[i, 1] = f2(x)
+    return fitness_fn
 
 
 def test_small_real_biobjective_nsag2(benchmark):
@@ -39,9 +39,8 @@ def test_small_real_biobjective_nsag2(benchmark):
         crossover=SimulatedBinaryCrossover(distribution_index=2),
         mutation=GaussianMutation(gene_mutation_rate=0.1, sigma=0.05),
         fitness_fn=fitness_biobjective,
+        constraints_fn=Constraints(lower_bound=0.0, upper_bound=1.0),
         num_vars=N_VARS,
-        num_objectives=2,
-        num_constraints=0,
         population_size=1000,
         num_offsprings=1000,
         num_iterations=100,
@@ -49,8 +48,6 @@ def test_small_real_biobjective_nsag2(benchmark):
         crossover_rate=0.9,
         duplicates_cleaner=CloseDuplicatesCleaner(epsilon=1e-5),
         keep_infeasible=False,
-        lower_bound=0,
-        upper_bound=1,
         verbose=False,
     )
     benchmark(algorithm.run)

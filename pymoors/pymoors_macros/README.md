@@ -194,7 +194,7 @@ impl PyNsga2 {
         sampler,
         crossover,
         mutation,
-        fitness_fn,
+        fitness,
         num_vars,
         population_size,
         num_offsprings,
@@ -214,7 +214,7 @@ impl PyNsga2 {
         sampler: PyObject,
         crossover: PyObject,
         mutation: PyObject,
-        fitness_fn: PyObject,
+        fitness: PyObject,
         num_vars: usize,
         population_size: usize,
         num_offsprings: usize,
@@ -239,8 +239,8 @@ impl PyNsga2 {
             None
         };
         // Build the mandatory population-level fitness closure.
-        let fitness_closure = create_population_fitness_closure(fitness_fn)?;
-        // Build the optional constraints closure.
+        let fitness_closure = create_population_fitness_closure(fitness)?;
+        // Build the optional constraints_fn closure.
         let constraints_closure = if let Some(py_obj) = constraints_fn {
             Some(create_population_constraints_closure(py_obj)?)
         } else {

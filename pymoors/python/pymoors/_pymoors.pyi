@@ -1,15 +1,16 @@
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from typing_extensions import Unpack
 
+from pymoors.constraints import Constraints
 from pymoors.schemas import Population
 from pymoors.typing import (
-    FitnessPopulationCallable,
-    ConstraintsPopulationCallable,
-    TwoDArray,
+    ConstraintsCallable,
     CrossoverLike,
+    FitnessCallable,
     MutationLike,
     SamplingLike,
+    TwoDArray,
 )
 
 # pylint: disable=W0622, W0231
@@ -31,7 +32,7 @@ class SamplingOperator:
         """
 
     def operate(
-        self, population_size: int, num_vars: int, seed: Optional[int]
+        self, population_size: int, num_vars: int, seed: int | None
     ) -> TwoDArray: ...
 
 class MutationOperator:
@@ -50,7 +51,7 @@ class MutationOperator:
             **kwargs: Arbitrary keyword arguments.
         """
 
-    def operate(self, population: TwoDArray, seed: Optional[int]) -> TwoDArray: ...
+    def operate(self, population: TwoDArray, seed: int | None) -> TwoDArray: ...
 
 class CrossoverOperator:
     """
@@ -69,7 +70,7 @@ class CrossoverOperator:
         """
 
     def operate(
-        self, parents_a: TwoDArray, parents_b: TwoDArray, seed: Optional[int]
+        self, parents_a: TwoDArray, parents_b: TwoDArray, seed: int | None
     ) -> TwoDArray: ...
 
 class RandomSamplingFloat(SamplingOperator):
@@ -158,6 +159,16 @@ class ScrambleMutation(MutationOperator):
     """Operator that selects a random segment from an individual and scrambles it by randomly reordering the genes within the segment."""
     def __init__(self) -> None: ...
 
+class InversionMutation(MutationOperator):
+    def __init__(self) -> None: ...
+
+class UniformBinaryMutation(MutationOperator):
+    """
+    Uniform mutation operator that resets each bit to a random 0 or 1
+    with a specified per-gene mutation probability.
+    """
+    def __init__(self, gene_mutation_rate: float): ...
+
 class OrderCrossover(CrossoverOperator):
     """
     Crossover operator for permutation-based individuals using Order Crossover (OX).
@@ -200,6 +211,19 @@ class ExponentialCrossover(CrossoverOperator):
 
     def __init__(self, exponential_crossover_rate: float) -> None: ...
 
+class ArithmeticCrossover(CrossoverOperator):
+    """
+    Whole arithmetic crossover for real-valued individuals.
+    Samples a single α ∼ U(0,1) and produces two offspring:
+    `child1[i] = α * parent_a[i] + (1-α) * parent_b[i]`
+    `child2[i] = (1−α) * parent_a[i] + α * parent_b[i]`
+    """
+    def __init__(self) -> None: ...
+
+class TwoPointBinaryCrossover(CrossoverOperator):
+    """Two-point crossover operator for binary-encoded individuals."""
+    def __init__(self) -> None: ...
+
 class SimulatedBinaryCrossover(CrossoverOperator):
     """
     Simulated Binary Crossover (SBX) operator for real-coded genetic algorithms.
@@ -235,7 +259,7 @@ class DuplicatesCleaner:
     """
 
     def remove_duplicates(
-        self, population: TwoDArray, reference: Optional[TwoDArray]
+        self, population: TwoDArray, reference: TwoDArray | None
     ) -> TwoDArray:
         """Removes duplicates from population."""
 
@@ -292,7 +316,7 @@ class DanAndDenisReferencePoints(StructuredReferencePoints):
 
 # Algorithms
 
-class _MooAlgorithmKwargs(TypedDict, total=False):
+class _AlgorithmKwargs(TypedDict, total=False):
     """
     It exists for Multi-Objective Optimization (MOO) algorithms kwargs.
 
@@ -302,10 +326,8 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
         sampler (SamplingOperator): Operator to sample initial population.
         crossover (CrossoverOperator): Operator to perform crossover.
         mutation (MutationOperator): Operator to perform mutation.
-        fitness_fn (FitnessPopuAgeMoealationCallable): Function to evaluate the fitness of the population.
+        fitness_fn (FitnessCallable): Function to evaluate the fitness_fn of the population.
         num_vars (int): Number of variables in the optimization problem.
-        num_objectives (int): Number of objectives in the optimization problem.
-        num_constraints (int): Number of constraints in the optimization problem.
         population_size (int): Population size.
         num_offsprings (int): Number of offsprings generated in each generation.
         num_iterations (int): Number of generations to run the algorithm.
@@ -313,20 +335,16 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
         crossover_rate (float): Probability of crossover.
         keep_infeasible (bool, optional): Whether to keep infeasible solutions. Defaults to False.
         verbose (bool, optional): Whether to print detailed information during the run. Defaults to True.
-        duplicates_cleaner (Optional[DuplicatesCleaner], optional): Cleaner to remove duplicates. Defaults to None.
-        constraints_fn (Optional[ConstraintsPopulationCallable], optional): Function to handle constraints. Defaults to None.
-        lower_bound (Optional[float], optional): Optional lower bound for each gene. Defaults to None.
-        upper_bound (Optional[float], optional): Optional upper bound for each gene. Defaults to None.
-        seed (Optional[seed], optional): Optional seed to control experiments. Defaults to None.
+        duplicates_cleaner (DuplicatesCleaner, optional): Cleaner to remove duplicates. Defaults to None.
+        constraints_fn (ConstraintsCallable | Constraints, optional): Function to handle constraints_fn. Defaults to None.
+        seed (int, optional): Optional seed to control experiments. Defaults to None.
     """
 
     sampler: SamplingLike
     crossover: CrossoverLike
     mutation: MutationLike
-    fitness_fn: FitnessPopulationCallable
+    fitness_fn: FitnessCallable
     num_vars: int
-    num_objectives: int
-    num_constraints: int
     population_size: int
     num_offsprings: int
     num_iterations: int
@@ -334,11 +352,9 @@ class _MooAlgorithmKwargs(TypedDict, total=False):
     crossover_rate: float
     keep_infeasible: bool
     verbose: bool
-    duplicates_cleaner: Optional[DuplicatesCleaner]
-    constraints_fn: Optional[ConstraintsPopulationCallable]
-    lower_bound: Optional[float]
-    upper_bound: Optional[float]
-    seed: Optional[int]
+    duplicates_cleaner: DuplicatesCleaner | None
+    constraints_fn: ConstraintsCallable | Constraints | None
+    seed: int | None
 
 class Nsga2:
     """
@@ -352,7 +368,20 @@ class Nsga2:
         NSGA-II. IEEE Transactions on Evolutionary Computation, 6(2), 182-197.
     """
 
-    def __init__(self, **kwargs: Unpack[_MooAlgorithmKwargs]): ...
+    def __init__(self, **kwargs: Unpack[_AlgorithmKwargs]): ...
+    @property
+    def population(self) -> Population:
+        """
+        Get the current population.
+
+        Returns:
+            Population: The current population of individuals.
+        """
+
+    def run(self) -> None: ...
+
+class GeneticAlgorithmSOO:
+    def __init__(self, **kwargs: Unpack[_AlgorithmKwargs]): ...
     @property
     def population(self) -> Population:
         """
@@ -376,7 +405,7 @@ class Spea2:
         Multiobjective Optimization. In Proceedings of the IEEE Congress on Evolutionary Computation (CEC01).
     """
 
-    def __init__(self, **kwargs: Unpack[_MooAlgorithmKwargs]): ...
+    def __init__(self, **kwargs: Unpack[_AlgorithmKwargs]): ...
     @property
     def population(self) -> Population:
         """
@@ -388,7 +417,7 @@ class Spea2:
 
     def run(self) -> None: ...
 
-class _Nsga3Kwargs(_MooAlgorithmKwargs, total=False):
+class _Nsga3Kwargs(_AlgorithmKwargs, total=False):
     reference_points: TwoDArray | StructuredReferencePoints
 
 class Nsga3:
@@ -415,7 +444,7 @@ class Nsga3:
 
     def run(self) -> None: ...
 
-class _RNsg2Kwargs(_MooAlgorithmKwargs, total=False):
+class _RNsg2Kwargs(_AlgorithmKwargs, total=False):
     reference_points: TwoDArray | StructuredReferencePoints
     epsilon: float
 
@@ -465,7 +494,7 @@ class AgeMoea:
         Evolutionary Computation Conference, GECCO, New York, NY, USA.
 
     """
-    def __init__(self, **kwargs: Unpack[_MooAlgorithmKwargs]): ...
+    def __init__(self, **kwargs: Unpack[_AlgorithmKwargs]): ...
     @property
     def population(self) -> Population:
         """
@@ -477,7 +506,7 @@ class AgeMoea:
 
     def run(self) -> None: ...
 
-class _ReveaKwargs(_MooAlgorithmKwargs, total=False):
+class _ReveaKwargs(_AlgorithmKwargs, total=False):
     reference_points: TwoDArray | StructuredReferencePoints
     alpha: float
     frequency: float
