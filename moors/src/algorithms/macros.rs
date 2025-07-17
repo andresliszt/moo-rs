@@ -55,7 +55,7 @@ macro_rules! create_algorithm {
             }
 
             pub fn initialize(&mut self) -> Result<(), AlgorithmError> {
-                self.inner.next_pop()
+                self.inner.initialize()
             }
 
             pub fn set_current_iteration(&mut self, current_iter: usize) {
