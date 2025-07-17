@@ -19,6 +19,7 @@ node_modules/
 
 /.benchmarks/
 /.idea/
+/moors/.idea/
 /.pytest_cache/
 /.vscode/
 /.venv/
