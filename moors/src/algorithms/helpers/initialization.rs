@@ -14,7 +14,7 @@ impl Initialization {
     pub fn initialize<S, Sur, DC, F, G>(
         sampler: &S,
         survivor: &mut Sur,
-        evaluator: &Evaluator<F, G>,
+        evaluator: &mut Evaluator<F, G>,
         duplicates_cleaner: &DC,
         rng: &mut impl RandomGenerator,
         context: &AlgorithmContext,
@@ -97,7 +97,7 @@ mod tests {
         let constraints_fn = |genes: &Array2<f64>, _context_id: usize| {
             dummy_constraints(genes, context.population_size, 2)
         };
-        let evaluator = EvaluatorBuilder::default()
+        let mut evaluator = EvaluatorBuilder::default()
             .fitness(fitness_fn)
             .constraints(constraints_fn)
             .keep_infeasible(false)
@@ -108,7 +108,7 @@ mod tests {
         let pop = Initialization::initialize(
             &sampler,
             &mut survivor,
-            &evaluator,
+            &mut evaluator,
             &duplicates_cleaner,
             &mut rng,
             &context,

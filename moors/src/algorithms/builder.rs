@@ -273,7 +273,7 @@ where
         let initial_population = Initialization::initialize(
             &self.sampler,
             &mut self.survivor,
-            &self.evaluator,
+            &mut self.evaluator,
             &self.evolve.duplicates_cleaner,
             &mut self.rng,
             &self.context,
@@ -292,7 +292,7 @@ where
         let initial_population = Initialization::initialize(
             &self.sampler,
             &mut self.survivor,
-            &self.evaluator,
+            &mut self.evaluator,
             &self.evolve.duplicates_cleaner,
             &mut self.rng,
             &self.context,
