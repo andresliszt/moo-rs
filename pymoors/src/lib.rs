@@ -88,7 +88,7 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("InitializationError", _py.get_type::<InitializationError>())?;
 
     // Functions
-    // let _ = m.add_function(wrap_pyfunction!(cross_euclidean_distances_py, m)?);
+    let _ = m.add_function(wrap_pyfunction!(cross_euclidean_distances_py, m)?);
 
     // Rerefence points
     m.add_class::<PyDanAndDenisReferencePoints>()?;
