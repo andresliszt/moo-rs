@@ -126,3 +126,28 @@ def test_run_algorithm_with_constraints_class():
     np.testing.assert_array_equal(
         algorithm.population.constraints, expected_constraints
     )
+
+
+def test_run_algorithm_with_constraints_1d_function():
+    algorithm = Spea2(
+        sampler=RandomSamplingFloat(min=-5, max=-1),
+        mutation=GaussianMutation(gene_mutation_rate=0.5, sigma=0.01),
+        crossover=ExponentialCrossover(exponential_crossover_rate=0.9),
+        fitness_fn=lambda genes: genes,
+        constraints_fn=Constraints(constraints_fn=lambda genes: genes.sum(axis=1)),
+        num_vars=2,
+        population_size=5,
+        num_offsprings=5,
+        num_iterations=2,
+        mutation_rate=0.1,
+        crossover_rate=0.9,
+        duplicates_cleaner=None,
+        keep_infeasible=False,
+    )
+
+    algorithm.run()
+    # Expected constraints
+    expected_constraints = algorithm.population.genes.sum(axis=1).reshape(-1, 1)
+    np.testing.assert_array_equal(
+        algorithm.population.constraints, expected_constraints
+    )

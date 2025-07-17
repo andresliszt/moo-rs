@@ -5,9 +5,11 @@ from pymoors import (
     BitFlipMutation,
     Constraints,
     InitializationError,
+    InversionMutation,
     Nsga2,
     RandomSamplingBinary,
     SinglePointBinaryCrossover,
+    TwoPointBinaryCrossover,
 )
 from pymoors.typing import TwoDArray
 
@@ -51,7 +53,7 @@ def infeasible_constraints(genes: TwoDArray) -> TwoDArray:
 def test_keep_infeasible():
     algorithm = Nsga2(
         sampler=RandomSamplingBinary(),
-        mutation=BitFlipMutation(gene_mutation_rate=0.5),
+        mutation=InversionMutation(),
         crossover=SinglePointBinaryCrossover(),
         fitness_fn=binary_biobjective_infeasible,
         constraints_fn=infeasible_constraints,
@@ -99,7 +101,7 @@ def test_remove_infeasible():
         algorithm = Nsga2(
             sampler=RandomSamplingBinary(),
             mutation=BitFlipMutation(gene_mutation_rate=0.5),
-            crossover=SinglePointBinaryCrossover(),
+            crossover=TwoPointBinaryCrossover(),
             fitness_fn=binary_biobjective_infeasible,
             constraints_fn=infeasible_constraints,
             num_vars=5,

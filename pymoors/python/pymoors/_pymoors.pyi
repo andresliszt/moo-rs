@@ -316,7 +316,7 @@ class DanAndDenisReferencePoints(StructuredReferencePoints):
 
 # Algorithms
 
-class _MooAlgorithmKwargs(TypedDict, total=False):
+class _AlgorithmKwargs(TypedDict, total=False):
     """
     It exists for Multi-Objective Optimization (MOO) algorithms kwargs.
 
@@ -368,7 +368,20 @@ class Nsga2:
         NSGA-II. IEEE Transactions on Evolutionary Computation, 6(2), 182-197.
     """
 
-    def __init__(self, **kwargs: Unpack[_MooAlgorithmKwargs]): ...
+    def __init__(self, **kwargs: Unpack[_AlgorithmKwargs]): ...
+    @property
+    def population(self) -> Population:
+        """
+        Get the current population.
+
+        Returns:
+            Population: The current population of individuals.
+        """
+
+    def run(self) -> None: ...
+
+class GeneticAlgorithmSOO:
+    def __init__(self, **kwargs: Unpack[_AlgorithmKwargs]): ...
     @property
     def population(self) -> Population:
         """
@@ -392,7 +405,7 @@ class Spea2:
         Multiobjective Optimization. In Proceedings of the IEEE Congress on Evolutionary Computation (CEC01).
     """
 
-    def __init__(self, **kwargs: Unpack[_MooAlgorithmKwargs]): ...
+    def __init__(self, **kwargs: Unpack[_AlgorithmKwargs]): ...
     @property
     def population(self) -> Population:
         """
@@ -404,7 +417,7 @@ class Spea2:
 
     def run(self) -> None: ...
 
-class _Nsga3Kwargs(_MooAlgorithmKwargs, total=False):
+class _Nsga3Kwargs(_AlgorithmKwargs, total=False):
     reference_points: TwoDArray | StructuredReferencePoints
 
 class Nsga3:
@@ -431,7 +444,7 @@ class Nsga3:
 
     def run(self) -> None: ...
 
-class _RNsg2Kwargs(_MooAlgorithmKwargs, total=False):
+class _RNsg2Kwargs(_AlgorithmKwargs, total=False):
     reference_points: TwoDArray | StructuredReferencePoints
     epsilon: float
 
@@ -481,7 +494,7 @@ class AgeMoea:
         Evolutionary Computation Conference, GECCO, New York, NY, USA.
 
     """
-    def __init__(self, **kwargs: Unpack[_MooAlgorithmKwargs]): ...
+    def __init__(self, **kwargs: Unpack[_AlgorithmKwargs]): ...
     @property
     def population(self) -> Population:
         """
@@ -493,7 +506,7 @@ class AgeMoea:
 
     def run(self) -> None: ...
 
-class _ReveaKwargs(_MooAlgorithmKwargs, total=False):
+class _ReveaKwargs(_AlgorithmKwargs, total=False):
     reference_points: TwoDArray | StructuredReferencePoints
     alpha: float
     frequency: float

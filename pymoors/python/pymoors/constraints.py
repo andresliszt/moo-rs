@@ -72,6 +72,8 @@ class Constraints:
             parts.append(genes - self.upper_bound)
         # if only one part, return it directly as 2D
         if len(parts) == 1:
+            if parts[0].ndim == 1:
+                return parts[0].reshape(-1, 1)
             return parts[0]
         # otherwise concatenate horizontally into a single 2D array
         return np.concatenate(parts, axis=1)

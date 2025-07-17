@@ -2,11 +2,11 @@ import numpy as np
 
 from pymoors import (
     CloseDuplicatesCleaner,
+    Constraints,
     GaussianMutation,
     Nsga2,
     RandomSamplingFloat,
     SimulatedBinaryCrossover,
-    Constraints,
 )
 from pymoors.typing import OneDArray, TwoDArray
 
