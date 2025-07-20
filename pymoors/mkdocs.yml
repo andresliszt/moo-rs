@@ -74,14 +74,26 @@ nav:
       - Duplicates Cleaner: user_guide/duplicates.md
       - Algorithms:
         - Introduction: user_guide/algorithms/algorithms.ipynb
-        - NSGA-II: user_guide/algorithms/nsga2.ipynb
+        - NSGA-II: user_guide/algorithms/nsga2/index.md
         - RNSGA-II: user_guide/algorithms/rnsga2.ipynb
         - NSGA-III: user_guide/algorithms/nsga3.ipynb
         - AGE-MOEA: user_guide/algorithms/agemoea.ipynb
         - REVEA: user_guide/algorithms/revea.ipynb
         - SPEA-II: user_guide/algorithms/spea2.ipynb
+  - 💻 Reference: reference.md
 
 plugins:
     - mkdocs-jupyter
     - search
     - include-markdown
+    - macros:
+        module_name: docs/macros
+    - mkdocstrings:
+        handlers:
+          python:
+            paths:
+              - "python"
+
+
+extra:
+  moors_crate_version: 0.2.4

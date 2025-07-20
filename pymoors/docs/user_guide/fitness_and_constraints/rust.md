@@ -1,6 +1,8 @@
 ## Fitness
 
-In **moors**, the way to define objective functions for optimization is through a [ndarray](https://docs.rs/ndarray/latest/ndarray/). Currently, the only dtype supported is `f64`, we're planning to relax this in the future (See ). An example is given below
+In **moors**, the way to define objective functions for optimization is through a [ndarray](https://docs.rs/ndarray/latest/ndarray/). Currently, the only dtype supported is `f64`, we're planning to relax this in the future. It means that when working with a different dtype, such as binary, its values must be trated as `f64` (in this case as `0.0` and `1.0`).
+
+ An example is given below
 
 
 ```Rust
@@ -28,9 +30,9 @@ fn fitness_dtlz2_3obj(genes: &Array2<f64>) -> Array2<f64> {
 }
 ```
 
-This funcion has the signature `(genes: &Array2<f64>) -> Array2<f64>` and is a valid function for any `moors` multi-objective optimization algorithm, such as `moors::Nsga2`, `moors::Nsga3`, etc. Note that this function is poblational, meaning that the **whole** population is evaluated
+This funcion has the signature `(genes: &Array2<f64>) -> Array2<f64>` and is a valid function for any `moors` multi-objective optimization algorithm, such as [Nsga2]({{ docs_rs("struct", "algorithms.Nsga2") }}), [Nsga3]({{ docs_rs("struct", "algorithms.Nsga3") }}), etc. Note that this function is poblational, meaning that the **whole** population is evaluated
 
-A function for a single objective optimization problem has the signature `(genes: &Array2<f64>) -> Array1<f64>` and is valid for any `moors` single optimization algorithm, such as `moors::GeneticAlgorithmSOO`. An example is given below
+A function for a single objective optimization problem has the signature `(genes: &Array2<f64>) -> Array1<f64>` and is valid for any `moors` single optimization algorithm. An example is given below
 
 ```Rust
 use ndarray::{Array1, Array2, Axix};
@@ -147,4 +149,4 @@ impl_constraints_fn!(
 ```
 
 !!! info "`ConstraintsFn` trait"
-    Internally, `constraints` as an argument to genetic algorithms is actually any type that implements `moors::ConstraintsFn`. The `impl_constraints_fn` macro creates a struct that implements this trait. The types `Fn(&Array2<f64>) -> Array1<f64>` and `Fn(&Array2<f64>) -> Array2<f64>` automatically implement this trait.
+    Internally, `constraints` as an argument to genetic algorithms is actually any type that implements [ConstraintsFn]({{ docs_rs("trait", "ConstraintsFn") }}). The `impl_constraints_fn` macro creates a struct that implements this trait. The types `Fn(&Array2<f64>) -> Array1<f64>` and `Fn(&Array2<f64>) -> Array2<f64>` automatically implement this trait.
