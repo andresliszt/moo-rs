@@ -66,10 +66,10 @@
 //! isolation or swap them at runtime to benchmark different evolutionary
 //! dynamics without touching your problem‑specific code or algorithm builder.
 
-pub(crate) mod crossover;
-pub(crate) mod evolve;
-pub(crate) mod mutation;
-pub(crate) mod sampling;
+pub mod crossover;
+pub mod evolve;
+pub mod mutation;
+pub mod sampling;
 pub mod selection;
 pub mod survival;
 
