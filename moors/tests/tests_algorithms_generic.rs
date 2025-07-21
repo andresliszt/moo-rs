@@ -3,9 +3,10 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    AgeMoeaBuilder, CloseDuplicatesCleaner, GaussianMutation, Nsga2Builder, Nsga3Builder,
-    Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat, ReveaBuilder, Rnsga2Builder,
-    SimulatedBinaryCrossover, Spea2Builder, impl_constraints_fn,
+    AgeMoeaBuilder, ArithmeticCrossover, CloseDuplicatesCleaner, GaussianMutation, Nsga2Builder,
+    Nsga3Builder, Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat, ReveaBuilder,
+    Rnsga2Builder, SimulatedBinaryCrossover, Spea2Builder, UniformRealMutation,
+    impl_constraints_fn,
     survival::moo::{
         DanAndDenisReferencePoints, Nsga3ReferencePoints, ReveaReferencePointsSurvival,
         Rnsga2ReferencePointsSurvival, StructuredReferencePoints,
@@ -231,4 +232,57 @@ fn test_spea2() {
         .population()
         .expect("population should have been initialized");
     assert_small_real_front(&population);
+}
+
+#[test]
+fn test_same_seed_same_result() {
+    let mut algorithm1 = Nsga2Builder::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(ArithmeticCrossover)
+        .mutation(UniformRealMutation::new(0.9, 0.0, 1.0))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective)
+        .constraints_fn(MyConstr)
+        .num_vars(2)
+        .population_size(200)
+        .num_offsprings(200)
+        .num_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(true)
+        .seed(1729)
+        .build()
+        .expect("failed to build NSGA2");
+
+    algorithm1.run().expect("NSGA2 run failed");
+    let population1 = algorithm1
+        .population()
+        .expect("population should have been initialized");
+
+    let mut algorithm2 = Nsga2Builder::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(ArithmeticCrossover)
+        .mutation(UniformRealMutation::new(0.9, 0.0, 1.0))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective)
+        .constraints_fn(MyConstr)
+        .num_vars(2)
+        .population_size(200)
+        .num_offsprings(200)
+        .num_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(true)
+        .seed(1729)
+        .build()
+        .expect("failed to build NSGA2");
+
+    algorithm2.run().expect("NSGA2 run failed");
+    let population2 = algorithm2
+        .population()
+        .expect("population should have been initialized");
+
+    assert_eq!(population1.genes, population2.genes)
 }

@@ -94,7 +94,7 @@ extern crate paste;
 
 pub mod algorithms;
 pub mod duplicates;
-pub(crate) mod evaluator;
+pub mod evaluator;
 pub mod genetic;
 pub(crate) mod helpers;
 pub mod non_dominated_sorting;

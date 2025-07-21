@@ -1,8 +1,4 @@
-use std::sync::Mutex;
-use std::sync::atomic::{AtomicUsize, Ordering};
-
 use ndarray::{Array1, Array2, ArrayView1, Axis};
-use rayon::prelude::*;
 
 use crate::genetic::{D12, Fronts, PopulationMOO};
 
@@ -21,7 +17,7 @@ fn dominates(f1: &ArrayView1<f64>, f2: &ArrayView1<f64>) -> bool {
     better
 }
 
-/// Parallel Fast Non-Dominated Sorting.
+/// Fast Non-Dominated Sorting.
 /// Returns a vector of fronts, each front is a list of indices.
 /// The individuals are grouped into fronts in order of non-dominance.
 /// If during the construction of fronts the cumulative count of individuals reaches or exceeds
@@ -33,62 +29,35 @@ pub fn fast_non_dominated_sorting(
 ) -> Vec<Vec<usize>> {
     let population_size = population_fitness.shape()[0];
 
-    // Thread-safe data structures
-    let domination_count = (0..population_size)
-        .map(|_| AtomicUsize::new(0))
-        .collect::<Vec<_>>();
-    let dominated_sets = (0..population_size)
-        .map(|_| Mutex::new(Vec::new()))
-        .collect::<Vec<_>>();
+    // simple domination counts and dominated sets
+    let mut domination_count = vec![0; population_size];
+    let mut dominated_sets = vec![Vec::new(); population_size];
 
     // Precompute row views to avoid repeated indexing
     let fitness_rows: Vec<ArrayView1<f64>> = (0..population_size)
         .map(|i| population_fitness.index_axis(Axis(0), i))
         .collect();
 
-    // Parallel pairwise comparisons: for each pair (p, q) with p < q, each thread updates local data
-    (0..population_size).into_par_iter().for_each(|p| {
-        // Accumulate changes locally to reduce locking overhead
-        let mut local_updates = Vec::new();
-
+    // Sequential pairwise comparisons: for each pair (p, q) with p < q
+    for p in 0..population_size {
         for q in (p + 1)..population_size {
-            let p_dominates_q = dominates(&fitness_rows[p], &fitness_rows[q]);
-            let q_dominates_p = dominates(&fitness_rows[q], &fitness_rows[p]);
-
-            if p_dominates_q {
+            if dominates(&fitness_rows[p], &fitness_rows[q]) {
                 // p dominates q
-                local_updates.push((p, q));
-            } else if q_dominates_p {
+                dominated_sets[p].push(q);
+                domination_count[q] += 1;
+            } else if dominates(&fitness_rows[q], &fitness_rows[p]) {
                 // q dominates p
-                local_updates.push((q, p));
+                dominated_sets[q].push(p);
+                domination_count[p] += 1;
             }
-            // else -> neither dominates
         }
-
-        // Apply local updates to shared data:
-        // For each (dominator, dominated) pair:
-        for (dominator, dominated) in local_updates {
-            {
-                // Push dominated into the dominator's list
-                let mut lock = dominated_sets[dominator].lock().unwrap();
-                lock.push(dominated);
-            }
-            // Increment the atomic domination_count of the dominated individual
-            domination_count[dominated].fetch_add(1, Ordering::Relaxed);
-        }
-    });
-
-    // Convert to a normal Vec<Vec<usize>>
-    let dominated_sets_vec: Vec<Vec<usize>> = dominated_sets
-        .into_iter()
-        .map(|m| m.into_inner().unwrap())
-        .collect();
+    }
 
     // Build the first front
     let mut fronts = Vec::new();
     let mut first_front = Vec::new();
     for i in 0..population_size {
-        if domination_count[i].load(Ordering::Relaxed) == 0 {
+        if domination_count[i] == 0 {
             first_front.push(i);
         }
     }
@@ -104,10 +73,9 @@ pub fn fast_non_dominated_sorting(
     while !current_front.is_empty() {
         let mut next_front = Vec::new();
         for &p in &current_front {
-            for &q in &dominated_sets_vec[p] {
-                let old_count = domination_count[q].fetch_sub(1, Ordering::Relaxed);
-                if old_count == 1 {
-                    // now it's zero
+            for &q in &dominated_sets[p] {
+                domination_count[q] -= 1;
+                if domination_count[q] == 0 {
                     next_front.push(q);
                 }
             }
@@ -149,7 +117,6 @@ where
     }
     results
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;

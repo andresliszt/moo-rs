@@ -30,6 +30,7 @@ impl MutationOperator for UniformBinaryMutation {
 
 /// Mutation operator that resets a real-valued gene
 /// to a new U(lower, upper) draw with per-gene rate pₘ.
+#[derive(Debug, Clone)]
 pub struct UniformRealMutation {
     pub gene_mutation_rate: f64,
     pub lower: f64,

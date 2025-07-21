@@ -1,6 +1,6 @@
 [package]
 name = "moors"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2024"
 authors = ["Andrés Sandoval Abarca <andres.sndbrca@gmail.com>"]
 description = "Solving multi-objective optimization problems using genetic algorithms."
@@ -17,7 +17,6 @@ rand_distr = "0.5.1"
 num-traits = "0.2.19"
 ndarray = "0.16.1"
 ordered-float = "5.0.0"
-rayon = "1.10.0"
 ndarray-stats = "0.6.0"
 faer-ext = { version = "0.5.0", features = ["ndarray"] }
 faer = "0.21.9"
