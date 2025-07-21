@@ -238,7 +238,7 @@ fn test_spea2() {
 fn test_same_seed_same_result() {
     let mut algorithm1 = Nsga2Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
-        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .crossover(ArithmeticCrossover)
         .mutation(UniformRealMutation::new(0.9, 0.0, 1.0))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
@@ -262,7 +262,7 @@ fn test_same_seed_same_result() {
 
     let mut algorithm2 = Nsga2Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
-        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .crossover(ArithmeticCrossover)
         .mutation(UniformRealMutation::new(0.9, 0.0, 1.0))
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
