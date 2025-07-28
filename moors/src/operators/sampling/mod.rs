@@ -2,11 +2,11 @@ use ndarray::{Array1, Array2};
 
 use crate::random::RandomGenerator;
 
-pub mod permutation;
-pub mod random;
+mod permutation;
+mod random;
 
 pub use permutation::PermutationSampling;
-pub use random::{RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt};
+pub use random::{PerGeneSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt};
 
 pub trait SamplingOperator {
     /// Samples a single individual.

@@ -1,19 +1,19 @@
-use ndarray::{stack, Array2, Axis};
+use ndarray::{Array2, Axis, stack};
 
 use moors::{
+    DanAndDenisReferencePoints,
     algorithms::{Nsga3Builder, ReveaBuilder},
     duplicates::CloseDuplicatesCleaner,
     genetic::PopulationMOO,
     impl_constraints_fn,
     operators::{
+        ArithmeticCrossover, GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
+        UniformRealMutation,
         survival::moo::{
             Nsga3ReferencePoints, Nsga3ReferencePointsSurvival, ReveaReferencePointsSurvival,
             StructuredReferencePoints,
-        }, ArithmeticCrossover, GaussianMutation, RandomSamplingFloat,
-        SimulatedBinaryCrossover,
-        UniformRealMutation,
+        },
     },
-    DanAndDenisReferencePoints,
 };
 
 /// DTLZ2 for 3 objectives (m = 3) with k = 0 (so num_vars = m−1 = 2):

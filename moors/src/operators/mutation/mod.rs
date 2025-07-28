@@ -2,14 +2,14 @@ use ndarray::{Array2, ArrayViewMut1, Axis};
 
 use crate::random::RandomGenerator;
 
-pub mod bitflip;
-pub mod displacement;
-pub mod gaussian;
-pub mod inversion;
-pub mod polynomial;
-pub mod scramble;
-pub mod swap;
-pub mod uniform;
+mod bitflip;
+mod displacement;
+mod gaussian;
+mod inversion;
+mod polynomial;
+mod scramble;
+mod swap;
+mod uniform;
 
 pub use bitflip::BitFlipMutation;
 pub use displacement::DisplacementMutation;

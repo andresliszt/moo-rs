@@ -1,8 +1,9 @@
-pub mod binary;
-pub mod float;
-pub mod int;
+mod binary;
+mod float;
+mod int;
 
 pub use binary::RandomSamplingBinary;
+pub use float::PerGeneSampling;
 pub use float::RandomSamplingFloat;
 pub use int::RandomSamplingInt;
 

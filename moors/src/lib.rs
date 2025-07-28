@@ -117,17 +117,16 @@ pub use helpers::linalg::cross_euclidean_distances;
 pub use operators::selection;
 pub use operators::survival;
 pub use operators::{
-    AgeMoeaSurvival, ArithmeticCrossover, BitFlipMutation, CrossoverOperator, DisplacementMutation,
-    ExponentialCrossover, FrontsAndRankingBasedSurvival, GaussianMutation, InversionMutation,
-    MutationOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePoints,
-    Nsga3ReferencePointsSurvival, OrderCrossover, PermutationSampling, RandomSamplingBinary,
-    RandomSamplingFloat, RandomSamplingInt, RandomSelectionMOO, RankAndScoringSelectionMOO,
-    ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, SBXCrossover, SamplingOperator,
-    ScrambleMutation, SelectionOperator, SimulatedBinaryCrossover, SinglePointBinaryCrossover,
-    Spea2KnnSurvival, StructuredReferencePoints, SurvivalOperator, SwapMutation,
-    TwoPointBinaryCrossover, UniformBinaryCrossover, UniformBinaryMutation, UniformRealMutation,
-    evolve::EvolveError, mutation::PolynomialMutation, sampling::random::float::PerGeneSampling,
-    survival::moo::reference_points::DanAndDenisReferencePoints,
-    survival::moo::reference_points::NormalBoundaryDivisions,
+    AgeMoeaSurvival, ArithmeticCrossover, BitFlipMutation, CrossoverOperator,
+    DanAndDenisReferencePoints, DisplacementMutation, ExponentialCrossover,
+    FrontsAndRankingBasedSurvival, GaussianMutation, InversionMutation, MutationOperator,
+    NormalBoundaryDivisions, Nsga2RankCrowdingSurvival, Nsga3ReferencePoints,
+    Nsga3ReferencePointsSurvival, OrderCrossover, PerGeneSampling, PermutationSampling,
+    PolynomialMutation, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
+    RandomSelectionMOO, RankAndScoringSelectionMOO, ReveaReferencePointsSurvival,
+    Rnsga2ReferencePointsSurvival, SBXCrossover, SamplingOperator, ScrambleMutation,
+    SelectionOperator, SimulatedBinaryCrossover, SinglePointBinaryCrossover, Spea2KnnSurvival,
+    StructuredReferencePoints, SurvivalOperator, SwapMutation, TwoPointBinaryCrossover,
+    UniformBinaryCrossover, UniformBinaryMutation, UniformRealMutation, evolve::EvolveError,
 };
 pub use random::{MOORandomGenerator, NoopRandomGenerator, RandomGenerator, TestDummyRng};

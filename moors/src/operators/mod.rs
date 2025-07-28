@@ -81,11 +81,11 @@ pub use crossover::{
 pub use evolve::{Evolve, EvolveBuilder, EvolveError};
 pub use mutation::{
     BitFlipMutation, DisplacementMutation, GaussianMutation, InversionMutation, MutationOperator,
-    ScrambleMutation, SwapMutation, UniformBinaryMutation, UniformRealMutation,
+    PolynomialMutation, ScrambleMutation, SwapMutation, UniformBinaryMutation, UniformRealMutation,
 };
 pub use sampling::{
-    PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
-    SamplingOperator,
+    PerGeneSampling, PermutationSampling, RandomSamplingBinary, RandomSamplingFloat,
+    RandomSamplingInt, SamplingOperator,
 };
 pub use selection::{
     SelectionOperator,
@@ -97,8 +97,9 @@ pub use selection::{
 pub use survival::{
     SurvivalOperator,
     moo::{
-        AgeMoeaSurvival, FrontsAndRankingBasedSurvival, Nsga2RankCrowdingSurvival,
-        Nsga3ReferencePoints, Nsga3ReferencePointsSurvival, ReveaReferencePointsSurvival,
-        Rnsga2ReferencePointsSurvival, Spea2KnnSurvival, StructuredReferencePoints,
+        AgeMoeaSurvival, DanAndDenisReferencePoints, FrontsAndRankingBasedSurvival,
+        NormalBoundaryDivisions, Nsga2RankCrowdingSurvival, Nsga3ReferencePoints,
+        Nsga3ReferencePointsSurvival, ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival,
+        Spea2KnnSurvival, StructuredReferencePoints,
     },
 };
