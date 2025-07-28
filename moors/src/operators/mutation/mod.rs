@@ -2,19 +2,20 @@ use ndarray::{Array2, ArrayViewMut1, Axis};
 
 use crate::random::RandomGenerator;
 
-mod bitflip;
-mod displacement;
-mod gaussian;
-mod inversion;
-mod polynomial;
-mod scramble;
-mod swap;
-mod uniform;
+pub mod bitflip;
+pub mod displacement;
+pub mod gaussian;
+pub mod inversion;
+pub mod polynomial;
+pub mod scramble;
+pub mod swap;
+pub mod uniform;
 
 pub use bitflip::BitFlipMutation;
 pub use displacement::DisplacementMutation;
 pub use gaussian::GaussianMutation;
 pub use inversion::InversionMutation;
+pub use polynomial::PolynomialMutation;
 pub use scramble::ScrambleMutation;
 pub use swap::SwapMutation;
 pub use uniform::{UniformBinaryMutation, UniformRealMutation};

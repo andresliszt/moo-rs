@@ -5,10 +5,11 @@ use std::time::Duration;
 use codspeed_criterion_compat::{Criterion, black_box, criterion_group, criterion_main};
 use ndarray::{Array2, Axis, stack};
 
+use moors::survival::moo::DanAndDenisReferencePoints;
 use moors::{
-    CloseDuplicatesCleaner, DanAndDenisReferencePoints, GaussianMutation, Nsga3Builder,
-    Nsga3ReferencePoints, Nsga3ReferencePointsSurvival, RandomSamplingFloat,
-    SimulatedBinaryCrossover, StructuredReferencePoints, impl_constraints_fn,
+    CloseDuplicatesCleaner, GaussianMutation, Nsga3Builder, Nsga3ReferencePoints,
+    Nsga3ReferencePointsSurvival, RandomSamplingFloat, SimulatedBinaryCrossover,
+    StructuredReferencePoints, impl_constraints_fn,
 };
 
 /// DTLZ2 for 3 objectives (m = 3) with k = 0 (so num_vars = m−1 = 2):

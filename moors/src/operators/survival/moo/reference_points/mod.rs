@@ -1,8 +1,6 @@
 use ndarray::Array2;
 
-mod dan_and_dennis;
-
-pub use dan_and_dennis::DanAndDenisReferencePoints;
+pub mod dan_and_dennis;
 
 /// A common trait for structured reference points.
 pub trait StructuredReferencePoints {

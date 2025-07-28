@@ -66,15 +66,15 @@
 //! isolation or swap them at runtime to benchmark different evolutionary
 //! dynamics without touching your problem‑specific code or algorithm builder.
 
-pub(crate) mod crossover;
-pub(crate) mod evolve;
-pub(crate) mod mutation;
-pub(crate) mod sampling;
+pub mod crossover;
+pub mod evolve;
+pub mod mutation;
+pub mod sampling;
 pub mod selection;
 pub mod survival;
 
 pub use crossover::{
-    ArithmeticCrossover, CrossoverOperator, ExponentialCrossover, OrderCrossover,
+    ArithmeticCrossover, CrossoverOperator, ExponentialCrossover, OrderCrossover, SBXCrossover,
     SimulatedBinaryCrossover, SinglePointBinaryCrossover, TwoPointBinaryCrossover,
     UniformBinaryCrossover,
 };
@@ -97,9 +97,8 @@ pub use selection::{
 pub use survival::{
     SurvivalOperator,
     moo::{
-        AgeMoeaSurvival, DanAndDenisReferencePoints, FrontsAndRankingBasedSurvival,
-        Nsga2RankCrowdingSurvival, Nsga3ReferencePoints, Nsga3ReferencePointsSurvival,
-        ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, Spea2KnnSurvival,
-        StructuredReferencePoints,
+        AgeMoeaSurvival, FrontsAndRankingBasedSurvival, Nsga2RankCrowdingSurvival,
+        Nsga3ReferencePoints, Nsga3ReferencePointsSurvival, ReveaReferencePointsSurvival,
+        Rnsga2ReferencePointsSurvival, Spea2KnnSurvival, StructuredReferencePoints,
     },
 };

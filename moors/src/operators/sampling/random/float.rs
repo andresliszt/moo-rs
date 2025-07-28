@@ -32,7 +32,6 @@ pub struct PerGeneSampling {
 
 impl PerGeneSampling {
     /// Ensure `ranges.len() == num_vars`
-    #[allow(dead_code)]
     pub fn new(ranges: Arc<Vec<(f64, f64)>>) -> Self {
         Self { ranges }
     }

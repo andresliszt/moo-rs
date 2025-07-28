@@ -1,6 +1,6 @@
-mod binary;
-mod float;
-mod int;
+pub mod binary;
+pub mod float;
+pub mod int;
 
 pub use binary::RandomSamplingBinary;
 pub use float::RandomSamplingFloat;

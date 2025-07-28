@@ -8,14 +8,12 @@ pub struct DanAndDenisReferencePoints {
     num_objectives: usize,
 }
 
-#[allow(dead_code)]
 pub struct NormalBoundaryDivisions {
     pub outer_divisions: usize,
     pub inner_divisions: usize,
 }
 
 impl NormalBoundaryDivisions {
-    #[allow(dead_code)]
     pub fn new(outer_divisions: usize, inner_divisions: usize) -> Self {
         Self {
             outer_divisions,
@@ -24,7 +22,6 @@ impl NormalBoundaryDivisions {
     }
 
     /// Pick the *default* boundary divisions for a given number of objectives
-    #[allow(dead_code)]
     pub fn for_num_objectives(num_obj: usize) -> Self {
         match num_obj {
             1 => Self::new(100, 0),
@@ -139,8 +136,10 @@ fn generate_combinations(
 
 #[cfg(test)]
 mod tests {
-    use crate::survival::moo::reference_points::dan_and_dennis::NormalBoundaryDivisions;
-    use crate::{DanAndDenisReferencePoints, StructuredReferencePoints};
+    use crate::StructuredReferencePoints;
+    use crate::survival::moo::reference_points::dan_and_dennis::{
+        DanAndDenisReferencePoints, NormalBoundaryDivisions,
+    };
     use ndarray::Axis;
 
     #[test]

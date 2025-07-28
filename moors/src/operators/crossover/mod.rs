@@ -2,19 +2,20 @@ use ndarray::{Array1, Array2};
 
 use crate::random::RandomGenerator;
 
-mod arithmetic;
-mod exponential;
-mod order;
-mod sbx;
-mod sbx2;
-mod single_point;
-mod two_points;
-mod uniform;
+pub mod arithmetic;
+pub mod exponential;
+pub mod order;
+pub mod sbx;
+pub mod sbx2;
+pub mod single_point;
+pub mod two_points;
+pub mod uniform;
 
 pub use arithmetic::ArithmeticCrossover;
 pub use exponential::ExponentialCrossover;
 pub use order::OrderCrossover;
 pub use sbx::SimulatedBinaryCrossover;
+pub use sbx2::SBXCrossover;
 pub use single_point::SinglePointBinaryCrossover;
 pub use two_points::TwoPointBinaryCrossover;
 pub use uniform::UniformBinaryCrossover;

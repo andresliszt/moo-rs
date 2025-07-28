@@ -2,8 +2,8 @@ use ndarray::{Array1, Array2};
 
 use crate::random::RandomGenerator;
 
-mod permutation;
-mod random;
+pub mod permutation;
+pub mod random;
 
 pub use permutation::PermutationSampling;
 pub use random::{RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt};

@@ -13,7 +13,6 @@ pub struct SBXCrossover {
 
 impl SBXCrossover {
     /// Creates a new `SBXCrossover` operator with the given distribution index and no swap
-    #[allow(dead_code)]
     pub fn new(distribution_index: f64, ranges: Arc<Vec<(f64, f64)>>) -> Self {
         Self {
             distribution_index,

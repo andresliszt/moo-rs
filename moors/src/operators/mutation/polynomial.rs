@@ -13,7 +13,6 @@ pub struct PolynomialMutation {
 }
 
 impl PolynomialMutation {
-    #[allow(dead_code)]
     pub fn new(
         gene_mutation_rate: f64,
         distribution_index: f64,
