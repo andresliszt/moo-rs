@@ -122,10 +122,12 @@ pub use operators::{
     MutationOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePoints,
     Nsga3ReferencePointsSurvival, OrderCrossover, PermutationSampling, RandomSamplingBinary,
     RandomSamplingFloat, RandomSamplingInt, RandomSelectionMOO, RankAndScoringSelectionMOO,
-    ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, SamplingOperator,
+    ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, SBXCrossover, SamplingOperator,
     ScrambleMutation, SelectionOperator, SimulatedBinaryCrossover, SinglePointBinaryCrossover,
     Spea2KnnSurvival, StructuredReferencePoints, SurvivalOperator, SwapMutation,
     TwoPointBinaryCrossover, UniformBinaryCrossover, UniformBinaryMutation, UniformRealMutation,
-    evolve::EvolveError,
+    evolve::EvolveError, mutation::PolynomialMutation, sampling::random::float::PerGeneSampling,
+    survival::moo::reference_points::DanAndDenisReferencePoints,
+    survival::moo::reference_points::NormalBoundaryDivisions,
 };
 pub use random::{MOORandomGenerator, NoopRandomGenerator, RandomGenerator, TestDummyRng};

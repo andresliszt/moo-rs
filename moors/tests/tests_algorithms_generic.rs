@@ -3,12 +3,12 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    AgeMoeaBuilder, CloseDuplicatesCleaner, GaussianMutation, Nsga2Builder, Nsga3Builder,
-    Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat, ReveaBuilder, Rnsga2Builder,
-    SimulatedBinaryCrossover, Spea2Builder, impl_constraints_fn,
+    AgeMoeaBuilder, CloseDuplicatesCleaner, DanAndDenisReferencePoints, GaussianMutation,
+    Nsga2Builder, Nsga3Builder, Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat,
+    ReveaBuilder, Rnsga2Builder, SimulatedBinaryCrossover, Spea2Builder, impl_constraints_fn,
     survival::moo::{
-        DanAndDenisReferencePoints, Nsga3ReferencePoints, ReveaReferencePointsSurvival,
-        Rnsga2ReferencePointsSurvival, StructuredReferencePoints,
+        Nsga3ReferencePoints, ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival,
+        StructuredReferencePoints,
     },
 };
 

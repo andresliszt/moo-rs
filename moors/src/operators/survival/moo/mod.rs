@@ -18,8 +18,6 @@ pub use agemoea::AgeMoeaSurvival;
 pub use nsga2::Nsga2RankCrowdingSurvival;
 pub use nsga3::{Nsga3ReferencePoints, Nsga3ReferencePointsSurvival};
 pub use reference_points::StructuredReferencePoints;
-pub use reference_points::dan_and_dennis::DanAndDenisReferencePoints;
-pub use reference_points::dan_and_dennis::NormalBoundaryDivisions;
 pub use revea::ReveaReferencePointsSurvival;
 pub use rnsga2::Rnsga2ReferencePointsSurvival;
 pub use spea2::Spea2KnnSurvival;
