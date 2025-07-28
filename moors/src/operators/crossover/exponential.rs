@@ -44,7 +44,7 @@ impl CrossoverOperator for ExponentialCrossover {
             if i == start {
                 break; // completed a full circle, stop
             }
-            let r: f64 = rng.gen_proability();
+            let r: f64 = rng.gen_probability();
             if r >= self.exponential_crossover_rate {
                 break;
             }
@@ -59,7 +59,7 @@ impl CrossoverOperator for ExponentialCrossover {
             if j == start_b {
                 break;
             }
-            let r: f64 = rng.gen_proability();
+            let r: f64 = rng.gen_probability();
             if r >= self.exponential_crossover_rate {
                 break;
             }
@@ -76,11 +76,11 @@ mod tests {
     use ndarray::array;
 
     /// A simple fake random generator for controlled testing of ExponentialCrossover.
-    /// It returns predetermined values for `gen_range_usize` and `gen_proability`.
+    /// It returns predetermined values for `gen_range_usize` and `gen_probability`.
     struct FakeRandom {
         /// Predefined responses for calls to `gen_range_usize`.
         range_values: Vec<usize>,
-        /// Predefined responses for calls to `gen_proability`.
+        /// Predefined responses for calls to `gen_probability`.
         probability_values: Vec<f64>,
         /// Dummy RNG to satisfy the trait requirement.
         dummy: TestDummyRng,
@@ -110,7 +110,7 @@ mod tests {
         }
 
         /// Returns the next predetermined probability value.
-        fn gen_proability(&mut self) -> f64 {
+        fn gen_probability(&mut self) -> f64 {
             self.probability_values.remove(0)
         }
     }
@@ -126,9 +126,9 @@ mod tests {
         let operator = ExponentialCrossover::new(0.5);
         // Set up the fake random generator:
         // - For child_a, gen_range_usize returns 1 (start index = 1) and then
-        //   gen_proability returns 0.7 (>= 0.5) so the loop stops after one replacement.
+        //   gen_probability returns 0.7 (>= 0.5) so the loop stops after one replacement.
         // - For child_b, gen_range_usize returns 2 (start index = 2) and then
-        //   gen_proability returns 0.8 (>= 0.5) so the loop stops after one replacement.
+        //   gen_probability returns 0.8 (>= 0.5) so the loop stops after one replacement.
         let mut fake_rng = FakeRandom::new(vec![1, 2], vec![0.7, 0.8]);
 
         // Perform the exponential crossover.

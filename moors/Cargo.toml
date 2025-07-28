@@ -53,3 +53,10 @@ incremental = true
 
 [profile.test]
 incremental = true
+
+[profile.release]
+strip = true
+lto = true
+opt-level = "s"
+panic = "abort"
+codegen-units = 1

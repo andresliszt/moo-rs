@@ -6,6 +6,7 @@ mod arithmetic;
 mod exponential;
 mod order;
 mod sbx;
+mod sbx2;
 mod single_point;
 mod two_points;
 mod uniform;
@@ -63,7 +64,7 @@ pub trait CrossoverOperator {
             let parent_a = parents_a.row(i).to_owned();
             let parent_b = parents_b.row(i).to_owned();
 
-            if rng.gen_proability() <= crossover_rate {
+            if rng.gen_probability() <= crossover_rate {
                 // Perform crossover
                 let (child_a, child_b) = self.crossover(&parent_a, &parent_b, rng);
                 flat_offspring.extend(child_a.into_iter());

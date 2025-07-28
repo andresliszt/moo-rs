@@ -14,7 +14,7 @@
 //! | `gen_range_f64(min, max)`   | `f64`  in `[min, max)` |
 //! | `gen_usize()`               | full‑range `usize` |
 //! | `gen_bool(p)`               | Bernoulli(`p`) |
-//! | `gen_proability()`          | uniform `[0, 1)` *(NB: typo kept for back‑compat)* |
+//! | `gen_probability()`          | uniform `[0, 1)` *(NB: typo kept for back‑compat)* |
 //! | `shuffle_vec`, `shuffle_vec_usize` | in‑place Fisher–Yates |
 //! | `choose_usize(slice)`       | random element or `None` |
 //! | `rng()`                     | mutable handle to the raw `RngCore` object |
@@ -84,7 +84,7 @@ pub trait RandomGenerator {
         self.rng().random_bool(p)
     }
     /// Generates a random probability as an `f64` in the range `[0.0, 1.0)`.
-    fn gen_proability(&mut self) -> f64 {
+    fn gen_probability(&mut self) -> f64 {
         self.rng().random::<f64>()
     }
     fn shuffle_vec(&mut self, vector: &mut Vec<f64>) {
@@ -161,7 +161,6 @@ impl Default for NoopRandomGenerator {
 
 impl NoopRandomGenerator {
     // @oliveira-sh: this is being used on tests
-    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             dummy: TestDummyRng,
@@ -238,11 +237,11 @@ mod tests {
         let seed = [42u8; 32];
         let mut rng = MOORandomGenerator::new(StdRng::from_seed(seed));
 
-        // gen_proability (note the method name) returns a f64 in the range [0, 1).
-        let prob = rng.gen_proability();
+        // gen_probability (note the method name) returns a f64 in the range [0, 1).
+        let prob = rng.gen_probability();
         assert!(
             prob >= 0.0 && prob < 1.0,
-            "gen_proability produced {} which is not in [0, 1)",
+            "gen_probability produced {} which is not in [0, 1)",
             prob
         );
     }

@@ -6,6 +6,7 @@ mod bitflip;
 mod displacement;
 mod gaussian;
 mod inversion;
+mod polynomial;
 mod scramble;
 mod swap;
 mod uniform;

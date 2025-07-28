@@ -76,7 +76,7 @@ fn test_nsga3_dtlz2_three_objectives() {
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
         .constraints_fn(MyConstr)
-        .num_vars(2)
+        .num_vars(5)
         .population_size(100)
         .num_offsprings(100)
         .num_iterations(200)

@@ -9,7 +9,6 @@ pub struct BitFlipMutation {
 }
 
 impl BitFlipMutation {
-    #[allow(dead_code)]
     pub fn new(gene_mutation_rate: f64) -> Self {
         Self { gene_mutation_rate }
     }

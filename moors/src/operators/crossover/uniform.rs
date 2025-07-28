@@ -37,7 +37,7 @@ impl CrossoverOperator for UniformBinaryCrossover {
         let mut offspring_b = Array1::<f64>::zeros(num_genes);
 
         for i in 0..num_genes {
-            if rng.gen_proability() < 0.5 {
+            if rng.gen_probability() < 0.5 {
                 // Swap genes
                 offspring_a[i] = parent_b[i];
                 offspring_b[i] = parent_a[i];
@@ -58,7 +58,7 @@ mod tests {
     use crate::random::{RandomGenerator, TestDummyRng};
     use ndarray::{Array1, array};
 
-    /// A controlled fake random generator that returns predetermined values for `gen_proability()`.
+    /// A controlled fake random generator that returns predetermined values for `gen_probability()`.
     struct ControlledFakeProbabilityGenerator {
         /// A list of predetermined f64 responses.
         responses: Vec<f64>,
@@ -83,8 +83,8 @@ mod tests {
         fn rng(&mut self) -> &mut TestDummyRng {
             &mut self.dummy
         }
-        // Override the default `gen_proability()` to return controlled values.
-        fn gen_proability(&mut self) -> f64 {
+        // Override the default `gen_probability()` to return controlled values.
+        fn gen_probability(&mut self) -> f64 {
             let value = self.responses[self.index];
             self.index += 1;
             value
