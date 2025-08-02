@@ -35,99 +35,124 @@ def fitness_dtlz2_3obj(genes: TwoDArray) -> TwoDArray:
 
 ```
 
-# Minimization and Maximization
+## Constraints
 
-In pymoors—as with many optimization frameworks—the core approach is based on **minimization**. This means that the optimization algorithm is designed to search for solutions that yield the lowest possible objective function values.
+Constraints are also a `numpy` function that evaluates at the population level. We recommend using the `pymoors.Constraints` class, which provides an appropriate wrapper, we will show this in the subsequent examples.
 
-When you encounter a problem where you want to maximize an objective (for example, maximize profit or efficiency), you can simply convert it into a minimization problem. This is achieved by taking the negative of the objective function. In effect, maximizing an objective is equivalent to minimizing its negative value.
+### Feasibility
 
-### Key Points
-
-- **Default Minimization:**
-  pymoors inherently minimizes objective functions. Lower values are considered better, and the optimization process works to reduce these values.
-
-- **Converting Maximization to Minimization:**
-  To handle maximization, you multiply the objective function by -1. By doing so, you transform a maximization problem into a minimization one. This unified approach simplifies the optimization framework.
-
-- **Practical Considerations:**
-  When defining your fitness functions, ensure that the returned evaluations conform to this minimization paradigm. For objectives that are originally maximization problems, adjust them by negating their outputs before they are returned by the fitness function.
-
-This method ensures a consistent and streamlined optimization process within `pymoors`.
-
-# Constraints
-
-Constraints in an optimization problem are optional. They are defined using a similar approach to the fitness function. In pymoors, you define a constraint function `g(genes)` where `genes` is a 2D array of shape `(population_size, num_vars)`, and the function must return a 2D array of shape `(population_size, n_constraints)`. Each row of the output corresponds to the constraint evaluations for an individual in the population.
-
-!!! warning "Feasibility of an Individual"
-
-    In **pymoors**, an individual in the population is considered **feasible** if and only if all constraints_fn are less than or equal to 0.
-
-    In the following subsections, we will explain how to consider other types of inequalities.
+This concept is very important in optimization, an individual is called *feasible* if and only if it satisfies all the constraints the problem defines. In `pymoors` as in many other optimization frameworks, constraints allowed are evaluated as `<= 0.0`. In genetic algorithms, there are different ways to incorporate feasibility in the search for optimal solutions. In this framework, the guiding philosophy is: *feasibility dominates everything*, meaning that a feasible individual is always preferred over an infeasible one.
 
 
-Below is an example constraint function. In this example, we enforce a simple constraint: the sum of the decision variables for each individual must be less than or equal to a specified threshold value.
+### Inequality constraints
+
+In `pymoors` as mentioned, any output from a constraint function is evaluated as less than or equal to zero. If this condition is met, the individual is considered feasible. For constraints that are naturally expressed as greater than zero, the user should modify the function by multiplying it by -1, as shown in the following example
 
 ```python
+
 import numpy as np
-from pymoors.typing import TwoDArray
 
-def constraints_fn(genes: TwoDArray) -> TwoDArray:
-    # Define a threshold for the sum of genes
-    threshold = 10
+from pymoors import Constraints
 
-    # Compute the sum for each individual (row)
-    row_sums = np.sum(genes, axis=1)
 
-    # Constraint: row_sums should be less than or equal to threshold.
-    # We compute the violation as (row_sums - threshold). A value <= 0 means the constraint is satisfied.
-    violations = row_sums - threshold
+def constraints_sphere_lower_than_zero(population: np.ndarray) -> np.ndarray:
+    """
+    For each individual (row) in the population, compute x^2 + y^2 + z^2 - 1.
+    Constraint is satisfied when this value is ≤ 0.
+    """
+    # population shape: (n_individuals, n_dimensions)
+    sum_sq = np.sum(population**2, axis=1)
+    return sum_sq - 1.0
 
-    # Return as a 2D array with one constraint per individual
-    return violations.reshape(-1, 1)
+def constraints_sphere_greater_than_zero(population: np.ndarray) -> np.ndarray:
+    """
+    For each individual (row) in the population, compute 1 - (x^2 + y^2 + z^2).
+    Constraint is satisfied when this value is ≥ 0.
+    """
+    sum_sq = np.sum(population**2, axis=1)
+    return 1.0 - sum_sq
+
+
+constraints = Constraints(ineq = [constraints_sphere_lower_than_zero, constraints_sphere_greater_than_zero])
+
 ```
 
-### Key points
+!!! warning "constraints as plain numpy function"
 
-- **Input:**
-The function receives `genes`, a 2D array with shape `(population_size, num_vars)`, where each row represents an individual in the population.
+    In **pymoors**, you can pass to the algorithm a callable, in this scenario you must ensure that the return array is always
+    2D, even if you work with just one constraint.
 
-- **Constraint Calculation:**
-For each individual, the function calculates the sum of its decision variables. The constraint is defined such that the sum must be less than or equal to a specified threshold (10 in this example).
-- If the sum is less than or equal to the threshold, the constraint value (i.e., the violation) is ≤ 0, meaning the constraint is satisfied.
-- If the sum exceeds the threshold, the resulting positive value indicates the magnitude of the violation.
+### Equality constraints
 
-- **Output:**
-The function returns a 2D array of shape `(population_size, 1)`, where each element represents the constraint evaluation for the corresponding individual.
+As is many other frameworks, the known epsilon technique must be used to force $g(x) = 0$, select a tolerance $\epsilon$ and then transform $g$ into an inquality constraint
 
-- **Note:**
-The use of `reshape(-1, 1)` is crucial for ensuring that the output always has the correct dimensions, even when there is only one constraint. This guarantees consistency in the dimensionality of the constraint evaluations.
+$$g_{\text{ineq}}(x) = \bigl|g(x)\bigr| - \varepsilon \;\le\; 0.$$
 
-
-## Handling Constraints: Greater than 0 and Equality Constraints
-
-In some optimization problems, constraints_fn might be defined as either inequalities of the form `g(genes) > 0` or as equality constraints_fn `g(genes) = 0`. In pymoors, since feasibility is determined by having all constraint values $≤ 0$, we handle these cases as follows:
-
-- **Inequalities (`g(genes) > 0`):**
-  This case is trivial to convert. Simply multiply the output of your constraint function by -1 to transform it into the standard form (`g(genes) <= 0`).
-
-- **Equality Constraints (`g(genes) = 0`) with Tolerance:**
-  Equality constraints_fn are typically managed by allowing a small tolerance, `epsilon`, around 0. A common approach is to construct a penalty function by computing the squared deviation `(g(genes) - epsilon)²`. This squared term penalizes any deviation from the desired equality, while the tolerance `epsilon` provides some leeway for numerical imprecision.
-
-### Example: Equality Constraint with Epsilon Tolerance
-
-Below is an example constraint function. In this example, we enforce that the sum of decision variables for each individual should equal a specified threshold (10) within a tolerance of `epsilon`. The function computes the squared error from the target (adjusted by `epsilon`) and ensures the output is a 2D array using `reshape(-1, 1)`.
+An example is given below
 
 ```python
+
 import numpy as np
-from pymoors.typing import TwoDArray
 
-TOL = 1e-3
+EPSILON = 1e-6
 
-def constraints_equality(genes: TwoDArray) -> TwoDArray:
-    threshold = 10
-    row_sums = np.sum(genes, axis=1)
-    # Compute the squared error from the equality constraint with tolerance epsilon.
-    error = (row_sums - threshold - TOL)**2
-    # The reshape ensures the output is a 2D array of shape (population_size, 1)
-    return error.reshape(-1, 1)
+def constraints(genes: np.ndarray) -> np.ndarray:
+    """
+    Compute two constraints for each row [x, y] in genes:
+      - Column 0: |x + y - 1| - EPSILON ≤ 0  (equality with ε-tolerance)
+      - Column 1: x² + y² - 1.0 ≤ 0         (unit circle inequality)
+    Returns an array of shape (n, 2).
+    """
+    # genes is expected to be shape (n_individuals, 2)
+    x = genes[:, 0]
+    y = genes[:, 1]
+
+    # Constraint 1: |x + y - 1| - EPSILON
+    eq = np.abs(x + y - 1.0) - EPSILON
+
+    # Constraint 2: x^2 + y^2 - 1
+    ineq = x**2 + y**2 - 1.0
+
+    return np.stack((eq, ineq), axis=1)
+
+```
+
+This example ilustrates 2 constraints where one of them is an equality constraint. The `pymoors.Constraints` class lets us skip having to manually implement the epsilon technique; we can simply do
+
+
+```python
+
+import numpy as np
+
+from pymoors import Constraints
+
+EPSILON = 1e-6
+
+def eq_constr(genes: np.ndarray):
+    return genes[:, 0] + genes[:, 1] - 1
+
+def ineq_constr(genes: np.ndarray)
+    return genes[:, 0]**2 + genes[:, 1]**2 - 1
+
+constraints = Constraints(eq = [eq_constr], ineq = [ineq_constr])
+
+```
+
+### Lower and upper bounds
+
+Also this class has two optional arguments `lower_bound` and `upper_bound` that will make each gene bounded by those values.
+
+```python
+
+import numpy as np
+
+from pymoors import Constraints
+
+EPSILON = 1e-6
+
+def eq_constr(genes: np.ndarray):
+    return genes[:, 0] + genes[:, 1] - 1
+
+constraints = Constraints(eq = [eq_constr], lower_bound = 0.0, upper_bound = 1.0)
+
 ```

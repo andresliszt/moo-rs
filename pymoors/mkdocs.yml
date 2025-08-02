@@ -68,10 +68,10 @@ nav:
           - Knapsack Problem: getting_started_pymoors/knapsack.ipynb
           - Small Real Valued Problem: getting_started_pymoors/real_valued.ipynb
   - 💻 Development: development.md
-  - 📖 User Guide Pymoors:
+  - 📖 User Guide:
+      - Genetic Operators: user_guide/operators/index.md
+      - Duplicates Cleaner: user_guide/duplicates/index.md
       - Fitness and Constraints: user_guide/fitness_and_constraints/index.md
-      - Genetic Operators: user_guide/operators.md
-      - Duplicates Cleaner: user_guide/duplicates.md
       - Algorithms:
         - Introduction: user_guide/algorithms/algorithms.ipynb
         - NSGA-II: user_guide/algorithms/nsga2/index.md
@@ -80,7 +80,6 @@ nav:
         - AGE-MOEA: user_guide/algorithms/agemoea.ipynb
         - REVEA: user_guide/algorithms/revea.ipynb
         - SPEA-II: user_guide/algorithms/spea2.ipynb
-  - 💻 Reference: reference.md
 
 plugins:
     - mkdocs-jupyter

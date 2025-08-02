@@ -46,7 +46,7 @@ fn fitness_sphere(population: &Array2<f64>) -> Array1<f64> {
 
 ## Constraints
 
-Constraints are also a ndarray function, for multi and single optimization the constraints have the same signature: can be either `(genes: &Array2<f64>) -> Array1<f64>` for single constraints or `(genes: &Array2<f64>) -> Array2<f64>` for more than one constraints.
+Constraints are also a `ndarray` function, for multi and single optimization the constraints have the same signature: can be either `(genes: &Array2<f64>) -> Array1<f64>` for single constraints or `(genes: &Array2<f64>) -> Array2<f64>` for more than one constraints.
 
 
 ### Feasibility
@@ -125,6 +125,9 @@ impl_constraints_fn!(
 ```
 
 This macro generates a new struct `MyConstraints` than can be passed to any algorithm, you can pass multiple inequality/equality constraints to the macro `impl_constraints_fn(MyConstraints, ineq =[g1, g2, ...], eq = [h1, h2, ..])`. This macro will use the epsilon technique internally using a fixed tolerance of `1e-6`, the last in the near future will be seteable by the user
+
+
+### Lower and upper bounds
 
 Also this macro has two optional arguments `lower_bound` and `upper_bound` that will make each gene bounded by those values.
 

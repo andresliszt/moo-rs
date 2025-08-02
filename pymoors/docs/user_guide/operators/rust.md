@@ -13,7 +13,6 @@ pub struct BitFlipMutation {
 }
 
 impl BitFlipMutation {
-    #[allow(dead_code)]
     pub fn new(gene_mutation_rate: f64) -> Self {
         Self { gene_mutation_rate }
     }
@@ -41,25 +40,34 @@ The main method to implement is `mutate`, which operates at the **individual** l
   </thead>
   <tbody>
     <tr>
-      <td><a href="https://docs.rs/moors/latest/moors/operators/struct.BitFlipMutation.html">BitFlipMutation</a></td>
+      <td><a href={{ docs_rs("struct", "operators.BitFlipMutation") }}>BitFlipMutation</a></td>
       <td>Randomly flips one or more bits in the binary representation, introducing small variations.</td>
     </tr>
     <tr>
-      <td><a href="https://docs.rs/moors/latest/moors/operators/struct.GaussianMutation.html">GaussianMutation</a></td>
+      <td><a href="{{ docs_rs("struct", "operators.GaussianMutation") }}">GaussianMutation</a></td>
       <td>Adds Gaussian noise to each real-valued gene to locally explore the continuous solution space.</td>
     </tr>
     <tr>
-      <td><a href="https://docs.rs/moors/latest/moors/operators/struct.ScrambleMutation.html">ScrambleMutation</a></td>
+      <td><a href="{{ docs_rs("struct", "operators.ScrambleMutation") }}">ScrambleMutation</a></td>
       <td>Selects a subsequence and randomly shuffles it, preserving the original elements but altering their order.</td>
     </tr>
     <tr>
-      <td><a href="https://docs.rs/moors/latest/moors/operators/struct.SwapMutation.html">SwapMutation</a></td>
+      <td><a href="{{ docs_rs("struct", "operators.SwapMutation") }}">SwapMutation</a></td>
       <td>Swaps the positions of two randomly chosen genes to explore neighboring permutations.</td>
     </tr>
     <tr>
-      <td><a href="https://docs.rs/moors/latest/moors/operators/struct.DisplacementMutation.html">DisplacementMutation</a></td>
+      <td><a href="{{ docs_rs("struct", "operators.DisplacementMutation") }}">DisplacementMutation</a></td>
       <td>Extracts a block of the permutation and inserts it at another position, preserving the block’s relative order.</td>
     </tr>
+    <tr>
+      <td><a href="{{ docs_rs("struct", "operators.UniformRealMutation") }}">UniformRealMutation</a></td>
+      <td>Resets a real-valued gene based on a uniform distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="{{ docs_rs("struct", "operators.UniformBinaryMutation") }}">UniformRealMutation</a></td>
+      <td> Resets a bit to a random 0 or 1 .</td>
+    </tr>
+
   </tbody>
 </table>
 
@@ -269,4 +277,4 @@ impl SelectionOperator for RandomSelection {
 }
 ```
 
-Note that we have defined an associated type `type FDim = ndarray::Ix2`, this is because, in this example, this operator will be used for a multi‑objective algorithm. The selection operators defined in pymoors must specify the fitness dimension. Note that this is the selection operator used by the NSGA‑III algorithm: it performs a random selection that gives priority to feasibility, which is why we use the trait’s static method `Self::feasibility_dominates`.
+Note that we have defined an associated type `type FDim = ndarray::Ix2`, this is because, in this example, this operator will be used for a multi‑objective algorithm. The selection operators defined in moors must specify the fitness dimension. Note that this is the selection operator used by the NSGA‑III algorithm: it performs a random selection that gives priority to feasibility, which is why we use the trait’s static method `Self::feasibility_dominates`.
