@@ -1,4 +1,4 @@
-A crossover operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.CrossoverOperator") }} trait. For example:
+A crossover operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.crossover.CrossoverOperator") }} trait. For example:
 
 ```rust
 use ndarray::{Array1, Axis, concatenate, s};
@@ -46,31 +46,31 @@ The main method to implement is `crossover`, which takes two parents (`ndarray::
   </thead>
   <tbody>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.ExponentialCrossover") }}>ExponentialCrossover</a></td>
+      <td> {{ docs_rs("struct", "operators.crossover.ExponentialCrossover") }} </td>
       <td>For Differential Evolution: starts at a random index and copies consecutive genes from the mutant vector while a uniform random number is below the crossover rate, then fills remaining positions from the target vector.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.OrderCrossover") }}>OrderCrossover</a></td>
+      <td> {{ docs_rs("struct", "operators.crossover.OrderCrossover") }} </td>
       <td>For permutations: copies a segment between two cut points from one parent, then fills the rest of the child with the remaining genes in the order they appear in the other parent.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.SimulatedBinaryCrossover") }}>SimulatedBinaryCrossover</a></td>
+      <td> {{ docs_rs("struct", "operators.crossover.SimulatedBinaryCrossover") }} </td>
       <td>For real-valued vectors: generates offspring by sampling each gene from a distribution centered on parent values, mimicking the spread of single-point binary crossover in continuous space.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.SinglePointBinaryCrossover") }}>SinglePointBinaryCrossover</a></td>
+      <td> {{ docs_rs("struct", "operators.crossover.SinglePointBinaryCrossover") }} </td>
       <td>Selects one crossover point and swaps the tails of two parents at that point to produce two offspring.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.UniformBinaryCrossover") }}>UniformBinaryCrossover</a></td>
+      <td> {{ docs_rs("struct", "operators.crossover.UniformBinaryCrossover") }} </td>
       <td>For each bit position, randomly chooses which parent to inherit from (with a given probability), resulting in highly mixed offspring.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.TwoPointBinaryCrossover") }}>TwoPointBinaryCrossover</a></td>
+      <td> {{ docs_rs("struct", "operators.crossover.TwoPointBinaryCrossover") }} </td>
       <td>Exchanges segments between two parents at two randomly chosen points to create offspring.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.ArithmeticCrossover") }}>ArithmeticCrossover</a></td>
+      <td> {{ docs_rs("struct", "operators.crossover.ArithmeticCrossover") }} </td>
       <td>Exchanges segments between two parents at two randomly chosen points to create offspring.</td>
     </tr>
   </tbody>

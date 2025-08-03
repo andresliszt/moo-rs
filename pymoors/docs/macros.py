@@ -7,11 +7,15 @@ def define_env(env):
     base    = f"https://docs.rs/moors/{version}/moors/"
 
     @env.macro
-    def docs_rs(item_type: str, path: str) -> str:
+    def docs_rs(item_type: str, path: str, label: str | None = None) -> str:
         parts = path.split(".")
-        item_name, parts = parts[-1], parts[:-1]
-        if parts:
-            parts_url = "/".join(parts) + f"/{item_type}.{item_name}.html"
+        name, *rest = parts[::-1]
+        # reconstruct the URL path
+        if rest:
+            parts_url = "/".join(parts[:-1]) + f"/{item_type}.{name}.html"
         else:
-            parts_url = f"{item_type}.{item_name}.html"
-        return base + parts_url
+            parts_url = f"{item_type}.{name}.html"
+        url = base + parts_url
+        text = label or name
+        # return raw HTML
+        return f'<a href="{url}" target="_blank" rel="noopener">{text}</a>'

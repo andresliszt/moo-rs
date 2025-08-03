@@ -1,4 +1,4 @@
-A mutation operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.MutationOperator") }} trait. For example:
+A mutation operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.mutation.MutationOperator") }} trait. For example:
 
 ```rust
 use ndarray::ArrayViewMut1;
@@ -38,31 +38,31 @@ The main method to implement is `mutate`, which operates at the **individual** l
   </thead>
   <tbody>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.BitFlipMutation") }}>BitFlipMutation</a></td>
+      <td> {{ docs_rs("struct", "operators.mutation.BitFlipMutation") }} </td>
       <td>Randomly flips one or more bits in the binary representation, introducing small variations.</td>
     </tr>
     <tr>
-      <td><a href="{{ docs_rs("struct", "operators.GaussianMutation") }}">GaussianMutation</a></td>
+      <td> {{ docs_rs("struct", "operators.mutation.GaussianMutation") }} </td>
       <td>Adds Gaussian noise to each real-valued gene to locally explore the continuous solution space.</td>
     </tr>
     <tr>
-      <td><a href="{{ docs_rs("struct", "operators.ScrambleMutation") }}">ScrambleMutation</a></td>
+      <td> {{ docs_rs("struct", "operators.ScrambleMutation") }} </td>
       <td>Selects a subsequence and randomly shuffles it, preserving the original elements but altering their order.</td>
     </tr>
     <tr>
-      <td><a href="{{ docs_rs("struct", "operators.SwapMutation") }}">SwapMutation</a></td>
+      <td> {{ docs_rs("struct", "operators.mutation.SwapMutation") }} </td>
       <td>Swaps the positions of two randomly chosen genes to explore neighboring permutations.</td>
     </tr>
     <tr>
-      <td><a href="{{ docs_rs("struct", "operators.DisplacementMutation") }}">DisplacementMutation</a></td>
+      <td> {{ docs_rs("struct", "operators.mutation.DisplacementMutation") }} </td>
       <td>Extracts a block of the permutation and inserts it at another position, preserving the block’s relative order.</td>
     </tr>
     <tr>
-      <td><a href="{{ docs_rs("struct", "operators.UniformRealMutation") }}">UniformRealMutation</a></td>
+      <td> {{ docs_rs("struct", "operators.mutation.UniformRealMutation") }} </td>
       <td>Resets a real-valued gene based on a uniform distribution.</td>
     </tr>
     <tr>
-      <td><a href="{{ docs_rs("struct", "operators.UniformBinaryMutation") }}">UniformRealMutation</a></td>
+      <td> {{ docs_rs("struct", "operators.mutation.UniformBinaryMutation") }} </td>
       <td> Resets a bit to a random 0 or 1 .</td>
     </tr>
 

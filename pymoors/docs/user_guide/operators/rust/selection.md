@@ -1,7 +1,7 @@
 
 The selection operator is a bit more restrictive, in that each pre‑defined algorithm in `moors` defines exactly one selection operator. For example, the `NSGA-II` algorithm uses a *ranking‑by‑crowding‑distance* selection operator, while `NSGA-III` uses a random selection operator. The user can only provide their own selection operator to a custom algorithm—not to the algorithms that come pre‑defined in moors.
 
-A selection operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.SelectionOperator") }} trait. For example:
+A selection operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.selection.SelectionOperator") }} trait. For example:
 
 ```Rust
 use crate::genetic::{D01, IndividualMOO};

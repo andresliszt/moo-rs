@@ -1,4 +1,4 @@
-A sampling operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.SamplingOperator") }} trait. For example:
+A sampling operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.sampling.SamplingOperator") }} trait. For example:
 
 ```rust
 use ndarray::Array1;
@@ -28,19 +28,19 @@ The main method to implement is `sample_individual`, which produces an **individ
   </thead>
   <tbody>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.RandomSamplingBinary") }}>RandomSamplingBinary</a></td>
+      <td> {{ docs_rs("struct", "operators.sampling.RandomSamplingBinary") }} </td>
       <td>Generates a vector of random bits, sampling each position independently with equal probability.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.RandomSamplingFloat") }}>RandomSamplingFloat</a></td>
+      <td> {{ docs_rs("struct", "operators.sampling.RandomSamplingFloat") }} </td>
       <td>Creates a real-valued vector by sampling each gene uniformly within specified bounds.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.RandomSamplingInt") }}>RandomSamplingInt</a></td>
+      <td> {{ docs_rs("struct", "operators.sampling.RandomSamplingInt") }} </td>
       <td>Produces an integer vector by sampling each gene uniformly from a given range.</td>
     </tr>
     <tr>
-      <td><a href={{ docs_rs("struct", "operators.PermutationSampling") }}>PermutationSampling</a></td>
+      <td> {{ docs_rs("struct", "operators.sampling.PermutationSampling") }} </td>
       <td>Generates a random permutation by uniformly shuffling all indices.</td>
     </tr>
   </tbody>

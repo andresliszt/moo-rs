@@ -1,8 +1,10 @@
 A sampling operator in `pymoors` is just a class that defines the `operate` method:
 
 ```python
+from pymoors.typing import TwoDArray
+
 class RandomSamplingBinary:
-    def operate(self, population: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    def operate(self, population: TwoDArray) -> TwoDArray:
         mask = np.random.random(population.shape) < 0.5
         return mask.astype(np.float64)
 

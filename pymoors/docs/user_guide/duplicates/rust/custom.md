@@ -1,4 +1,4 @@
-A duplicates cleaner in `moors` is any type that implements the [PopulationCleaner]({{ docs_rs("trait", "duplicates.PopulationCleaner") }}) trait. For example:
+A duplicates cleaner in `moors` is any type that implements the {{ docs_rs("trait", "duplicates.PopulationCleaner") }} trait. For example:
 
 ```rust
 use std::collections::HashSet;

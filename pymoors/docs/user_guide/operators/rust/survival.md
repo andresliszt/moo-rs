@@ -1,7 +1,7 @@
 
 The survival operator follows the same logic than selection operator, in that each pre‑defined algorithm in `moors` defines exactly one selection operator. For example, the `NSGA-II` algorithm uses a *ranking‑by‑crowding‑distance* survival operator, while `NSGA-III` uses a reference points based operator. The user can only provide their own survival operator to a custom algorithm—not to the algorithms that come pre‑defined in moors.
 
-A survival operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.SurvivalOperator") }} trait. For example:
+A survival operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.survival.SurvivalOperator") }} trait. For example:
 
 ```Rust
 use crate::genetic::{D01, IndividualMOO};
