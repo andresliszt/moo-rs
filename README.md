@@ -154,8 +154,6 @@ use ndarray::{Array2, Array1, Axis};
 
 use moors::impl_constraints_fn;
 
-const EPSILON: f64 = 1e-6;
-
 /// Equality constraint x + y = 1
 fn constraints_eq(genes: &Array2<f64>) -> Array1<f64> {
     genes.map_axis(Axis(1), |row| row[0] + row[1] - 1.0)
@@ -239,8 +237,6 @@ algorithm = Nsga2(
     constraints_fn=knapsack_constraint,
     duplicates_cleaner=ExactDuplicatesCleaner(),
     n_vars=5,
-    num_objectives=1,
-    num_constraints=1,
     population_size=32,
     num_offsprings=32,
     num_iterations=10,

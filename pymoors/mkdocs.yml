@@ -9,47 +9,50 @@ theme:
   favicon: images/moors-logo.png
   name: material
   palette:
-  - media: '(prefers-color-scheme: light)'
-    scheme: default
-    primary: black
-    accent: amber
-    toggle:
-      icon: material/lightbulb
-      name: Switch to dark mode
-  - media: '(prefers-color-scheme: dark)'
-    scheme: slate
-    primary: black
-    accent: amber
-    toggle:
-      icon: material/lightbulb-outline
-      name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: amber
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: amber
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
   highlightjs: true
   features:
-  - search.suggest
-  - search.highlight
-  - content.tabs.link
-  - navigation.indexes
-  - content.tooltips
-  - navigation.path
-  - content.code.annotate
-  - content.code.copy
-  - content.code.select
-  - navigation.tabs
-  - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - navigation.indexes
+    - content.tooltips
+    - navigation.path
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - navigation.tabs
+    - navigation.footer
 repo_url: https://github.com/andresliszt/moo-rs
 repo_name: "andresliszt/moo-rs"
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.snippets
+  # - pymdownx.highlight:
+  #     linenums: true
+  - pymdownx.arithmatex:
+      generic: true
   - neoteroi.cards
   - neoteroi.timeline
   - neoteroi.projects
-  - admonition
-  - pymdownx.details
-  - pymdownx.arithmatex:
-      generic: true
 extra_javascript:
   - js/custom_mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
@@ -58,25 +61,31 @@ extra_css:
   - stylesheets/extra.css
 
 nav:
-  - 🏠 Home: index.md
-  - 🚀 Getting Started:
-       - pymoors:
-          - Installation: getting_started_pymoors/installation.md
-          - Knapsack Problem: getting_started_pymoors/knapsack.ipynb
-          - Small Real Valued Problem: getting_started_pymoors/real_valued.ipynb
-  - 💻 Development: development.md
-  - 📖 User Guide Pymoors:
-      - Fitness and Constraints: user_guide/fitness_and_constraints.md
-      - Genetic Operators: user_guide/operators.md
-      - Duplicates Cleaner: user_guide/duplicates.md
-      - Algorithms:
-        - Introduction: user_guide/algorithms/algorithms.ipynb
-        - NSGA-II: user_guide/algorithms/nsga2.ipynb
-        - RNSGA-II: user_guide/algorithms/rnsga2.ipynb
-        - NSGA-III: user_guide/algorithms/nsga3.ipynb
-        - AGE-MOEA: user_guide/algorithms/agemoea.ipynb
-        - REVEA: user_guide/algorithms/revea.ipynb
-        - SPEA-II: user_guide/algorithms/spea2.ipynb
+  - Home: index.md
+  - Getting Started:
+    - Moo-rs : getting_started/moors.md
+    - Installation: getting_started/installation.md
+    - Knapsack Problem: getting_started/knapsack.ipynb
+    - Small Real Valued Problem: getting_started/real_valued.ipynb
+  - Development: development.md
+  - User Guide Pymoors:
+    - Fitness and Constraints: user_guide/fitness_and_constraints/fitness_and_constraints.md
+    - Genetic Operators: user_guide/operators/operators.md
+    - Duplicates Cleaner: user_guide/duplicates/duplicates.md
+    - Algorithms:
+      - Introduction: user_guide/algorithms/algorithms.ipynb
+      - NSGA-II: user_guide/algorithms/nsga2.ipynb
+      - RNSGA-II: user_guide/algorithms/rnsga2.ipynb
+      - NSGA-III: user_guide/algorithms/nsga3.ipynb
+      - AGE-MOEA: user_guide/algorithms/agemoea.ipynb
+      - REVEA: user_guide/algorithms/revea.ipynb
+      - SPEA-II: user_guide/algorithms/spea2.ipynb
 
 plugins:
-    - mkdocs-jupyter
+  - mkdocs-jupyter
+  - search
+  - include-markdown
+  - macros:
+      module_name: docs/macros
+extra:
+  moors_crate_version: 0.2.5
