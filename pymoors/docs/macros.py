@@ -4,7 +4,7 @@ def define_env(env):
     the URL to docs.rs/moors/<version>/moors/<type>.<item>.html
     """
     version = env.variables.get("moors_crate_version")
-    base    = f"https://docs.rs/moors/{version}/moors/"
+    base = f"https://docs.rs/moors/{version}/moors/"
 
     @env.macro
     def docs_rs(item_type: str, path: str, label: str | None = None) -> str:

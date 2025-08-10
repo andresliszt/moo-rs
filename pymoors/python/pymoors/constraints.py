@@ -1,79 +1,150 @@
-from typing import Callable
-
+from typing import Callable, TypeAlias
 import numpy as np
 
-from pymoors.typing import TwoDArray
+from pymoors.typing import TwoDArray, OneDArray
+
+ConstraintSpec: TypeAlias = (
+    Callable[[TwoDArray], OneDArray]
+    | Callable[[TwoDArray], TwoDArray]
+    | list[Callable[[TwoDArray], OneDArray] | Callable[[TwoDArray], TwoDArray]]
+    | None
+)
 
 
 class Constraints:
     """
-    Encapsulates custom constraint functions and optional bound constraints,
-    producing a combined constraint evaluation when called.
+    Encapsulates equality (`eq`) and inequality (`ineq`) constraint functions plus optional bound constraints.
 
-    The `__call__` method returns a 2D array that concatenates:
-      1. The output of a user‑supplied `constraints_fn`, if provided.
-      2. Lower‑bound violation values (`lower_bound - genes`), if `lower_bound` is set.
-      3. Upper‑bound violation values (`genes - upper_bound`), if `upper_bound` is set.
+    When called with `genes` (shape: (n, d)), returns a 2D array formed by horizontally
+    concatenating, in order:
+      1) Outputs from `eq` (single callable or list). Each callable maps `genes -> (n,) or (n, k)`.
+         Each equality residual h(x) is converted to an inequality via ε-technique:
+         `|h(x)| - epsilon`, yielding values ≤ 0 when within tolerance.
+         1D outputs are reshaped to (n, 1).
+      2) Outputs from `ineq` (single callable or list). Each callable maps `genes -> (n,) or (n, k)`.
+         1D outputs are reshaped to (n, 1).
+      3) Lower-bound violations: (lower_bound - genes), if provided (shape: (n, d)).
+      4) Upper-bound violations: (genes - upper_bound), if provided (shape: (n, d)).
 
-    This method will be delegated to the Rust side once this issue is fixed:
-    https://github.com/andresliszt/moo-rs/issues/208
-
+    The resulting matrix has shape (n, m), where:
+      m = (cols from ε-adapted `eq`) + (cols from `ineq`)
+          + d * I[lower_bound is not None] + d * I[upper_bound is not None]
 
     Parameters
     ----------
-    constraints_fn : Callable[[TwoDArray], TwoDArray], optional
-        A user‑provided function that maps the gene matrix to a 2D array
-        of custom constraint evaluations.
+    eq : Callable[[TwoDArray], OneDArray | TwoDArray]
+         | list[Callable[[TwoDArray], OneDArray | TwoDArray]]
+         | None
+        Equality constraint residuals h(x). Each output is converted to `|h(x)| - epsilon`.
+    ineq : Callable[[TwoDArray], OneDArray | TwoDArray]
+           | list[Callable[[TwoDArray], OneDArray | TwoDArray]]
+           | None
+        Inequality constraints g(x) ≤ 0.
     lower_bound : float, optional
-        A scalar lower bound applied element‑wise to the genes. Violations
-        are computed as `lower_bound - genes`.
+        Scalar lower bound applied element-wise; violations are (lower_bound - genes).
     upper_bound : float, optional
-        A scalar upper bound applied element‑wise to the genes. Violations
-        are computed as `genes - upper_bound`.
+        Scalar upper bound applied element-wise; violations are (genes - upper_bound).
+    epsilon : float, optional (default: 1e-6)
+        Tolerance for equality constraints. Must be non-negative.
+
+    Returns
+    -------
+    TwoDArray
+        Constraint evaluation matrix of shape (n, m), as described above.
 
     Raises
     ------
     ValueError
-        If none of `constraints_fn`, `lower_bound`, or `upper_bound` is provided.
+        If none of `eq`, `ineq`, `lower_bound`, or `upper_bound` is provided;
+        if any callable returns an array whose first dimension differs from `n`;
+        if a callable returns an array with ndim > 2; or if `epsilon < 0`.
     """
 
     def __init__(
         self,
         *,
-        constraints_fn: Callable[[TwoDArray], TwoDArray] | None = None,
+        eq: ConstraintSpec = None,
+        ineq: ConstraintSpec = None,
         lower_bound: float | None = None,
         upper_bound: float | None = None,
+        epsilon: float = 1e-6,
     ):
+        if epsilon < 0:
+            raise ValueError("`epsilon` must be non-negative.")
+
+        def _to_callable_list(
+            spec: ConstraintSpec,
+        ) -> list[Callable[[TwoDArray], OneDArray] | Callable[[TwoDArray], TwoDArray]]:
+            if spec is None:
+                return []
+            if isinstance(spec, list):
+                return spec
+            return [spec]
+
+        # Normalize to lists so Pyright knows these are callables (not Sequence)
+        self.eq: list[
+            Callable[[TwoDArray], OneDArray] | Callable[[TwoDArray], TwoDArray]
+        ] = _to_callable_list(eq)
+        self.ineq: list[
+            Callable[[TwoDArray], OneDArray] | Callable[[TwoDArray], TwoDArray]
+        ] = _to_callable_list(ineq)
+
         if not any(
             [
-                constraints_fn is not None,
+                len(self.eq) > 0,
+                len(self.ineq) > 0,
                 lower_bound is not None,
                 upper_bound is not None,
             ]
         ):
             raise ValueError(
-                "At least constraints_fn, lower_bound or upper_bound must be set"
+                "At least one of `eq`, `ineq`, `lower_bound`, or `upper_bound` must be provided."
             )
 
-        self.constraints_fn = constraints_fn
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
+        self.epsilon = float(epsilon)
+
+    def _normalize_output(self, arr: np.ndarray, n_rows: int) -> np.ndarray:
+        """Ensure constraint output is 2D with shape (n_rows, k)."""
+        arr = np.asarray(arr)
+        if arr.ndim == 1:
+            if arr.shape[0] != n_rows:
+                raise ValueError(
+                    f"Constraint function returned shape {arr.shape}, expected ({n_rows},) for 1D output."
+                )
+            return arr.reshape(-1, 1)
+        if arr.ndim == 2:
+            if arr.shape[0] != n_rows:
+                raise ValueError(
+                    f"Constraint function returned shape {arr.shape}, expected first dimension {n_rows}."
+                )
+            return arr
+        raise ValueError(
+            f"Constraint function returned array with ndim={arr.ndim}; only 1D or 2D supported."
+        )
 
     def __call__(self, genes: TwoDArray) -> TwoDArray:
-        parts = []
-        # any custom constraint‑function output
-        if self.constraints_fn is not None:
-            parts.append(self.constraints_fn(genes))
-        # lower‑bound violations
+        n_rows = genes.shape[0]
+        parts: list[np.ndarray] = []
+
+        # 1) Equality residuals -> ε-inequalities: |h(x)| - epsilon
+        for fn in self.eq:
+            raw = fn(genes)
+            norm = self._normalize_output(raw, n_rows)
+            parts.append(np.abs(norm) - self.epsilon)
+
+        # 2) Inequalities as-is
+        for fn in self.ineq:
+            out = fn(genes)
+            parts.append(self._normalize_output(out, n_rows))
+
+        # 3) Bounds
         if self.lower_bound is not None:
             parts.append(self.lower_bound - genes)
-        # upper‑bound violations
         if self.upper_bound is not None:
             parts.append(genes - self.upper_bound)
-        # if only one part, return it directly as 2D
+
         if len(parts) == 1:
-            if parts[0].ndim == 1:
-                return parts[0].reshape(-1, 1)
             return parts[0]
-        # otherwise concatenate horizontally into a single 2D array
         return np.concatenate(parts, axis=1)
