@@ -90,6 +90,7 @@
 //! operator or algorithm.
 
 pub(in crate::algorithms) mod agemoea;
+pub(in crate::algorithms) mod ibea;
 pub(in crate::algorithms) mod nsga2;
 pub(in crate::algorithms) mod nsga3;
 pub(in crate::algorithms) mod revea;

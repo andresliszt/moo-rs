@@ -7,6 +7,7 @@ use crate::{
     operators::survival::moo::FrontsAndRankingBasedSurvival,
     random::RandomGenerator,
 };
+
 #[derive(Debug, Clone)]
 pub struct Nsga2RankCrowdingSurvival;
 
