@@ -165,3 +165,168 @@ impl IbeaHyperVolumeSurvivalOperator {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::genetic::PopulationMOO;
+    use crate::random::NoopRandomGenerator;
+    use ndarray::{Array1, Array2, array};
+
+    fn approx_eq(a: f64, b: f64, eps: f64) -> bool {
+        (a - b).abs() <= eps
+    }
+
+    // ---------------------------
+    // Indicator (math) unit tests
+    // ---------------------------
+
+    #[test]
+    /// For r = (3,3), a = (1,1), b = (2,2):
+    ///  HV(a)=4, HV(b)=1, HV({a,b})=4, so:
+    ///  I(a,b)=HV({a,b})-HV(b)=3, I(b,a)=HV({a,b})-HV(a)=0.
+    fn indicator_hv_basics() {
+        let r: Array1<f64> = array![3.0, 3.0];
+        let ind = HyperVolumeIndicator {
+            reference: r,
+            kappa: 1.0,
+        };
+
+        let a = array![1.0, 1.0];
+        let b = array![2.0, 2.0];
+
+        let i_ab = ind.indicator(a.view(), b.view());
+        let i_ba = ind.indicator(b.view(), a.view());
+
+        assert!(approx_eq(i_ab, 3.0, 1e-12));
+        assert!(approx_eq(i_ba, 0.0, 1e-12));
+    }
+
+    #[test]
+    /// M[i,j] = -exp( -I(i,j)/kappa ), diag = 0.
+    /// With kappa=1 and the previous points:
+    ///  I(a,b)=3  => M[a,b] = -exp(-3)
+    ///  I(b,a)=0  => M[b,a] = -exp(0) = -1
+    fn pairwise_indicator_matrix_values() {
+        let r: Array1<f64> = array![3.0, 3.0];
+        let ind = HyperVolumeIndicator {
+            reference: r,
+            kappa: 1.0,
+        };
+
+        let fitness: Array2<f64> = array![[1.0, 1.0], [2.0, 2.0]]; // rows: a, b
+        let m = ind.pairwise_indicator(&fitness);
+
+        assert!(approx_eq(m[[0, 0]], 0.0, 1e-12));
+        assert!(approx_eq(m[[1, 1]], 0.0, 1e-12));
+        assert!(approx_eq(m[[0, 1]], -(-3.0f64).exp(), 1e-12)); // -e^{-3}
+        assert!(approx_eq(m[[1, 0]], -1.0, 1e-12));
+        // Bounds sanity: off-diagonals in (-1, 0]
+        for i in 0..2 {
+            for j in 0..2 {
+                if i != j {
+                    assert!(m[[i, j]] <= 0.0 && m[[i, j]] > -1.0000001);
+                }
+            }
+        }
+    }
+
+    // ---------------------------------------
+    // Survival operator (IBEA) behavior tests
+    // ---------------------------------------
+
+    #[test]
+    /// If num_survive == population size, the operator should return the same population
+    /// (genes/fitness unchanged) and set a survival_score with matching length.
+    fn operate_no_drop_returns_same_population() {
+        let r: Array1<f64> = array![3.0, 3.0];
+        let mut op = IbeaHyperVolumeSurvivalOperator::new(r, 1.0);
+
+        let genes: Array2<f64> = array![[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]];
+        let fitness: Array2<f64> = array![[1.0, 2.0], [2.0, 1.0], [2.0, 2.0]];
+        let pop = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
+
+        let mut rng = NoopRandomGenerator::new();
+        let out = op.operate(pop, 3, &mut rng);
+
+        assert_eq!(out.len(), 3);
+        assert_eq!(out.genes, genes);
+        assert_eq!(out.fitness, fitness);
+
+        let score = out.survival_score.as_ref().expect("survival score set");
+        assert_eq!(score.len(), 3);
+        assert!(score.iter().all(|v| v.is_finite()));
+    }
+
+    #[test]
+    /// Simple elimination scenario.
+    ///
+    /// r=(3,3), kappa=1, fitness rows:
+    ///   a=(1,1), b=(2,2), c=(2.5,2.5)
+    ///
+    /// Pairwise I:
+    ///   I(a,b)=3,    I(b,a)=0
+    ///   I(a,c)=3.75, I(c,a)=0
+    ///   I(b,c)=0.75, I(c,b)=0
+    ///
+    /// M[i,j] = -exp(-I(i,j)):
+    ///   M[a,b]=-e^{-3},  M[b,a]=-1
+    ///   M[a,c]=-e^{-3.75}, M[c,a]=-1
+    ///   M[b,c]=-e^{-0.75}, M[c,b]=-1
+    ///
+    /// Column sums F[j] = Σ_i M[i,j]:
+    ///   F[a] = -1 + -1 = -2
+    ///   F[b] = -e^{-3} + -1 ≈ -1.049787
+    ///   F[c] = -e^{-3.75} + -e^{-0.75} ≈ -0.495884
+    ///
+    /// The operator removes argmin(F). With num_survive=2 it drops index of 'a' first
+    /// and keeps 'b' and 'c'. This asserts that behavior.
+    fn operate_drops_one_keeps_two_expected_indices() {
+        let r: Array1<f64> = array![3.0, 3.0];
+        let mut op = IbeaHyperVolumeSurvivalOperator::new(r, 1.0);
+
+        // genes are arbitrary but aligned with fitness rows (a, b, c)
+        let genes: Array2<f64> = array![[10.0, 10.0], [20.0, 20.0], [25.0, 25.0]];
+        let fitness: Array2<f64> = array![[1.0, 1.0], [2.0, 2.0], [2.5, 2.5]];
+
+        let pop = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
+        let mut rng = NoopRandomGenerator::new();
+        let out = op.operate(pop, 2, &mut rng);
+
+        // Expect 2 survivors: rows corresponding to b and c (indices 1 and 2).
+        assert_eq!(out.len(), 2);
+        assert_eq!(out.genes, array![[20.0, 20.0], [25.0, 25.0]]);
+        assert_eq!(out.fitness, array![[2.0, 2.0], [2.5, 2.5]]);
+
+        // Survival score present and sized correctly
+        let score = out.survival_score.as_ref().expect("survival score set");
+        assert_eq!(score.len(), 2);
+        assert!(score.iter().all(|v| v.is_finite()));
+    }
+
+    #[test]
+    /// Smoke test on asymmetry and diagonal of the pairwise matrix for a larger set.
+    fn pairwise_matrix_shape_and_diagonal() {
+        let r: Array1<f64> = array![3.0, 3.0, 3.0];
+        let ind = HyperVolumeIndicator {
+            reference: r,
+            kappa: 0.5,
+        };
+
+        let fitness: Array2<f64> = array![[1.0, 1.0, 1.0], [2.0, 2.0, 2.0], [2.5, 1.5, 2.0]];
+
+        let m = ind.pairwise_indicator(&fitness);
+        assert_eq!(m.nrows(), 3);
+        assert_eq!(m.ncols(), 3);
+
+        // Diagonal must be exactly zero; off-diagonal must be in (-1, 0]
+        for i in 0..3 {
+            assert!(approx_eq(m[[i, i]], 0.0, 1e-12));
+            for j in 0..3 {
+                if i != j {
+                    assert!(m[[i, j]] <= 0.0 && m[[i, j]] > -1.0000001);
+                }
+            }
+        }
+    }
+}
