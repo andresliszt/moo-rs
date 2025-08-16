@@ -24,6 +24,7 @@ jobs:
           config-name: release-drafter-moors.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOG_LEVEL: debug
 
       - uses: release-drafter/release-drafter@v6
         with:

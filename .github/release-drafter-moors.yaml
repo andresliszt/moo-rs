@@ -5,9 +5,11 @@ tag-prefix: "moors-"
 include-paths:
   - "moors/**"
 
-exclude-labels:
-  - relnotes-ignore
-  - documentation
+include-labels:
+  - relnotes-feature
+  - relnotes-change
+  - relnotes-performance
+  - relnotes-fix
 
 categories:
   - title: New Features
