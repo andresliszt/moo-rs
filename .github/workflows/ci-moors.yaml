@@ -63,6 +63,6 @@ jobs:
           working-directory: moors
           disable_search: true
           files: lcov.info
-          flags: coverage
+          flags: moors
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
