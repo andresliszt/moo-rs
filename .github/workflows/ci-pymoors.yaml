@@ -50,6 +50,8 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           files: coverage.xml,codecov.json
+          working-directory: pymoors
+          disable_search: true
           flags: pymoors
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
