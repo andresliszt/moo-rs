@@ -17,12 +17,12 @@ jobs:
 
       - uses: release-drafter/release-drafter@v6
         with:
-          config-name: release-drafter-moors.yml
+          config-name: release-drafter-moors.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: release-drafter/release-drafter@v6
         with:
-          config-name: release-drafter-pymoors.yml
+          config-name: release-drafter-pymoors.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
