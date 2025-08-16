@@ -1,5 +1,6 @@
 name-template: "pymoors $RESOLVED_VERSION"
 tag-template: "pymoors-$RESOLVED_VERSION"
+tag-prefix: "pymoors-"
 
 include-paths:
   - "pymoors/**"

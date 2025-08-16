@@ -1,5 +1,6 @@
 name-template: "moors $RESOLVED_VERSION"
 tag-template: "moors-$RESOLVED_VERSION"
+tag-prefix: "moors-"
 
 include-paths:
   - "moors/**"

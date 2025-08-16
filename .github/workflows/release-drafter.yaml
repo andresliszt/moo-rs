@@ -4,7 +4,11 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, labeled, unlabeled, edited, synchronize, closed]
+    types: [opened, labeled, unlabeled, edited, synchronize]
+
+concurrency:
+  group: release-drafter
+  cancel-in-progress: true
 
 permissions:
   contents: write
