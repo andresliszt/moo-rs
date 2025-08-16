@@ -1,0 +1,32 @@
+name-template: "moors $RESOLVED_VERSION"
+tag-template: "moors-$RESOLVED_VERSION"
+
+include-paths:
+  - "moors/**"
+
+exclude-labels:
+  - relnotes-ignore
+  - documentation
+
+categories:
+  - title: New Features
+    labels: [relnotes-feature]
+  - title: Changes
+    labels: [relnotes-change]
+  - title: Performance
+    labels: [relnotes-performance]
+  - title: Fixes
+    labels: [relnotes-fix]
+
+version-resolver:
+  major:   { labels: ["major"] }
+  minor:   { labels: ["minor"] }
+  patch:   { labels: ["patch"] }
+  default: patch
+
+template: |
+  ## What’s Changed
+  $CHANGES
+
+  ## Contributors
+  $CONTRIBUTORS
