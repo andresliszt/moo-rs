@@ -1,6 +1,7 @@
-use ndarray::{Array2, Axis, stack};
+use ndarray::{Array2, Axis, array, stack};
 
 use moors::{
+    IbeaBuilder,
     algorithms::{Nsga3Builder, ReveaBuilder},
     duplicates::CloseDuplicatesCleaner,
     genetic::PopulationMOO,
@@ -9,8 +10,8 @@ use moors::{
         ArithmeticCrossover, GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
         UniformRealMutation,
         survival::moo::{
-            DanAndDenisReferencePoints, Nsga3ReferencePoints, Nsga3ReferencePointsSurvival,
-            ReveaReferencePointsSurvival, StructuredReferencePoints,
+            DanAndDenisReferencePoints, IbeaHyperVolumeSurvivalOperator, Nsga3ReferencePoints,
+            Nsga3ReferencePointsSurvival, ReveaReferencePointsSurvival, StructuredReferencePoints,
         },
     },
 };
@@ -108,6 +109,43 @@ fn test_revea_dtlz2_three_objectives() {
 
     // instantiate via builder
     let mut algorithm = ReveaBuilder::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(ArithmeticCrossover)
+        .mutation(UniformRealMutation::new(0.5, 0.0, 1.0))
+        .survivor(survivor)
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_dtlz2_3obj)
+        .constraints_fn(MyConstr)
+        .num_vars(2)
+        .population_size(100)
+        .num_offsprings(100)
+        .num_iterations(num_iterations)
+        .mutation_rate(0.05)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .build()
+        .expect("failed to build REVEA");
+
+    // 3) run & assert
+    algorithm.run().expect("REVEA run failed");
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_full_unit_sphere(&population);
+}
+
+#[test]
+fn test_ibea_three_objectives() {
+    // build 3-objective reference points
+    let rp = array![1.005, 1.005, 1.005];
+    let kappa = 0.005;
+    let num_iterations = 200;
+    let survivor = IbeaHyperVolumeSurvivalOperator::new(rp, kappa);
+    impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
+
+    // instantiate via builder
+    let mut algorithm = IbeaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(ArithmeticCrossover)
         .mutation(UniformRealMutation::new(0.5, 0.0, 1.0))

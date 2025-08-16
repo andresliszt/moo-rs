@@ -7,6 +7,7 @@ use crate::{
 
 pub(crate) mod agemoea;
 pub(crate) mod helpers;
+pub(crate) mod ibea;
 pub(crate) mod nsga2;
 pub(crate) mod nsga3;
 pub(crate) mod reference_points;
@@ -15,6 +16,7 @@ pub(crate) mod rnsga2;
 pub(crate) mod spea2;
 
 pub use agemoea::AgeMoeaSurvival;
+pub use ibea::IbeaHyperVolumeSurvivalOperator;
 pub use nsga2::Nsga2RankCrowdingSurvival;
 pub use nsga3::{Nsga3ReferencePoints, Nsga3ReferencePointsSurvival};
 pub use reference_points::{DanAndDenisReferencePoints, StructuredReferencePoints};
