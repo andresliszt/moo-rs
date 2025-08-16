@@ -1,0 +1,28 @@
+name: Release Drafter (update drafts)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, labeled, unlabeled, edited, synchronize, closed]
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter-moors.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter-pymoors.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

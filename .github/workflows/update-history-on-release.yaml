@@ -1,0 +1,53 @@
+name: Update HISTORY on Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  sync-history:
+    if: startsWith(github.event.release.tag_name, 'moors-') || startsWith(github.event.release.tag_name, 'pymoors-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Choose package HISTORY path
+        id: pick
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          DATE="$(date -u +%F)"
+          BODY_FILE="release_body.md"
+          printf "%s" "${{ github.event.release.body }}" > "$BODY_FILE"
+
+          if [[ "$TAG" == moors-* ]]; then
+            echo "history=moors/HISTORY.md" >> $GITHUB_OUTPUT
+          else
+            echo "history=pymoors/HISTORY.md" >> $GITHUB_OUTPUT
+          fi
+
+          # Prepend section to HISTORY
+          HISTORY_PATH="$(cat $GITHUB_OUTPUT | sed -n 's/^history=//p')"
+          HEADER="## [$TAG] - $DATE"
+          TMP=".tmp_history.md"
+          {
+            echo "$HEADER"
+            echo
+            cat "$BODY_FILE"
+            echo
+            echo
+            if [[ -f "$HISTORY_PATH" ]]; then cat "$HISTORY_PATH"; fi
+          } > "$TMP"
+          mkdir -p "$(dirname "$HISTORY_PATH")"
+          mv "$TMP" "$HISTORY_PATH"
+
+      - name: Commit & push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add moors/HISTORY.md pymoors/HISTORY.md || true
+          git commit -m "docs(history): update from release ${{ github.event.release.tag_name }}" || echo "No changes"
+          git push
