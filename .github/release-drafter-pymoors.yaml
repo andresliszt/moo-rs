@@ -4,7 +4,7 @@ tag-template:  "pymoors-$RESOLVED_VERSION"
 tag-prefix:    "pymoors-"
 filter-by-commitish: true
 include-paths:
-  - "pymoors/**"
+  - "pymoors/"
 
 no-changes-template: "* No changes (no merged PRs touching pymoors/**)"
 template: |

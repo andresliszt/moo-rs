@@ -3,7 +3,7 @@ tag-template:  "moors-$RESOLVED_VERSION"
 tag-prefix:    "moors-"
 filter-by-commitish: true
 include-paths:
-  - "moors/**"
+  - "moors/"
 
 no-changes-template: "* No changes (no merged PRs touching moors/**)"
 template: |
