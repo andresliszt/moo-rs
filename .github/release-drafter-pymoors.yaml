@@ -1,44 +1,9 @@
 name-template: "pymoors $RESOLVED_VERSION"
 tag-template:  "pymoors-$RESOLVED_VERSION"
 tag-prefix:    "pymoors-"
-
-# Restrict included PRs to changes under the package directory
-include-paths:
-  - "pymoors/**"
-
-# Exclude PRs with these labels
-exclude-labels:
-  - relnotes-ignore
-  - documentation
-
-# Group PRs into sections based on labels
-categories:
-  - title: New Features
-    labels: [relnotes-feature]
-  - title: Changes
-    labels: [relnotes-change]
-  - title: Performance
-    labels: [relnotes-performance]
-  - title: Fixes
-    labels: [relnotes-fix]
-  # Fallback so uncategorized PRs still appear
-  - title: Other Changes
-    labels: ["*"]
-
-# Determine the next version from PR labels (SemVer-style)
-version-resolver:
-  major:   { labels: ["major"] }
-  minor:   { labels: ["minor"] }
-  patch:   { labels: ["patch"] }
-  default: patch
-
-# Consider previous releases that target the same branch/commitish
 filter-by-commitish: true
 
-# Body template for the draft release
+no-changes-template: "* No changes (check filters and tags)"
 template: |
-  ## What’s Changed
+  ## Changes
   $CHANGES
-
-  ## Contributors
-  $CONTRIBUTORS

@@ -1,3 +1,4 @@
+# .github/workflows/release-drafter.yaml
 name: Release Drafter
 
 on:
@@ -13,19 +14,33 @@ jobs:
       contents: write
       pull-requests: write
     runs-on: ubuntu-latest
+    concurrency:
+      group: release-drafter
+      cancel-in-progress: true
     steps:
-      - name: Update draft (moors)
+      - name: Release Drafter (moors)
+        id: moors
         uses: release-drafter/release-drafter@v6
         with:
           config-name: release-drafter-moors.yaml
           disable-autolabeler: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update draft (pymoors)
+      - name: Echo drafted body (moors)
+        run: |
+          echo "TAG:  ${{ steps.moors.outputs.tag_name }}"
+          echo "NAME: ${{ steps.moors.outputs.name }}"
+          printf '%s\n' '${{ steps.moors.outputs.body }}'
+      - name: Release Drafter (pymoors)
+        id: pymoors
         uses: release-drafter/release-drafter@v6
         with:
           config-name: release-drafter-pymoors.yaml
           disable-autolabeler: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Echo drafted body (pymoors)
+        run: |
+          echo "TAG:  ${{ steps.pymoors.outputs.tag_name }}"
+          echo "NAME: ${{ steps.pymoors.outputs.name }}"
+          printf '%s\n' '${{ steps.pymoors.outputs.body }}'
