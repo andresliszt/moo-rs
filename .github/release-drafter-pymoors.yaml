@@ -1,9 +1,12 @@
+# .github/release-drafter-pymoors.yaml
 name-template: "pymoors $RESOLVED_VERSION"
 tag-template:  "pymoors-$RESOLVED_VERSION"
 tag-prefix:    "pymoors-"
 filter-by-commitish: true
+include-paths:
+  - "pymoors/**"
 
-no-changes-template: "* No changes (check filters and tags)"
+no-changes-template: "* No changes (no merged PRs touching pymoors/**)"
 template: |
   ## Changes
   $CHANGES

@@ -2,9 +2,10 @@ name-template: "moors $RESOLVED_VERSION"
 tag-template:  "moors-$RESOLVED_VERSION"
 tag-prefix:    "moors-"
 filter-by-commitish: true
+include-paths:
+  - "moors/**"
 
-# cuerpo mínimo y un mensaje claro si no hay cambios
-no-changes-template: "* No changes (check filters and tags)"
+no-changes-template: "* No changes (no merged PRs touching moors/**)"
 template: |
   ## Changes
   $CHANGES
