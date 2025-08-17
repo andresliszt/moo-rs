@@ -1,12 +1,52 @@
-# .github/release-drafter-pymoors.yaml
 name-template: "pymoors $RESOLVED_VERSION"
 tag-template:  "pymoors-$RESOLVED_VERSION"
 tag-prefix:    "pymoors-"
-filter-by-commitish: true
+
 include-paths:
   - "pymoors/"
 
-no-changes-template: "* No changes (no merged PRs touching pymoors/**)"
+# Exclude PRs carrying these labels
+exclude-labels:
+  - relnotes-ignore
+
+# Group PRs by labels (section headings)
+categories:
+  - title: Packaging
+    labels: [relnotes-packaging]
+  - title: New Features
+    labels: [relnotes-feature]
+  - title: Changes
+    labels: [relnotes-change]
+  - title: Performance
+    labels: [relnotes-performance]
+  - title: Fixes
+    labels: [relnotes-fix]
+  # Fallback so uncategorized PRs still appear
+  - title: Other Changes
+    labels: ["*"]
+
+# Sort entries newest-first
+sort-by: merged_at
+sort-direction: descending
+
+version-resolver:
+  major:   { labels: ["major"] }
+  minor:   { labels: ["minor"] }
+  patch:   { labels: ["patch"] }
+  default: patch
+
+# Only consider previous releases pointing to the same target
+filter-by-commitish: true
+
+# Per-change line format
+change-title-escapes: '\<*_&'
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+
 template: |
-  ## Changes
+  ## What’s Changed
   $CHANGES
+
+  ## Contributors
+  $CONTRIBUTORS
+
+no-changes-template: "* No changes"
