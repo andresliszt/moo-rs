@@ -1,33 +1,31 @@
-name: Release Drafter (update drafts)
+name: Release Drafter
 
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [opened, labeled, unlabeled, edited, synchronize]
-
-concurrency:
-  group: release-drafter
-  cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  draft:
+  update_release_draft:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: release-drafter/release-drafter@v6
+      - name: Update draft (moors)
+        uses: release-drafter/release-drafter@v6
         with:
           config-name: release-drafter-moors.yaml
+          disable-autolabeler: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LOG_LEVEL: debug
 
-      - uses: release-drafter/release-drafter@v6
+      - name: Update draft (pymoors)
+        uses: release-drafter/release-drafter@v6
         with:
           config-name: release-drafter-pymoors.yaml
+          disable-autolabeler: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

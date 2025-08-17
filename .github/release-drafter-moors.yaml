@@ -1,16 +1,17 @@
 name-template: "moors $RESOLVED_VERSION"
-tag-template: "moors-$RESOLVED_VERSION"
-tag-prefix: "moors-"
+tag-template:  "moors-$RESOLVED_VERSION"
+tag-prefix:    "moors-"
 
+# Restrict included PRs to changes under the package directory
 include-paths:
   - "moors/**"
 
-include-labels:
-  - relnotes-feature
-  - relnotes-change
-  - relnotes-performance
-  - relnotes-fix
+# Exclude PRs with these labels
+exclude-labels:
+  - relnotes-ignore
+  - documentation
 
+# Group PRs into sections based on labels
 categories:
   - title: New Features
     labels: [relnotes-feature]
@@ -20,13 +21,21 @@ categories:
     labels: [relnotes-performance]
   - title: Fixes
     labels: [relnotes-fix]
+  # Fallback so uncategorized PRs still appear
+  - title: Other Changes
+    labels: ["*"]
 
+# Determine the next version from PR labels (SemVer-style)
 version-resolver:
   major:   { labels: ["major"] }
   minor:   { labels: ["minor"] }
   patch:   { labels: ["patch"] }
   default: patch
 
+# Consider previous releases that target the same branch/commitish
+filter-by-commitish: true
+
+# Body template for the draft release
 template: |
   ## What’s Changed
   $CHANGES
