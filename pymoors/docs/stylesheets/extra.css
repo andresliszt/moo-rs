@@ -14,3 +14,10 @@
 .md-header-nav {
   top: var(--md-header-height) !important;
 }
+
+/* Increase code font size only inside "example" admonitions */
+.md-typeset .admonition.example pre > code,
+.md-typeset .admonition.example .highlight pre {
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
