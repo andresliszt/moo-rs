@@ -85,10 +85,7 @@ nav:
 plugins:
   - mkdocs-jupyter
   - search
-  - include-markdown:
-      rewrite_relative_urls: true
-      relative_docs: true
-      relative_images: true
+  - include-markdown
   - macros:
       module_name: docs/macros
 extra:
