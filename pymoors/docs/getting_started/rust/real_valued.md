@@ -149,8 +149,7 @@ println!("EVCXR_BEGIN_CONTENT image/svg+xml\n{}\nEVCXR_END_CONTENT", svg);
 
 
 
-
-![svg](../../images/real_valued_rust.svg)
+![svg](../images/real_valued_rust.svg)
 
 
 
