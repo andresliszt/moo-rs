@@ -478,23 +478,3 @@ Population { genes: [[1.0, 0.0, 0.0, 1.0, 1.0]], shape=[1, 5], strides=[5, 1], l
 Individual { genes: [1.0, 0.0, 0.0, 1.0, 1.0], shape=[5], strides=[1], layout=CFcf (0xf), const ndim=1, fitness: [-7.0, -15.0], shape=[2], strides=[1], layout=CFcf (0xf), const ndim=1, constraints: 0.0, shape=[], strides=[], layout=CFcf (0xf), const ndim=0, rank: Some(0), survival_score: Some(inf), constraint_violation_totals: Some(0.0) }
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```Rust
-
-```

@@ -75,7 +75,7 @@ nav:
     - Algorithms:
       - Introduction: user_guide/algorithms/introduction/introduction.md
       - Custom Defined Genetic Operators: user_guide/algorithms/custom/custom.md
-      - NSGA-II: user_guide/algorithms/nsga2.ipynb
+      - NSGA-II: user_guide/algorithms/nsga2.md
       - RNSGA-II: user_guide/algorithms/rnsga2.ipynb
       - NSGA-III: user_guide/algorithms/nsga3.ipynb
       - AGE-MOEA: user_guide/algorithms/agemoea.ipynb
