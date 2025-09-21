@@ -1,4 +1,4 @@
-To use close duplicates cleaner in `moors` just pass to the algorithm the cleaner instance
+To use exact duplicates cleaner in `moors` just pass to the algorithm the cleaner instance
 
 ```Rust
 
