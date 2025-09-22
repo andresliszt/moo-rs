@@ -77,7 +77,7 @@ nav:
       - Custom Defined Genetic Operators: user_guide/algorithms/custom/custom.md
       - NSGA-II: user_guide/algorithms/nsga2.md
       - RNSGA-II: user_guide/algorithms/rnsga2.md
-      - NSGA-III: user_guide/algorithms/nsga3.ipynb
+      - NSGA-III: user_guide/algorithms/nsga3.md
       - AGE-MOEA: user_guide/algorithms/agemoea.ipynb
       - REVEA: user_guide/algorithms/revea.ipynb
       - SPEA-II: user_guide/algorithms/spea2.ipynb

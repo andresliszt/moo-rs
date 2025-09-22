@@ -113,24 +113,3 @@ plt.grid(True)
 ```
 
 ![png](../images/nsga2_python.png)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```python
-
-```
