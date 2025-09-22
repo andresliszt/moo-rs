@@ -107,27 +107,22 @@ let mut svg = String::new();
     // Build axis ranges with headroom including reference points
     let reference_points: Vec<[f64; 2]> = vec![[0.5, 0.2], [0.1, 0.6]];
 
-    let mut x_min = f64::INFINITY;
-    let mut x_max = f64::NEG_INFINITY;
-    let mut y_min = f64::INFINITY;
-    let mut y_max = f64::NEG_INFINITY;
+    // Compute min/max from actual data
+    let (mut x_min, mut x_max) = (f1_theo[0], f1_theo[0]);
+    let (mut y_min, mut y_max) = (f2_theo[0], f2_theo[0]);
 
-    for &x in f1_theo.iter().chain(f1_found.iter()).chain(reference_points.iter().map(|p| &p[0])) {
+    for &x in f1_theo.iter().chain(f1_found.iter()) {
         if x < x_min { x_min = x; }
         if x > x_max { x_max = x; }
     }
-    for &y in f2_theo.iter().chain(f2_found.iter()).chain(reference_points.iter().map(|p| &p[1])) {
+    for &y in f2_theo.iter().chain(f2_found.iter()) {
         if y < y_min { y_min = y; }
         if y > y_max { y_max = y; }
     }
 
-    if !x_min.is_finite() { x_min = 0.0; }
-    if !x_max.is_finite() { x_max = 1.0; }
-    if !y_min.is_finite() { y_min = 0.0; }
-    if !y_max.is_finite() { y_max = 1.0; }
-
-    let xr = (x_max - x_min).max(1e-6);
-    let yr = (y_max - y_min).max(1e-6);
+    // Add a small margin (5%)
+    let xr = (x_max - x_min);
+    let yr = (y_max - y_min);
     x_min -= xr * 0.05;
     x_max += xr * 0.05;
     y_min -= yr * 0.05;
@@ -191,7 +186,6 @@ let mut svg = String::new();
 
 // Emit as rich output for evcxr
 println!("EVCXR_BEGIN_CONTENT image/svg+xml\n{}\nEVCXR_END_CONTENT", svg);
-
 
 ```
 
