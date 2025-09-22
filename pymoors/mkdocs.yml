@@ -80,7 +80,7 @@ nav:
       - NSGA-III: user_guide/algorithms/nsga3.md
       - AGE-MOEA: user_guide/algorithms/agemoea.ipynb
       - REVEA: user_guide/algorithms/revea.ipynb
-      - SPEA-II: user_guide/algorithms/spea2.ipynb
+      - SPEA-II: user_guide/algorithms/spea2.md
   - API docs (moors): https://docs.rs/moors/latest/moors/
 
 plugins:
