@@ -1,4 +1,14 @@
-# THIS CHANGE IS TEST FOR RELEASE DRAFTER --- Remove.
+# moors HISTORY
+
+## moors-0.2.6 (2025-09-22)
+
+[GitHub release](https://github.com/andresliszt/moo-rs/releases/tag/moors-0.2.6)
+
+## What’s Changed
+- Add IBEA algorithm with hyper volume estimator [#219](https://github.com/andresliszt/moo-rs/pull/219) @andresliszt
+
+## Contributors
+@andresliszt
 
 ## moors-0.2.5 (2025-08-10)
 
