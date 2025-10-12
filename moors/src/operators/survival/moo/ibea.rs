@@ -81,7 +81,7 @@ impl Indicator for HyperVolumeIndicator {
 
     /// I_HV(f1,f2) = HV({f1,f2}) - HV({f2})
     fn indicator(&self, f1: ArrayView1<'_, f64>, f2: ArrayView1<'_, f64>) -> f64 {
-        self.hv_two(f1, f2) - self.hv_single(f2)
+        self.hv_single(f2) - self.hv_two(f1, f2)
     }
 }
 
@@ -183,8 +183,10 @@ mod tests {
 
     #[test]
     /// For r = (3,3), a = (1,1), b = (2,2):
-    ///  HV(a)=4, HV(b)=1, HV({a,b})=4, so:
-    ///  I(a,b)=HV({a,b})-HV(b)=3, I(b,a)=HV({a,b})-HV(a)=0.
+    ///  HV(a)=4, HV(b)=1, HV({a,b})=4.
+    ///  New orientation:
+    ///    I(a,b) = HV(b) - HV({a,b}) = 1 - 4 = -3
+    ///    I(b,a) = HV(a) - HV({a,b}) = 4 - 4 =  0
     fn indicator_hv_basics() {
         let r: Array1<f64> = array![3.0, 3.0];
         let ind = HyperVolumeIndicator {
@@ -198,15 +200,17 @@ mod tests {
         let i_ab = ind.indicator(a.view(), b.view());
         let i_ba = ind.indicator(b.view(), a.view());
 
-        assert!(approx_eq(i_ab, 3.0, 1e-12));
+        assert!(approx_eq(i_ab, -3.0, 1e-12));
         assert!(approx_eq(i_ba, 0.0, 1e-12));
     }
 
     #[test]
     /// M[i,j] = -exp( -I(i,j)/kappa ), diag = 0.
-    /// With kappa=1 and the previous points:
-    ///  I(a,b)=3  => M[a,b] = -exp(-3)
-    ///  I(b,a)=0  => M[b,a] = -exp(0) = -1
+    /// With kappa=1 and the previous points (new orientation):
+    ///  I(a,b)=-3  => M[a,b] = -exp(3)
+    ///  I(b,a)= 0  => M[b,a] = -exp(0) = -1
+    ///
+    /// Off-diagonals are now <= -1 (not in (-1,0]).
     fn pairwise_indicator_matrix_values() {
         let r: Array1<f64> = array![3.0, 3.0];
         let ind = HyperVolumeIndicator {
@@ -219,13 +223,15 @@ mod tests {
 
         assert!(approx_eq(m[[0, 0]], 0.0, 1e-12));
         assert!(approx_eq(m[[1, 1]], 0.0, 1e-12));
-        assert!(approx_eq(m[[0, 1]], -(-3.0f64).exp(), 1e-12)); // -e^{-3}
-        assert!(approx_eq(m[[1, 0]], -1.0, 1e-12));
-        // Bounds sanity: off-diagonals in (-1, 0]
+        assert!(approx_eq(m[[0, 1]], -(3.0f64).exp(), 1e-12)); // -e^{3}
+        assert!(approx_eq(m[[1, 0]], -1.0, 1e-12)); // -e^{0} = -1
+
+        // Off-diagonals must be <= -1 (and finite)
         for i in 0..2 {
             for j in 0..2 {
                 if i != j {
-                    assert!(m[[i, j]] <= 0.0 && m[[i, j]] > -1.0000001);
+                    assert!(m[[i, j]].is_finite());
+                    assert!(m[[i, j]] <= -1.0);
                 }
             }
         }
@@ -259,28 +265,27 @@ mod tests {
     }
 
     #[test]
-    /// Simple elimination scenario.
+    /// Simple elimination scenario
     ///
     /// r=(3,3), kappa=1, fitness rows:
     ///   a=(1,1), b=(2,2), c=(2.5,2.5)
     ///
-    /// Pairwise I:
-    ///   I(a,b)=3,    I(b,a)=0
-    ///   I(a,c)=3.75, I(c,a)=0
-    ///   I(b,c)=0.75, I(c,b)=0
+    /// Pairwise I (new):
+    ///   I(a,b)=-3,     I(b,a)=0
+    ///   I(a,c)=-3.75,  I(c,a)=0
+    ///   I(b,c)=-0.75,  I(c,b)=0
     ///
-    /// M[i,j] = -exp(-I(i,j)):
-    ///   M[a,b]=-e^{-3},  M[b,a]=-1
-    ///   M[a,c]=-e^{-3.75}, M[c,a]=-1
-    ///   M[b,c]=-e^{-0.75}, M[c,b]=-1
+    /// M = -exp(-I):
+    ///   M[a,b]=-e^{3},   M[b,a]=-1
+    ///   M[a,c]=-e^{3.75}, M[c,a]=-1
+    ///   M[b,c]=-e^{0.75}, M[c,b]=-1
     ///
     /// Column sums F[j] = Σ_i M[i,j]:
     ///   F[a] = -1 + -1 = -2
-    ///   F[b] = -e^{-3} + -1 ≈ -1.049787
-    ///   F[c] = -e^{-3.75} + -e^{-0.75} ≈ -0.495884
+    ///   F[b] = -e^{3} + -1   ≈ -21.085
+    ///   F[c] = -e^{3.75} + -e^{0.75} ≈ -44.637
     ///
-    /// The operator removes argmin(F). With num_survive=2 it drops index of 'a' first
-    /// and keeps 'b' and 'c'. This asserts that behavior.
+    /// argmin(F) = c, so c is dropped first. With num_survive=2, keep a and b.
     fn operate_drops_one_keeps_two_expected_indices() {
         let r: Array1<f64> = array![3.0, 3.0];
         let mut op = IbeaHyperVolumeSurvivalOperator::new(r, 1.0);
@@ -293,10 +298,10 @@ mod tests {
         let mut rng = NoopRandomGenerator::new();
         let out = op.operate(pop, 2, &mut rng);
 
-        // Expect 2 survivors: rows corresponding to b and c (indices 1 and 2).
+        // Expect 2 survivors: a and b (indices 0 and 1).
         assert_eq!(out.len(), 2);
-        assert_eq!(out.genes, array![[20.0, 20.0], [25.0, 25.0]]);
-        assert_eq!(out.fitness, array![[2.0, 2.0], [2.5, 2.5]]);
+        assert_eq!(out.genes, array![[10.0, 10.0], [20.0, 20.0]]);
+        assert_eq!(out.fitness, array![[1.0, 1.0], [2.0, 2.0]]);
 
         // Survival score present and sized correctly
         let score = out.survival_score.as_ref().expect("survival score set");
@@ -305,7 +310,8 @@ mod tests {
     }
 
     #[test]
-    /// Smoke test on asymmetry and diagonal of the pairwise matrix for a larger set.
+    /// Matrix shape & diagonal with new orientation:
+    /// diagonal == 0; off-diagonals <= -1 and finite.
     fn pairwise_matrix_shape_and_diagonal() {
         let r: Array1<f64> = array![3.0, 3.0, 3.0];
         let ind = HyperVolumeIndicator {
@@ -319,12 +325,12 @@ mod tests {
         assert_eq!(m.nrows(), 3);
         assert_eq!(m.ncols(), 3);
 
-        // Diagonal must be exactly zero; off-diagonal must be in (-1, 0]
         for i in 0..3 {
             assert!(approx_eq(m[[i, i]], 0.0, 1e-12));
             for j in 0..3 {
                 if i != j {
-                    assert!(m[[i, j]] <= 0.0 && m[[i, j]] > -1.0000001);
+                    assert!(m[[i, j]].is_finite());
+                    assert!(m[[i, j]] <= -1.0);
                 }
             }
         }

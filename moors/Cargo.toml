@@ -1,6 +1,6 @@
 [package]
 name = "moors"
-version = "0.2.6"
+version = "0.2.7-rc.1"
 edition = "2024"
 authors = ["Andrés Sandoval Abarca <andres.sndbrca@gmail.com>"]
 description = "Solving multi-objective optimization problems using genetic algorithms."
