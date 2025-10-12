@@ -803,9 +803,9 @@ dependencies = [
 
 [[package]]
 name = "moors"
-version = "0.2.4"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "403939d09737f64eb81cacb312cc73c2565f04843bd2ed4ffe18d19422bbc4e7"
+checksum = "d559fa4ee7f9abb43655aa716842c95a6f3eb940c043b3e75e6c6e8976e3ae19"
 dependencies = [
  "derive_builder",
  "faer",
@@ -817,7 +817,6 @@ dependencies = [
  "paste",
  "rand 0.9.0",
  "rand_distr 0.5.1",
- "rayon",
  "thiserror 2.0.12",
 ]
 
@@ -1180,7 +1179,7 @@ dependencies = [
 
 [[package]]
 name = "pymoors"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "criterion",
  "faer",

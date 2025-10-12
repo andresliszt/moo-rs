@@ -11,6 +11,7 @@ from pymoors.typing import (
     MutationLike,
     SamplingLike,
     TwoDArray,
+    OneDArray,
 )
 
 # pylint: disable=W0622, W0231
@@ -470,6 +471,50 @@ class Rnsga2:
     """
 
     def __init__(self, **kwargs: Unpack[_RNsg2Kwargs]) -> None: ...
+    @property
+    def population(self) -> Population:
+        """
+        Returns the current population of individuals.
+
+        Returns:
+            Population: The current population.
+        """
+
+    def run(self) -> None: ...
+
+class _IbeaKwargs(_AlgorithmKwargs, total=False):
+    reference_points: OneDArray
+    kappa: float
+
+class Ibea:
+    """
+    Implementation of IBEA (Indicator‑Based Evolutionary Algorithm).
+
+    IBEA is a multi-objective evolutionary algorithm that bases selection pressure
+    entirely on a user-chosen quality indicator rather than on Pareto ranking or
+    density estimators. By assigning fitness through pairwise indicator
+    contributions and iteratively removing the least promising solutions, IBEA
+    directly optimizes the indicator, promoting convergence toward the Pareto
+    front and distribution according to the indicator’s preferences (e.g., ε-indicator
+    or hypervolume). This makes IBEA particularly effective for many-objective
+    settings where dominance-based methods may lose selection pressure.
+
+    Following Zitzler & Künzli (2004), each individual x is assigned a fitness
+        F(x) = Σ_{y≠x} ( -exp( -I(y, x) / κ ) ),
+    where I(·,·) is a strictly monotone performance indicator and κ > 0 is a scaling
+    parameter that controls selection pressure. Environmental selection repeatedly
+    removes the individual with the worst fitness and updates the affected fitness
+    values until the target population size is reached. Variation operators (e.g.,
+    SBX, polynomial mutation) can be used as in standard EAs.
+
+    References:
+        Zitzler, E., & Künzli, S. (2004).
+            Indicator-Based Selection in Multiobjective Search.
+            In Parallel Problem Solving from Nature – PPSN VIII (LNCS, Vol. 3242, pp. 832–842).
+            Springer, Berlin, Heidelberg.
+    """
+
+    def __init__(self, **kwargs: Unpack[_IbeaKwargs]) -> None: ...
     @property
     def population(self) -> Population:
         """
