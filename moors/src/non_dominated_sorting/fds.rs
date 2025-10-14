@@ -4,7 +4,7 @@ use crate::genetic::{D12, Fronts, PopulationMOO};
 
 /// Inlines the check for "does f1 dominate f2?" to reduce call overhead.
 #[inline]
-fn dominates(f1: &ArrayView1<f64>, f2: &ArrayView1<f64>) -> bool {
+pub fn dominates(f1: &ArrayView1<f64>, f2: &ArrayView1<f64>) -> bool {
     let mut better = false;
     // We assume f1.len() == f2.len()
     for (&a, &b) in f1.iter().zip(f2.iter()) {

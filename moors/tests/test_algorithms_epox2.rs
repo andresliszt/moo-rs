@@ -24,7 +24,7 @@ fn fitness_expo2(pop: &Array2<f64>) -> Array2<f64> {
     // f1 = x1
     let f1 = pop.column(0).to_owned();
 
-    // g = 1 + 9/(n-1) * sum_{i=2..n} x_i  (avoid s!; sum columns by index)
+    // g = 1 + 9/(n-1) * sum_{i=2..n} x_i
     let mut tail_sum = Array1::<f64>::zeros(pop.nrows());
     if n > 1 {
         for j in 1..n {
@@ -111,8 +111,8 @@ fn test_ibea_expo2_hv_matches_true_front() {
     // -------------------
     // Safe HV reference point (minimization ⇒ worse-than-worst in the search space):
     // f1 ∈ [0,1]; f2 can reach ~10 off-front (g≈10, x1≈0). Add margin:
-    let hv_reference = array![1.2, 11.0];
-    let kappa = 0.05;
+    let hv_reference = array![1.1, 1.1];
+    let kappa = 0.005;
     let survivor = IbeaHyperVolumeSurvivalOperator::new(hv_reference.clone(), kappa);
 
     // Box constraints on decision variables
@@ -124,15 +124,15 @@ fn test_ibea_expo2_hv_matches_true_front() {
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.05, 0.10))
         .survivor(survivor)
-        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-10))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_expo2)
         .constraints_fn(MyConstr)
         .num_vars(30)
-        .population_size(200)
-        .num_offsprings(200)
-        .num_iterations(300)
-        .mutation_rate(0.10)
-        .crossover_rate(0.90)
+        .population_size(100)
+        .num_offsprings(100)
+        .num_iterations(600)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
         .keep_infeasible(false)
         .verbose(false)
         .seed(1729)

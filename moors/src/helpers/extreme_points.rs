@@ -16,6 +16,31 @@ pub fn get_nadir(population_fitness: &Array2<f64>) -> Array1<f64> {
     population_fitness.fold_axis(Axis(0), f64::NEG_INFINITY, |a, &b| a.max(b))
 }
 
+pub fn normalize_fitness(population_fitness: &Array2<f64>) -> Array2<f64> {
+    let ideal = get_ideal(population_fitness);
+    let nadir = get_nadir(population_fitness);
+
+    let mut range = &nadir - &ideal;
+
+    let eps = 1e-12;
+    range.mapv_inplace(|r| if r.abs() < eps { 1.0 } else { r });
+
+    let (nrows, ncols) = population_fitness.dim();
+
+    let ideal_b = ideal
+        .broadcast((nrows, ncols))
+        .expect("broadcast de ideal falló");
+    let range_b = range
+        .broadcast((nrows, ncols))
+        .expect("broadcast de range falló");
+
+    // f' = (f - ideal) / range
+    let mut normalized = population_fitness - &ideal_b;
+    normalized /= &range_b;
+
+    normalized
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
