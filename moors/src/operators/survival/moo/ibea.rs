@@ -2,7 +2,7 @@ use ndarray::{Array1, Array2, ArrayView1, Axis};
 
 use crate::genetic::{D12, PopulationMOO};
 use crate::helpers::extreme_points::normalize_fitness;
-use crate::non_dominated_sorting::dominates;
+use crate::non_dominated_sorting::dominates_weak;
 use crate::operators::SurvivalOperator;
 use crate::random::RandomGenerator;
 
@@ -20,9 +20,9 @@ pub trait Indicator {
     /// Raw quality indicator I(f1,f2) (no exponent).
     fn indicator(&self, f1: ArrayView1<'_, f64>, f2: ArrayView1<'_, f64>) -> f64;
 
-    /// Build M with M[i,j] = -exp( -I(i,j)/κ ), diag=0.
+    /// Build M with M[i,j] = I(i,j), diag=0.
     /// Time: O(n^2·m).  Memory: O(n^2).
-    fn pairwise_indicator(&self, fitness: &Array2<f64>) -> Array2<f64> {
+    fn indicator_matrix(&self, fitness: &Array2<f64>) -> Array2<f64> {
         let n = fitness.nrows();
         let mut out = Array2::<f64>::zeros((n, n));
         for i in 0..n {
@@ -32,11 +32,30 @@ pub trait Indicator {
                     0.0
                 } else {
                     let bj = fitness.row(j);
-                    -((-self.indicator(ai, bj) / self.kappa()).exp())
+                    self.indicator(ai, bj)
                 };
             }
         }
         out
+    }
+    fn exponential_indicator_matrix(&self, fitness: &Array2<f64>) -> Array2<f64> {
+        // Compute indicator matrix
+        let m = self.indicator_matrix(fitness);
+        // Adaptative kappa
+        let c = m
+            .iter()
+            .max_by(|a, b| a.abs().partial_cmp(&b.abs()).unwrap())
+            .unwrap();
+        let kappa = self.kappa() * c;
+        // Create the exponential matrix of indicators -exp( -I(i,j)/κ )
+        let mut exp_matrix = m.map(|a| -((-a / kappa).clamp(-50.0, 50.0).exp()));
+
+        let n = exp_matrix.nrows();
+        for i in 0..n {
+            exp_matrix[[i, i]] = 0.0;
+        }
+
+        exp_matrix
     }
 }
 
@@ -72,10 +91,9 @@ impl Indicator for HyperVolumeIndicator {
         let hv_f1 = self.hypervolume_singleton(f1);
         let hv_f2 = self.hypervolume_singleton(f2);
 
-        if dominates(&f1, &f2) {
+        if dominates_weak(&f1, &f2) {
             return hv_f2 - hv_f1;
         }
-
         let inter: f64 = self
             .reference
             .iter()
@@ -116,9 +134,13 @@ impl<I: Indicator> SurvivalOperator for IbeaSurvivalOperator<I> {
         let mut to_drop = population.len() - num_survive;
         let mut indices_to_drop: Vec<usize> = Vec::with_capacity(to_drop);
 
-        // 1) Pairwise matrix M and 2) initial fitness F
+        // Pairwise exponential matrix M
         let normalized_fitness = normalize_fitness(&population.fitness);
-        let m = self.indicator.pairwise_indicator(&normalized_fitness);
+
+        let m = self
+            .indicator
+            .exponential_indicator_matrix(&normalized_fitness);
+
         // Compute F = Σ_i M[i,·] (column-wise sum of M).
         let mut f = m.sum_axis(Axis(0));
 
@@ -213,7 +235,7 @@ mod tests {
     ///  I(b,a)= 0  => M[b,a] = -exp(0) = -1
     ///
     /// Off-diagonals are now <= -1 (not in (-1,0]).
-    fn pairwise_indicator_matrix_values() {
+    fn indicator_matrix_values() {
         let r: Array1<f64> = array![3.0, 3.0];
         let ind = HyperVolumeIndicator {
             reference: r,
@@ -221,7 +243,7 @@ mod tests {
         };
 
         let fitness: Array2<f64> = array![[1.0, 1.0], [2.0, 2.0]]; // rows: a, b
-        let m = ind.pairwise_indicator(&fitness);
+        let m = ind.exponential_indicator_matrix(&fitness);
 
         assert!(approx_eq(m[[0, 0]], 0.0, 1e-12));
         assert!(approx_eq(m[[1, 1]], 0.0, 1e-12));
@@ -323,7 +345,7 @@ mod tests {
 
         let fitness: Array2<f64> = array![[1.0, 1.0, 1.0], [2.0, 2.0, 2.0], [2.5, 1.5, 2.0]];
 
-        let m = ind.pairwise_indicator(&fitness);
+        let m = ind.exponential_indicator_matrix(&fitness);
         assert_eq!(m.nrows(), 3);
         assert_eq!(m.ncols(), 3);
 

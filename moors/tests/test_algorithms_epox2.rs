@@ -105,14 +105,13 @@ fn best_front_to_array2(pop: &PopulationMOO) -> Array2<f64> {
 }
 
 #[test]
-fn test_ibea_expo2_hv_matches_true_front() {
+fn test_ibea_expo2() {
     // -------------------
     // IBEA-HV configuration
     // -------------------
     // Safe HV reference point (minimization ⇒ worse-than-worst in the search space):
-    // f1 ∈ [0,1]; f2 can reach ~10 off-front (g≈10, x1≈0). Add margin:
-    let hv_reference = array![1.1, 1.1];
-    let kappa = 0.005;
+    let hv_reference = array![6.0, 6.0];
+    let kappa = 0.05;
     let survivor = IbeaHyperVolumeSurvivalOperator::new(hv_reference.clone(), kappa);
 
     // Box constraints on decision variables
@@ -128,9 +127,9 @@ fn test_ibea_expo2_hv_matches_true_front() {
         .fitness_fn(fitness_expo2)
         .constraints_fn(MyConstr)
         .num_vars(30)
-        .population_size(100)
-        .num_offsprings(100)
-        .num_iterations(600)
+        .population_size(200)
+        .num_offsprings(200)
+        .num_iterations(500)
         .mutation_rate(0.1)
         .crossover_rate(0.9)
         .keep_infeasible(false)

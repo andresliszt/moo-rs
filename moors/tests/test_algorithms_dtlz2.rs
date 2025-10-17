@@ -162,10 +162,10 @@ fn test_ibea_three_objectives() {
         .keep_infeasible(false)
         .verbose(false)
         .build()
-        .expect("failed to build REVEA");
+        .expect("failed to build IBEA");
 
     // 3) run & assert
-    algorithm.run().expect("REVEA run failed");
+    algorithm.run().expect("IBEA run failed");
     let population = algorithm
         .population()
         .expect("population should have been initialized");

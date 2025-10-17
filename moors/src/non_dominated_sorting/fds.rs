@@ -17,6 +17,16 @@ pub fn dominates(f1: &ArrayView1<f64>, f2: &ArrayView1<f64>) -> bool {
     better
 }
 
+#[inline]
+pub fn dominates_weak(f1: &ArrayView1<f64>, f2: &ArrayView1<f64>) -> bool {
+    for (&a, &b) in f1.iter().zip(f2.iter()) {
+        if a > b {
+            return false;
+        }
+    }
+    true
+}
+
 /// Fast Non-Dominated Sorting.
 /// Returns a vector of fronts, each front is a list of indices.
 /// The individuals are grouped into fronts in order of non-dominance.
