@@ -130,11 +130,6 @@ impl PyGeneticAlgorithmSOO {
         } else {
             py.None().into_py(py)
         };
-        let py_survival_score = if let Some(ref r) = population.survival_score {
-            r.to_pyarray(py).into_py(py)
-        } else {
-            py.None().into_py(py)
-        };
         let kwargs = pyo3::types::PyDict::new(py);
         kwargs.set_item("genes", py_genes)?;
         kwargs.set_item("fitness", py_fitness)?;
