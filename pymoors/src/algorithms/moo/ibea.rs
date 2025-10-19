@@ -1,9 +1,9 @@
-use moors::{Ibea, IbeaBuilder};
 use moors::operators::IbeaHyperVolumeSurvivalOperator;
-use pymoors_macros::py_algorithm_impl;
-use pyo3::prelude::*;
+use moors::{Ibea, IbeaBuilder};
 use ndarray::Array1;
 use numpy::{PyArray1, PyArrayMethods, PyReadonlyArray1, ToPyArray};
+use pymoors_macros::py_algorithm_impl;
+use pyo3::prelude::*;
 
 use crate::py_error::AlgorithmErrorWrapper;
 use crate::py_fitness_and_constraints::{PyConstraintsFnWrapper, PyFitnessFnWrapper};
@@ -68,7 +68,6 @@ impl PyIbea {
         constraints_fn: Option<PyObject>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
-
         let rp = reference_points_from_python(reference_points);
         let survival = IbeaHyperVolumeSurvivalOperator::new(rp, kappa);
 

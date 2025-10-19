@@ -15,7 +15,7 @@ use numpy::ToPyArray;
 use pyo3::prelude::*;
 
 pub use algorithms::{
-    PyAgeMoea, PyGeneticAlgorithmSOO, PyNsga2, PyNsga3, PyRevea, PyRnsga2, PySpea2, PyIbea
+    PyAgeMoea, PyGeneticAlgorithmSOO, PyIbea, PyNsga2, PyNsga3, PyRevea, PyRnsga2, PySpea2,
 };
 pub use py_error::{InitializationError, InvalidParameterError, NoFeasibleIndividualsError};
 pub use py_operators::{
