@@ -90,4 +90,4 @@ plugins:
   - macros:
       module_name: docs/macros
 extra:
-  moors_crate_version: 0.2.5
+  moors_crate_version: 0.2.8

@@ -1,38 +1,36 @@
-use moors::algorithms::{AlgorithmBuilder, GeneticAlgorithm};
-use moors::operators::selection::soo::RankSelection;
-use moors::operators::survival::soo::FitnessSurvival;
-use numpy::ToPyArray;
+use moors::operators::IbeaHyperVolumeSurvivalOperator;
+use moors::{Ibea, IbeaBuilder};
+use ndarray::Array1;
+use numpy::{PyArray1, PyArrayMethods, PyReadonlyArray1, ToPyArray};
+use pymoors_macros::py_algorithm_impl;
 use pyo3::prelude::*;
 
 use crate::py_error::AlgorithmErrorWrapper;
-use crate::py_fitness_and_constraints::{PyConstraintsFnWrapper, PyFitnessFnWrapper1D};
+use crate::py_fitness_and_constraints::{PyConstraintsFnWrapper, PyFitnessFnWrapper};
 use crate::py_operators::{
     CrossoverOperatorDispatcher, DuplicatesCleanerDispatcher, MutationOperatorDispatcher,
     SamplingOperatorDispatcher,
 };
 
-#[pyclass(name = "GeneticAlgorithmSOO")]
-pub struct PyGeneticAlgorithmSOO {
-    algorithm: GeneticAlgorithm<
+#[pyclass(name = "Ibea")]
+pub struct PyIbea {
+    algorithm: Ibea<
         SamplingOperatorDispatcher,
-        RankSelection,
-        FitnessSurvival,
         CrossoverOperatorDispatcher,
         MutationOperatorDispatcher,
-        PyFitnessFnWrapper1D,
+        PyFitnessFnWrapper,
         PyConstraintsFnWrapper,
         DuplicatesCleanerDispatcher,
     >,
 }
 
-// TODO: The macro doesn't work because GeneticAlgorithm doesn't have population as method but as attribute
-
-// py_algorithm_impl!(PyGeneticAlgorithmSOO);
+py_algorithm_impl!(PyIbea);
 
 #[pymethods]
-impl PyGeneticAlgorithmSOO {
+impl PyIbea {
     #[new]
     #[pyo3(signature = (
+        reference_points,
         sampler,
         crossover,
         mutation,
@@ -41,6 +39,7 @@ impl PyGeneticAlgorithmSOO {
         population_size,
         num_offsprings,
         num_iterations,
+        kappa,
         mutation_rate=0.1,
         crossover_rate=0.9,
         keep_infeasible=false,
@@ -51,6 +50,7 @@ impl PyGeneticAlgorithmSOO {
     ))]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
+        reference_points: Py<PyArray1<f64>>,
         sampler: PyObject,
         crossover: PyObject,
         mutation: PyObject,
@@ -59,6 +59,7 @@ impl PyGeneticAlgorithmSOO {
         population_size: usize,
         num_offsprings: usize,
         num_iterations: usize,
+        kappa: f64,
         mutation_rate: f64,
         crossover_rate: f64,
         keep_infeasible: bool,
@@ -67,6 +68,9 @@ impl PyGeneticAlgorithmSOO {
         constraints_fn: Option<PyObject>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
+        let rp = reference_points_from_python(reference_points);
+        let survival = IbeaHyperVolumeSurvivalOperator::new(rp, kappa);
+
         // Unwrap the operator objects using the previously generated unwrap functions.
         let sampler = SamplingOperatorDispatcher::from_python_operator(sampler)?;
         let crossover = CrossoverOperatorDispatcher::from_python_operator(crossover)?;
@@ -74,17 +78,16 @@ impl PyGeneticAlgorithmSOO {
         let duplicates_cleaner =
             DuplicatesCleanerDispatcher::from_python_operator(duplicates_cleaner)?;
         // Build the mandatory population-level fitness_fn.
-        let fitness_fn = PyFitnessFnWrapper1D::from_python_fitness(fitness_fn);
+        let fitness_fn = PyFitnessFnWrapper::from_python_fitness(fitness_fn);
         // Build the optional constraints_fn.
         let constraints_fn = PyConstraintsFnWrapper::from_python_constraints(constraints_fn);
 
-        // Build the NSGA2 algorithm instance.
-        let mut builder = AlgorithmBuilder::default()
+        // Build the Ibea algorithm instance.
+        let mut builder = IbeaBuilder::default()
             .sampler(sampler)
-            .survivor(FitnessSurvival)
-            .selector(RankSelection)
             .crossover(crossover)
             .mutation(mutation)
+            .survivor(survival)
             .duplicates_cleaner(duplicates_cleaner)
             .fitness_fn(fitness_fn)
             .constraints_fn(constraints_fn)
@@ -103,47 +106,18 @@ impl PyGeneticAlgorithmSOO {
 
         let algorithm = builder.build().map_err(AlgorithmErrorWrapper::from)?;
 
-        Ok(PyGeneticAlgorithmSOO {
+        Ok(PyIbea {
             algorithm: algorithm,
         })
     }
+}
 
-    /// Getter for the algorithm's population.
-    /// It converts the internal population members (genes, fitness, rank, constraints)
-    /// to Python objects using NumPy.
-    #[getter]
-    pub fn population(&self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
-        let schemas_module = py.import("pymoors.schemas")?;
-        let population_class = schemas_module.getattr("Population")?;
-        let population = self.algorithm.population.as_ref().unwrap();
-        let py_genes = population.genes.to_pyarray(py);
-        let py_fitness = population.fitness.to_pyarray(py);
-        let py_constraints = population.constraints.to_pyarray(py);
-
-        let py_rank = if let Some(ref r) = population.rank {
-            r.to_pyarray(py).into_py(py)
-        } else {
-            py.None().into_py(py)
-        };
-        let py_survival_score = if let Some(ref r) = population.survival_score {
-            r.to_pyarray(py).into_py(py)
-        } else {
-            py.None().into_py(py)
-        };
-        let kwargs = pyo3::types::PyDict::new(py);
-        kwargs.set_item("genes", py_genes)?;
-        kwargs.set_item("fitness", py_fitness)?;
-        kwargs.set_item("rank", py_rank)?;
-        kwargs.set_item("constraints", py_constraints)?;
-        kwargs.set_item("survival_score", py_survival_score)?;
-        let py_instance = population_class.call((), Some(&kwargs))?;
-        Ok(py_instance.into_py(py))
-    }
-
-    pub fn run(&mut self) -> pyo3::PyResult<()> {
-        self.algorithm
-            .run()
-            .map_err(|e| AlgorithmErrorWrapper(e.into()))?;
-        Ok(())
-    }
+/// Auxiliary function: grabs the GIL, borrows the array as read‑only,
+/// and clones it into an `ndarray::Array1<f64>`.
+fn reference_points_from_python(reference_points: Py<PyArray1<f64>>) -> Array1<f64> {
+    Python::with_gil(|py| {
+        let array_ref: &Bound<'_, PyArray1<f64>> = reference_points.bind(py);
+        let readonly: PyReadonlyArray1<f64> = array_ref.readonly();
+        readonly.as_array().to_owned()
+    })
 }

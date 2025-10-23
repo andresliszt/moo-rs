@@ -15,7 +15,7 @@ use numpy::ToPyArray;
 use pyo3::prelude::*;
 
 pub use algorithms::{
-    PyAgeMoea, PyGeneticAlgorithmSOO, PyNsga2, PyNsga3, PyRevea, PyRnsga2, PySpea2,
+    PyAgeMoea, PyGeneticAlgorithmSOO, PyIbea, PyNsga2, PyNsga3, PyRevea, PyRnsga2, PySpea2,
 };
 pub use py_error::{InitializationError, InvalidParameterError, NoFeasibleIndividualsError};
 pub use py_operators::{
@@ -53,6 +53,7 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyAgeMoea>()?;
     m.add_class::<PyRevea>()?;
     m.add_class::<PySpea2>()?;
+    m.add_class::<PyIbea>()?;
     m.add_class::<PyGeneticAlgorithmSOO>()?;
 
     // Add classes from operators

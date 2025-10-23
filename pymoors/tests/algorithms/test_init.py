@@ -8,6 +8,7 @@ from pymoors import (
     GaussianMutation,
     Nsga2,
     Nsga3,
+    Ibea,
     RandomSamplingFloat,
     Revea,
     Rnsga2,
@@ -47,6 +48,7 @@ def common_kwargs():
     [
         (Nsga2, {}),
         (Spea2, {}),
+        (Ibea, {"kappa": 0.001, "reference_points": np.array([1.005, 1.005, 1.005])}),
         (AgeMoea, {}),
         (
             Nsga3,

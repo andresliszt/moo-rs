@@ -3,13 +3,13 @@ use ordered_float::OrderedFloat;
 use std::collections::HashSet;
 
 use moors::{
-    AgeMoeaBuilder, ArithmeticCrossover, CloseDuplicatesCleaner, GaussianMutation, Nsga2Builder,
-    Nsga3Builder, Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat, ReveaBuilder,
-    Rnsga2Builder, SimulatedBinaryCrossover, Spea2Builder, UniformRealMutation,
+    AgeMoeaBuilder, ArithmeticCrossover, CloseDuplicatesCleaner, GaussianMutation, IbeaBuilder,
+    Nsga2Builder, Nsga3Builder, Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat,
+    ReveaBuilder, Rnsga2Builder, SimulatedBinaryCrossover, Spea2Builder, UniformRealMutation,
     impl_constraints_fn,
     survival::moo::{
-        DanAndDenisReferencePoints, Nsga3ReferencePoints, ReveaReferencePointsSurvival,
-        Rnsga2ReferencePointsSurvival, StructuredReferencePoints,
+        DanAndDenisReferencePoints, IbeaHyperVolumeSurvivalOperator, Nsga3ReferencePoints,
+        ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, StructuredReferencePoints,
     },
 };
 
@@ -101,6 +101,39 @@ fn test_agemoea() {
         .expect("failed to build AgeMoea");
 
     algorithm.run().expect("AgeMoea run failed");
+    let population = algorithm
+        .population()
+        .expect("population should have been initialized");
+    assert_small_real_front(&population);
+}
+
+#[test]
+fn test_ibea() {
+    let hv_reference = array![1.1, 1.1];
+    let kappa = 0.05;
+    let survivor = IbeaHyperVolumeSurvivalOperator::new(hv_reference.clone(), kappa);
+
+    let mut algorithm = IbeaBuilder::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.5, 0.01))
+        .survivor(survivor)
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective)
+        .constraints_fn(MyConstr)
+        .num_vars(2)
+        .population_size(100)
+        .num_offsprings(100)
+        .num_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .seed(1729)
+        .build()
+        .expect("failed to build IBEA");
+
+    algorithm.run().expect("IBEA run failed");
     let population = algorithm
         .population()
         .expect("population should have been initialized");
