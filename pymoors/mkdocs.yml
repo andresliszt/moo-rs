@@ -81,6 +81,7 @@ nav:
       - AGE-MOEA: user_guide/algorithms/agemoea.md
       - REVEA: user_guide/algorithms/revea.md
       - SPEA-II: user_guide/algorithms/spea2.md
+      - IBEA: user_guide/algorithms/ibea.md
   - API docs (moors): https://docs.rs/moors/latest/moors/
 
 plugins:

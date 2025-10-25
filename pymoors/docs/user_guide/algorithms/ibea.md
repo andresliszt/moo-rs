@@ -23,19 +23,6 @@ Following Zitzler & Künzli (2004), fitness is assigned from pairwise indicator 
 - **Diversity via the Indicator:**
   Unlike crowding-distance methods, diversity emerges **implicitly** because hypervolume rewards sets that cover the Pareto front and expand the dominated volume. Regions that enlarge the dominated space receive higher preference.
 
-- **Variation Operators:**
-  Mating selection is typically tournament-based on fitness, while variation employs standard operators (e.g., **SBX** crossover and **polynomial mutation**) as in other evolutionary algorithms.
-
-- **Computational Considerations:**
-  The cost of fitness updates depends on the **hypervolume computation**. Exact hypervolume is efficient for **two objectives** ($\mathcal{O}(N \log N)$ with sorting) and becomes increasingly expensive with higher dimensions; practical implementations often use **Monte Carlo** or **FPR/FPO** estimators for $M \ge 4$ to trade accuracy for speed.
-
-- **Constraint Handling:**
-  In this implementation, constraints are handled using a **feasible-first** policy consistent with the constraint-domination principle:
-  1. **Feasible vs. Infeasible:** Feasible solutions (all constraints satisfied) are always preferred.
-  2. **Feasible–Feasible:** Compare by the IBEA fitness (hypervolume-based).
-  3. **Infeasible–Infeasible:** Prefer the one with **smaller total violation**; ties broken by IBEA fitness computed on **penalized objectives**.
-
-  Alternative strategies (e.g., $\varepsilon$-constraint or augmented Lagrangian penalties) can be substituted without altering the core selection mechanism.
 
 ---
 
@@ -45,6 +32,7 @@ In `moo-rs`, the IBEA implementation uses the **hypervolume indicator** as the c
 
 ### Normalization of Objectives
 Before computing hypervolume contributions, all objective values are **normalized to [0,1]** using the **ideal** and **nadir points**:
+
 - **Ideal point:** Best observed value for each objective.
 - **Nadir point:** Worst observed value for each objective.
 
@@ -63,7 +51,7 @@ IH(\{x, y\}) - IH(x), & \text{otherwise}.
 $$
 
 Where:
-- **IH(S)** denotes the **hypervolume** of a set \( S \) with respect to a **reference point** \( r \).
+- $IH(S)$ denotes the **hypervolume** of a set $S$ with respect to a **reference point** $r$.
 - The hypervolume of a singleton $\{x\}$ is the **Lebesgue measure** of the region dominated by $\{x\}$ and bounded by $\{r \}$.
 
 ---
@@ -72,13 +60,13 @@ Where:
 
 - **IH(x):**
   The hypervolume of the singleton set $\{x\}$. This is the volume of the hyperrectangle formed between the point $\{x\}$ and the reference point $\{r\}$.
-  For a minimization problem with \( m \) objectives:
+  For a minimization problem with $m$ objectives:
   $$
   IH(x) = \prod_{i=1}^{m} (r_i - f_i(x)),
   $$
   where $f_i(x)$ is the $i$-th objective value of solution $x$, and $r_i$ is the $i$-th component of the reference point.
 
-- **IH(\{x, y\}):**
+- $IH(\{x, y\})$:
   The hypervolume of the set containing both $\{x\}$ and $\{y\}$. This accounts for the **union of dominated regions** by both points, avoiding double-counting overlapping areas.
 
 ---
@@ -126,6 +114,15 @@ To avoid this, choose $r$ significantly larger than the normalized range (e.g., 
   - **Scalable Dimensionality:** As $n$ increases, **linkage** via $g(\mathbf{x})$ raises difficulty by coupling objectives with many variables.
 
 ---
+
+
+=== "Rust"
+    {% include-markdown "user_guide/algorithms/rust/ibea.md" %}
+
+=== "Python"
+    {% include-markdown "user_guide/algorithms/python/ibea.md" %}
+
+
 
 ## References
 
