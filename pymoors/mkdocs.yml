@@ -61,8 +61,7 @@ extra_css:
   - stylesheets/extra.css
 
 nav:
-  - Home: index.md
-  - Getting Started:
+  - Get Started:
     - Moo-rs : getting_started/moors.md
     - Installation: getting_started/installation.md
     - Knapsack Problem: getting_started/knapsack.md
