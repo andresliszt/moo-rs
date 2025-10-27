@@ -34,14 +34,14 @@ A concise index of the currently available algorithms.
 
 | Algorithm | Description |
 |---|---|
-| [NSGA-II](../user_guide/algorithms/nsga2.md) | Baseline Pareto-based MOEA with fast non-dominated sorting and crowding distance. Robust, widely used for 2–3 objectives. |
-| [NSGA-III](../user_guide/algorithms/nsga3.md) | Many-objective extension of NSGA-II using reference points to maintain diversity and guide convergence. |
-| [IBEA](../user_guide/algorithms/ibea.md) | Indicator-Based EA that optimizes a quality indicator (e.g., hypervolume/ε-indicator) to drive selection. |
-| [SPEA-II](../user_guide/algorithms/spea2.md) | Strength Pareto EA with enhanced fitness assignment, density estimation (k-NN), and external archive. |
-| [AGEMOEA](../user_guide/algorithms/agemoea.md) | Approximation-guided MOEA that directly improves the Pareto-front approximation via set-level indicators. |
-| [RNSGA-II](../user_guide/algorithms/rnsga2.md) | Reference-point oriented NSGA-II variant; biases the search toward regions of interest while preserving diversity. |
-| [REVEA](../user_guide/algorithms/revea.md) | Reference vector/region–guided evolutionary algorithm using directional vectors to balance diversity and convergence. |
-| [Custom Defined Algorithms](../user_guide/algorithms/custom/custom.md) | User defined algorithms by defining selection and survival operators|
+| [NSGA-II](user_guide/algorithms/nsga2.md) | Baseline Pareto-based MOEA with fast non-dominated sorting and crowding distance. Robust, widely used for 2–3 objectives. |
+| [NSGA-III](user_guide/algorithms/nsga3.md) | Many-objective extension of NSGA-II using reference points to maintain diversity and guide convergence. |
+| [IBEA](user_guide/algorithms/ibea.md) | Indicator-Based EA that optimizes a quality indicator (e.g., hypervolume/ε-indicator) to drive selection. |
+| [SPEA-II](user_guide/algorithms/spea2.md) | Strength Pareto EA with enhanced fitness assignment, density estimation (k-NN), and external archive. |
+| [AGEMOEA](user_guide/algorithms/agemoea.md) | Approximation-guided MOEA that directly improves the Pareto-front approximation via set-level indicators. |
+| [RNSGA-II](user_guide/algorithms/rnsga2.md) | Reference-point oriented NSGA-II variant; biases the search toward regions of interest while preserving diversity. |
+| [REVEA](user_guide/algorithms/revea.md) | Reference vector/region–guided evolutionary algorithm using directional vectors to balance diversity and convergence. |
+| [Custom Defined Algorithms](user_guide/algorithms/custom/custom.md) | User defined algorithms by defining selection and survival operators|
 
 ## Introduction to Multi-Objective Optimization
 
@@ -69,7 +69,7 @@ Unlike single-objective optimization, here we seek to optimize *all* objectives 
 
 ## Quickstart
 
-The well known [ZTD3](../user_guide/algorithms/nsga2.md#zdt3-problem) problem solved with the [NSGA-II](../user_guide/algorithms/nsga2.md) algorithm!
+The well known [ZTD3](user_guide/algorithms/nsga2.md#zdt3-problem) problem solved with the [NSGA-II](user_guide/algorithms/nsga2.md) algorithm!
 
 === "Rust"
     {% include-markdown "user_guide/algorithms/python/nsga2.md" %}
@@ -88,7 +88,7 @@ The well known [ZTD3](../user_guide/algorithms/nsga2.md#zdt3-problem) problem so
 In this unique optimization problem, there is only one individual who optimizes both beauty and misbehavior at the same time: my little dog Arya!
 
 <div style="text-align: center;">
-  <img src="../images/arya.png" alt="Arya" width="500" />
+  <img src="images/arya.png" alt="Arya" width="500" />
 </div>
 
 Arya not only captivates with her beauty, but she also misbehaves in the most adorable way possible. This problem serves as a reminder that sometimes the optimal solution is as heartwarming as it is delightfully mischievous.
