@@ -14,7 +14,7 @@ use crate::{
 /// Implementation of the survival operator for the NSGA3 algorithm presented in the paper
 /// An Evolutionary Many-Objective Optimization Algorithm Using Reference-point Based Non-dominated Sorting Approach
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Nsga3ReferencePoints {
     points: Array2<f64>,
     are_aspirational: bool,
@@ -74,7 +74,7 @@ impl HyperPlaneNormalization for Nsga3HyperPlaneNormalization {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Nsga3ReferencePointsSurvival {
     reference_points: Nsga3ReferencePoints, // Each row is a reference point
 }

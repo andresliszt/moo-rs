@@ -21,7 +21,7 @@
 //! the main population; truncation is handled by the k‑NN density measure.
 //!
 use crate::{
-    create_algorithm,
+    create_algorithm_and_builder,
     selection::moo::RankAndScoringSelection,
     survival::moo::{Spea2KnnSurvival, SurvivalScoringComparison},
 };
