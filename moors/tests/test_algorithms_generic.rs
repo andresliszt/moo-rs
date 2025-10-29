@@ -6,6 +6,7 @@ use moors::{
     AgeMoeaBuilder, ArithmeticCrossover, CloseDuplicatesCleaner, GaussianMutation, IbeaBuilder,
     Nsga2Builder, Nsga3Builder, Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat,
     ReveaBuilder, Rnsga2Builder, SimulatedBinaryCrossover, Spea2Builder, UniformRealMutation,
+    algorithms::{Nsga2BuilderTmp, Nsga3BuilderTmp},
     impl_constraints_fn,
     survival::moo::{
         DanAndDenisReferencePoints, IbeaHyperVolumeSurvivalOperator, Nsga3ReferencePoints,
@@ -53,7 +54,7 @@ impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
 #[test]
 fn test_nsga2() {
-    let mut algorithm = Nsga2Builder::default()
+    let mut algorithm = Nsga2BuilderTmp::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
@@ -74,7 +75,7 @@ fn test_nsga2() {
 
     algorithm.run().expect("NSGA2 run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }
@@ -142,15 +143,13 @@ fn test_ibea() {
 
 #[test]
 fn test_nsga3() {
-    let reference_points = DanAndDenisReferencePoints::new(100, 2);
-    let rp = Nsga3ReferencePoints::new(reference_points.generate(), false);
-    let survivor = Nsga3ReferencePointsSurvival::new(rp);
-
-    let mut algorithm = Nsga3Builder::default()
+    let rp = DanAndDenisReferencePoints::new(100, 2).generate();
+    // let survivor = Nsga3ReferencePointsSurvival::new(rp);
+    let mut algorithm = Nsga3BuilderTmp::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
-        .survivor(survivor)
+        .reference_points(rp)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
         .constraints_fn(MyConstr)
@@ -168,7 +167,7 @@ fn test_nsga3() {
 
     algorithm.run().expect("NSGA3 run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }

@@ -8,7 +8,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Nsga2RankCrowdingSurvival;
 
 impl Nsga2RankCrowdingSurvival {

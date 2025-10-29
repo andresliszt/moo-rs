@@ -11,6 +11,13 @@ impl RandomSelection {
     }
 }
 
+impl Default for RandomSelection {
+    /// Default = use both criteria; maximize survival score.
+    fn default() -> Self {
+        Self {}
+    }
+}
+
 impl SelectionOperator for RandomSelection {
     type FDim = ndarray::Ix2;
 
