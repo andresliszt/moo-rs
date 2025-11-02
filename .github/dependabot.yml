@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Rust dependencies in moors/
+  - package-ecosystem: "cargo"
+    directory: "/moors"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Rust dependencies in pymoors/ (used via pyo3)
+  - package-ecosystem: "cargo"
+    directory: "/pymoors"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Python dependencies in pymoors/
+  - package-ecosystem: "pip"
+    directory: "/pymoors"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
