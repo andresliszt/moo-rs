@@ -44,7 +44,7 @@ fn test_keep_infeasible() {
         .run()
         .expect("run should succeed when keep_infeasible = true");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_eq!(population.len(), 100);
 }
@@ -70,7 +70,7 @@ fn test_keep_infeasible_out_of_bounds() {
         .run()
         .expect("run should succeed even if genes are out of bounds");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_eq!(population.len(), 100);
 }

@@ -36,6 +36,26 @@ use crate::{
 };
 
 create_algorithm_and_builder!(
+    /// NSGA-III algorithm wrapper.
+    ///
+    /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
+    /// the NSGA-III survival and selection strategy.
+    ///
+    /// * **Selection:** [`RandomSelection`]
+    /// * **Survival:**  [`Nsga3ReferencePointsSurvival`] (elitist, reference-point based)
+    ///
+    /// Construct it with [`Nsga3Builder`](crate::algorithms::Nsga3Builder).
+    /// After building, call [`run`](GeneticAlgorithm::run)
+    /// and then [`population`](GeneticAlgorithm::population) to retrieve the
+    /// final non-dominated set.
+    ///
+    /// For algorithmic details, see:
+    /// Kalyanmoy Deb and Himanshu Jain (2014),
+    /// "An Evolutionary Many-Objective Optimization Algorithm Using Reference-Point-Based
+    /// Nondominated Sorting Approach, Part I: Solving Problems with Box Constraints",
+    /// *IEEE Transactions on Evolutionary Computation*, vol. 18, no. 4,
+    /// pp. 577–601, Aug. 2014.
+    /// DOI: 10.1109/TEVC.2013.2281535
     Nsga3,
     RandomSelection,
     Nsga3ReferencePointsSurvival,
@@ -54,9 +74,7 @@ where
     G: ConstraintsFn,
     DC: PopulationCleaner,
 {
-    pub fn build(
-        mut self,
-    ) -> Result<Nsga3<S, Cross, Mut, F, G, DC>, crate::algorithms::AlgorithmBuilderError> {
+    pub fn build(mut self) -> Result<Nsga3<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
         let aspirational = self.are_aspirational.unwrap_or(false);
         let rp = self
             .reference_points

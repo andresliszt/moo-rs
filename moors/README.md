@@ -77,7 +77,7 @@ fn main() -> Result<(), AlgorithmError> {
         .build()?;
 
     algorithm.run()?;
-    let population = algorithm.population()?;
+    let population = algorithm.population?;
     println!("Done! Population size: {}", population.len());
 
     Ok(())

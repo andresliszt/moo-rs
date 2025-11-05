@@ -17,13 +17,21 @@
 //!
 //! The default configuration keeps a single population (no external archive).
 
+use ndarray::Array1;
+
 use crate::{
-    create_algorithm,
-    selection::moo::RankAndScoringSelection,
-    survival::moo::{IbeaHyperVolumeSurvivalOperator, SurvivalScoringComparison},
+    algorithms::AlgorithmBuilderError,
+    create_algorithm_and_builder,
+    duplicates::PopulationCleaner,
+    evaluator::{ConstraintsFn, FitnessFn},
+    operators::{
+        CrossoverOperator, MutationOperator, SamplingOperator, SelectionOperator, SurvivalOperator,
+        selection::moo::RankAndScoringSelection,
+        survival::moo::{IbeaHyperVolumeSurvivalOperator, SurvivalScoringComparison},
+    },
 };
 
-create_algorithm!(
+create_algorithm_and_builder!(
     /// IBEA algorithm wrapper.
     ///
     /// Thin façade over [`GeneticAlgorithm`] preset with IBEA’s selection/survival strategy.
@@ -40,47 +48,37 @@ create_algorithm!(
     /// EMO 2004, LNCS 3248, Springer.
     Ibea,
     RankAndScoringSelection,
-    IbeaHyperVolumeSurvivalOperator
+    IbeaHyperVolumeSurvivalOperator,
+    extras = [reference: Array1<f64>, kappa: f64],
+    override_build_method = true
 );
 
-impl<S, Cross, Mut, F, G, DC> Default for IbeaBuilder<S, Cross, Mut, F, G, DC>
+impl<S, Cross, Mut, F, G, DC> IbeaBuilder<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
+    RankAndScoringSelection: SelectionOperator<FDim = F::Dim>,
+    IbeaHyperVolumeSurvivalOperator: SurvivalOperator<FDim = F::Dim>,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
+    F: FitnessFn,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmBuilder<
-        S,
-        RankAndScoringSelection,
-        IbeaHyperVolumeSurvivalOperator,
-        Cross,
-        Mut,
-        F,
-        G,
-        DC,
-    >: Default,
 {
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RankAndScoringSelection,
-            IbeaHyperVolumeSurvivalOperator,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
+    pub fn build(mut self) -> Result<Ibea<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
+        let kappa = self.kappa.unwrap_or(0.05);
 
+        let rp = self
+            .reference
+            .ok_or(AlgorithmBuilderError::UninitializedField(
+                "reference_points",
+            ))?;
+
+        let survivor = IbeaHyperVolumeSurvivalOperator::new(rp, kappa);
         // Selector operator uses scoring survival given by the raw fitness but it doesn't use rank
         let selector =
             RankAndScoringSelection::new(false, true, SurvivalScoringComparison::Maximize);
-
-        inner = inner.selector(selector);
-        IbeaBuilder {
-            inner_builder: inner,
-        }
+        self.inner = self.inner.survivor(survivor);
+        self.inner = self.inner.selector(selector);
+        Ok(self.inner.build()?)
     }
 }

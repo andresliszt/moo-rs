@@ -66,7 +66,9 @@ nav:
     - Installation: getting_started/installation.md
     - Knapsack Problem: getting_started/knapsack.md
     - Small Real Valued Problem: getting_started/real_valued.md
-  - Development: development.md
+  - Development:
+    - Setting up an Environment: development/setup_environment.md
+    - Setting up a new Algorithm: development/setup_algorithm.md
   - User Guide:
     - Fitness and Constraints: user_guide/fitness_and_constraints/fitness_and_constraints.md
     - Genetic Operators: user_guide/operators/operators.md

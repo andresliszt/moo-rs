@@ -15,7 +15,6 @@ use moors::{
         SimulatedBinaryCrossover,
         DanAndDenisReferencePoints,
         StructuredReferencePoints,
-        ReveaReferencePointsSurvival
     },
     genetic::Population,
 };
@@ -120,13 +119,14 @@ let population: Population<Ix2, Ix2> = {
     let rp = DanAndDenisReferencePoints::new(101, 3).generate();
     let alpha = 2.5;
     let frequency = 0.2;
-    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency, num_iterations);
 
     let mut algorithm = ReveaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(10.0)) // distribution_index = 10
         .mutation(GaussianMutation::new(0.1, 0.01))     // gene_mutation_rate = 0.1, sigma = 0.01
-        .survivor(survivor)
+        .reference_points(rp)
+        .alpha(2.5)
+        .frequency(frequency)
         .fitness_fn(evaluate_dtlz2)
         .constraints_fn(BoundConstraints)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-8))
@@ -144,7 +144,7 @@ let population: Population<Ix2, Ix2> = {
 
     // Run the algorithm
     algorithm.run().expect("REVEA run failed");
-    algorithm.population().unwrap().clone()
+    algorithm.population.unwrap().clone()
 };
 
 // Define again rp just for plotting

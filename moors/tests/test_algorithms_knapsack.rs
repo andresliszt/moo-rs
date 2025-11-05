@@ -58,7 +58,7 @@ fn test_knapsack_nsga2_small_binary() {
 
     algorithm.run().expect("NSGA2 run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     let pareto = population.best();
 

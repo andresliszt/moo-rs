@@ -63,7 +63,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
 
             algorithm.run().expect("NSGA3 run failed");
             // prevent optimizer from eliding the result
-            black_box(algorithm.population().expect("Population getter failed"));
+            black_box(algorithm.population.expect("Population getter failed"));
         })
     });
 }

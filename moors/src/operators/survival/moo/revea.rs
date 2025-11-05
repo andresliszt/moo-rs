@@ -15,7 +15,7 @@ use crate::{
 /// Implementation of the survival operator for the REVEA algorithm presented in the paper
 /// A Reference Vector Guided Evolutionary Algorithm for Many-objective Optimization
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ReveaReferencePointsSurvival {
     reference_points: Array2<f64>,
     initial_reference_points: Array2<f64>,

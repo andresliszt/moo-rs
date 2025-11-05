@@ -72,7 +72,7 @@
 //!         .build()?;
 //!
 //!     algo.run()?;
-//!     println!("Final population size: {}", algo.population()?.len());
+//!     println!("Final population size: {}", algo.population.ok_or(None));
 //!     Ok(())
 //! }
 //! ```
@@ -89,7 +89,6 @@
 //! ---
 
 extern crate core;
-#[macro_use]
 extern crate paste;
 
 pub mod algorithms;

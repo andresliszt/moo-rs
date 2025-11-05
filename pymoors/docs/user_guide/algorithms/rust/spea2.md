@@ -88,7 +88,7 @@ let population: Population<Ix2, Ix2> = {
 
     // Run SPEA2 on ZDT6
     algorithm.run().expect("SPEA2 run failed");
-    algorithm.population().unwrap().clone()
+    algorithm.population.unwrap().clone()
 };
 
 

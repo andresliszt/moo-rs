@@ -41,7 +41,7 @@ impl HyperPlaneNormalization for AgeMoeaHyperPlaneNormalization {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AgeMoeaSurvival;
 
 impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {

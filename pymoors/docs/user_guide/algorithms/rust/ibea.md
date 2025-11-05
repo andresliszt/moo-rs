@@ -8,10 +8,7 @@ use moors::{
     impl_constraints_fn,
     algorithms::IbeaBuilder,
     duplicates::CloseDuplicatesCleaner,
-    operators::{
-        GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
-        survival::moo::IbeaHyperVolumeSurvivalOperator,
-    },
+    operators::{GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover},
     genetic::Population
 };
 use plotters::prelude::*;
@@ -80,13 +77,13 @@ let population: Population<Ix2, Ix2> = {
     let hv_reference = array![4.0, 4.0];
     // kappa controls the selection pressure in IBEA
     let kappa = 0.05;
-    let survivor = IbeaHyperVolumeSurvivalOperator::new(hv_reference, kappa);
 
     let mut algorithm = IbeaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.1, 0.1))
-        .survivor(survivor)
+        .reference(hv_reference.clone()) // clone because we will plot it later
+        .kappa(kappa)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(evaluate_expo2)
         .constraints_fn(BoundConstraints)
@@ -106,7 +103,7 @@ let population: Population<Ix2, Ix2> = {
     // Run IBEA
     // ===============
     algorithm.run().expect("IBEA run failed");
-    algorithm.population().unwrap().clone()
+    algorithm.population.unwrap().clone()
 };
 
 // Best front (Population)

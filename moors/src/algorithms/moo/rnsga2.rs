@@ -26,13 +26,21 @@
 //! point ≤ ε as equally preferred.
 //!
 
+use ndarray::Array2;
+
 use crate::{
-    create_algorithm,
-    selection::moo::RankAndScoringSelection,
-    survival::moo::{Rnsga2ReferencePointsSurvival, SurvivalScoringComparison},
+    algorithms::AlgorithmBuilderError,
+    create_algorithm_and_builder,
+    duplicates::PopulationCleaner,
+    evaluator::{ConstraintsFn, FitnessFn},
+    operators::{
+        CrossoverOperator, MutationOperator, SamplingOperator, SelectionOperator, SurvivalOperator,
+        selection::moo::RankAndScoringSelection,
+        survival::moo::{Rnsga2ReferencePointsSurvival, SurvivalScoringComparison},
+    },
 };
 
-create_algorithm!(
+create_algorithm_and_builder!(
     /// R-NSGA-II algorithm wrapper.
     ///
     /// Thin facade around [`GeneticAlgorithm`] pre-configured with
@@ -51,46 +59,36 @@ create_algorithm!(
     /// preference-biased Pareto set.
     Rnsga2,
     RankAndScoringSelection,
-    Rnsga2ReferencePointsSurvival
+    Rnsga2ReferencePointsSurvival,
+    extras = [reference_points: Array2<f64>, epsilon: f64],
+    override_build_method = true
 );
 
-impl<S, Cross, Mut, F, G, DC> Default for Rnsga2Builder<S, Cross, Mut, F, G, DC>
+impl<S, Cross, Mut, F, G, DC> Rnsga2Builder<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
+    RankAndScoringSelection: SelectionOperator<FDim = F::Dim>,
+    Rnsga2ReferencePointsSurvival: SurvivalOperator<FDim = F::Dim>,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
+    F: FitnessFn,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmBuilder<
-        S,
-        RankAndScoringSelection,
-        Rnsga2ReferencePointsSurvival,
-        Cross,
-        Mut,
-        F,
-        G,
-        DC,
-    >: Default,
 {
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RankAndScoringSelection,
-            Rnsga2ReferencePointsSurvival,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
+    pub fn build(mut self) -> Result<Rnsga2<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
+        let eps = self.epsilon.unwrap_or(0.05);
 
+        let rp = self
+            .reference_points
+            .ok_or(AlgorithmBuilderError::UninitializedField(
+                "reference_points",
+            ))?;
+
+        let survivor = Rnsga2ReferencePointsSurvival::new(rp, eps);
         let selector =
             RankAndScoringSelection::new(true, true, SurvivalScoringComparison::Minimize);
-
-        inner = inner.selector(selector);
-        Rnsga2Builder {
-            inner_builder: inner,
-        }
+        self.inner = self.inner.survivor(survivor);
+        self.inner = self.inner.selector(selector);
+        Ok(self.inner.build()?)
     }
 }

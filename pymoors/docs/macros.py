@@ -7,7 +7,7 @@ def define_env(env):
     base = f"https://docs.rs/moors/{version}/moors/"
 
     @env.macro
-    def docs_rs(item_type: str, path: str, label: str | None = None) -> str:
+    def docs_rs(item_type: str, path: str, label: str | None = None, method: str | None = None, tymethod: str | None = None) -> str:
         parts = path.split(".")
         name, *rest = parts[::-1]
         # reconstruct the URL path
@@ -16,6 +16,12 @@ def define_env(env):
         else:
             parts_url = f"{item_type}.{name}.html"
         url = base + parts_url
+        if method:
+            url = url + f"#method.{method}"
+
+        if tymethod:
+            url = url + f"#tymethod.{method}"
+
         text = label or name
         # return raw HTML
         return f'<a href="{url}" target="_blank" rel="noopener">{text}</a>'

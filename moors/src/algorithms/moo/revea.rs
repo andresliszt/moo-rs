@@ -29,11 +29,20 @@
 //! * `frequency` – how often (in generations) the reference set is refreshed.
 //!
 
+use ndarray::Array2;
+
 use crate::{
-    create_algorithm, selection::moo::RandomSelection, survival::moo::ReveaReferencePointsSurvival,
+    algorithms::AlgorithmBuilderError,
+    create_algorithm_and_builder,
+    duplicates::PopulationCleaner,
+    evaluator::{ConstraintsFn, FitnessFn},
+    operators::{
+        CrossoverOperator, MutationOperator, SamplingOperator, SelectionOperator, SurvivalOperator,
+        selection::moo::RandomSelection, survival::moo::ReveaReferencePointsSurvival,
+    },
 };
 
-create_algorithm!(
+create_algorithm_and_builder!(
     /// REVEA algorithm wrapper.
     ///
     /// Thin facade around [`GeneticAlgorithm`] pre-configured with
@@ -52,34 +61,39 @@ create_algorithm!(
     /// Pareto approximation.
     Revea,
     RandomSelection,
-    ReveaReferencePointsSurvival
+    ReveaReferencePointsSurvival,
+    extras = [reference_points: Array2<f64>, alpha: f64, frequency: f64],
+    override_build_method = true
 );
 
-impl<S, Cross, Mut, F, G, DC> Default for ReveaBuilder<S, Cross, Mut, F, G, DC>
+impl<S, Cross, Mut, F, G, DC> ReveaBuilder<S, Cross, Mut, F, G, DC>
 where
     S: SamplingOperator,
+    RandomSelection: SelectionOperator<FDim = F::Dim>,
+    ReveaReferencePointsSurvival: SurvivalOperator<FDim = F::Dim>,
     Cross: CrossoverOperator,
     Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
+    F: FitnessFn,
     G: ConstraintsFn,
     DC: PopulationCleaner,
-    AlgorithmBuilder<S, RandomSelection, ReveaReferencePointsSurvival, Cross, Mut, F, G, DC>:
-        Default,
 {
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RandomSelection,
-            ReveaReferencePointsSurvival,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
-        inner = inner.selector(RandomSelection);
-        ReveaBuilder {
-            inner_builder: inner,
-        }
+    pub fn build(mut self) -> Result<Revea<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
+        let alpha = self.alpha.unwrap_or(2.5);
+        let frequency = self.frequency.unwrap_or(0.2);
+
+        let rp = self
+            .reference_points
+            .ok_or(AlgorithmBuilderError::UninitializedField(
+                "reference_points",
+            ))?;
+
+        let iterations = self
+            .inner
+            .num_iterations
+            .ok_or(AlgorithmBuilderError::UninitializedField("num_iterations"))?;
+
+        let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency, iterations);
+        self.inner = self.inner.survivor(survivor);
+        Ok(self.inner.build()?)
     }
 }
