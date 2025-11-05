@@ -27,7 +27,7 @@ paste = "1.0.15"
 [dev-dependencies]
 criterion = "0.5.1"
 rstest = "0.25.0"
-codspeed-criterion-compat = "2"
+codspeed-criterion-compat = "4"
 
 [[bench]]
 name = "fds"
