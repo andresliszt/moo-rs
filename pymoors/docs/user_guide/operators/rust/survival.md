@@ -3,7 +3,7 @@ The survival operator follows the same logic than selection operator, in that ea
 
 First, determine whether your algorithm uses ranking. If it does, implement the trait: {{ docs_rs("trait", "operators.survival.moo.FrontsAndRankingBasedSurvival") }}. If not, implement: {{ docs_rs("trait", "operators.survival.moo.SurvivalOperator") }}
 
-We use [NSGA-II](../user_guide/algorithms/nsga2.md) as an example, which uses both ranking and survival scoring.
+We use [NSGA-II](../../algorithms/nsga2.md) as an example, which uses both ranking and survival scoring.
 
 ```rust
 use ndarray::{Array1, Array2};
