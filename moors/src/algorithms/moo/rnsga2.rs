@@ -25,22 +25,16 @@
 //! to [`Rnsga2::new`]; the survivor will treat individuals whose distance to a
 //! point ≤ ε as equally preferred.
 //!
-
 use ndarray::Array2;
 
 use crate::{
-    algorithms::AlgorithmBuilderError,
-    create_algorithm_and_builder,
-    duplicates::PopulationCleaner,
-    evaluator::{ConstraintsFn, FitnessFn},
+    define_algorithm_and_builder,
     operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator, SelectionOperator, SurvivalOperator,
-        selection::moo::RankAndScoringSelection,
-        survival::moo::{Rnsga2ReferencePointsSurvival, SurvivalScoringComparison},
+        selection::moo::Rnsga2RankScoringSelection, survival::moo::Rnsga2ReferencePointsSurvival,
     },
 };
 
-create_algorithm_and_builder!(
+define_algorithm_and_builder!(
     /// R-NSGA-II algorithm wrapper.
     ///
     /// Thin facade around [`GeneticAlgorithm`] pre-configured with
@@ -58,37 +52,7 @@ create_algorithm_and_builder!(
     /// with [`Rnsga2::new`]; then call `run()` and `population()` to retrieve the
     /// preference-biased Pareto set.
     Rnsga2,
-    RankAndScoringSelection,
+    Rnsga2RankScoringSelection,
     Rnsga2ReferencePointsSurvival,
-    extras = [reference_points: Array2<f64>, epsilon: f64],
-    override_build_method = true
+    survival_args = [reference_points: Array2<f64>, epsilon: f64],
 );
-
-impl<S, Cross, Mut, F, G, DC> Rnsga2Builder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    RankAndScoringSelection: SelectionOperator<FDim = F::Dim>,
-    Rnsga2ReferencePointsSurvival: SurvivalOperator<FDim = F::Dim>,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-{
-    pub fn build(mut self) -> Result<Rnsga2<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
-        let eps = self.epsilon.unwrap_or(0.05);
-
-        let rp = self
-            .reference_points
-            .ok_or(AlgorithmBuilderError::UninitializedField(
-                "reference_points",
-            ))?;
-
-        let survivor = Rnsga2ReferencePointsSurvival::new(rp, eps);
-        let selector =
-            RankAndScoringSelection::new(true, true, SurvivalScoringComparison::Minimize);
-        self.inner = self.inner.survivor(survivor);
-        self.inner = self.inner.selector(selector);
-        Ok(self.inner.build()?)
-    }
-}

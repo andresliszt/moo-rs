@@ -16,26 +16,17 @@
 //! * **Selection:** [`RandomSelection`] (uniform binary tournament)
 //! * **Survival:**  [`Nsga3ReferencePointsSurvival`] (rank + reference‑point niching)
 //! * **Crossover / Mutation / Sampling:** user‑provided via the builder.
-//!
-//! You supply the *reference points*—typically generated with
-//! [`Nsga3ReferencePoints::from_simplex_lattice`] or a custom constructor—and
-//! the algorithm handles association and niche preservation automatically.
 
 use ndarray::Array2;
 
 use crate::{
-    algorithms::AlgorithmBuilderError,
-    create_algorithm_and_builder,
-    duplicates::PopulationCleaner,
-    evaluator::{ConstraintsFn, FitnessFn},
+    define_algorithm_and_builder,
     operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator, SelectionOperator, SurvivalOperator,
-        selection::moo::RandomSelection,
-        survival::moo::{Nsga3ReferencePoints, Nsga3ReferencePointsSurvival},
+        selection::moo::Nsga3RandomSelection, survival::moo::Nsga3ReferencePointsSurvival,
     },
 };
 
-create_algorithm_and_builder!(
+define_algorithm_and_builder!(
     /// NSGA-III algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -57,34 +48,7 @@ create_algorithm_and_builder!(
     /// pp. 577–601, Aug. 2014.
     /// DOI: 10.1109/TEVC.2013.2281535
     Nsga3,
-    RandomSelection,
+    Nsga3RandomSelection,
     Nsga3ReferencePointsSurvival,
-    extras = [ reference_points: Array2<f64>, are_aspirational: bool ],
-    override_build_method = true
+    survival_args = [ reference_points: Array2<f64>, are_aspirational: bool ]
 );
-
-impl<S, Cross, Mut, F, G, DC> Nsga3Builder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    RandomSelection: SelectionOperator<FDim = F::Dim>,
-    Nsga3ReferencePointsSurvival: SurvivalOperator<FDim = F::Dim>,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-{
-    pub fn build(mut self) -> Result<Nsga3<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
-        let aspirational = self.are_aspirational.unwrap_or(false);
-        let rp = self
-            .reference_points
-            .ok_or(AlgorithmBuilderError::UninitializedField(
-                "reference_points",
-            ))?;
-
-        let rp = Nsga3ReferencePoints::new(rp, aspirational);
-        let survivor = Nsga3ReferencePointsSurvival::new(rp);
-        self.inner = self.inner.survivor(survivor);
-        Ok(self.inner.build()?)
-    }
-}

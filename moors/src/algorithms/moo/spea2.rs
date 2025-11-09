@@ -22,18 +22,11 @@
 //!
 
 use crate::{
-    algorithms::AlgorithmBuilderError,
-    create_algorithm_and_builder,
-    duplicates::PopulationCleaner,
-    evaluator::{ConstraintsFn, FitnessFn},
-    operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator, SelectionOperator, SurvivalOperator,
-        selection::moo::RankAndScoringSelection,
-        survival::moo::{Spea2KnnSurvival, SurvivalScoringComparison},
-    },
+    define_algorithm_and_builder,
+    operators::{selection::moo::Spea2ScoringSelection, survival::moo::Spea2KnnSurvival},
 };
 
-create_algorithm_and_builder!(
+define_algorithm_and_builder!(
     /// SPEA-II algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -53,27 +46,6 @@ create_algorithm_and_builder!(
     /// TIK-Report 103, Computer Engineering and Networks Laboratory,
     /// ETH Zurich, Switzerland, 2001.
     Spea2,
-    RankAndScoringSelection,
-    Spea2KnnSurvival,
-    override_build_method = true
+    Spea2ScoringSelection,
+    Spea2KnnSurvival
 );
-
-impl<S, Cross, Mut, F, G, DC> Spea2Builder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    RankAndScoringSelection: SelectionOperator<FDim = F::Dim>,
-    Spea2KnnSurvival: SurvivalOperator<FDim = F::Dim>,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-{
-    pub fn build(mut self) -> Result<Spea2<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
-        // Selector operator uses scoring survival given by the raw fitness but it doesn't use rank
-        let selector =
-            RankAndScoringSelection::new(false, true, SurvivalScoringComparison::Maximize);
-        self.inner = self.inner.selector(selector);
-        Ok(self.inner.build()?)
-    }
-}

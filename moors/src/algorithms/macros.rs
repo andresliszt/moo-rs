@@ -1,67 +1,60 @@
 #[macro_export]
-macro_rules! create_algorithm_and_builder {
-    // Public API — with `extras = [...]` + explicit override_build flag
-    ($(#[$meta:meta])* $algorithm:ident, $selector:ty, $survivor:ty,
-        extras = [ $( $ef:ident : $ety:ty ),+ $(,)? ],
-        override_build_method = $ov:tt
+macro_rules! define_algorithm_and_builder {
+    // === API: with override_build_method  ===
+    (
+        $(#[$meta:meta])*
+        $algorithm:ident, $selector:ty, $survivor:ty
+        $(, selection_args = [ $( $larg:ident : $lty:ty ),* $(,)? ])?
+        $(, survival_args  = [ $( $sarg:ident : $sty:ty ),* $(,)? ])?
+        $(, shared_survival_args = [ $( $ss:ident : $ssty:ty ),* $(,)? ])?
+        , override_build_method = $ov:tt
+        $(,)?
     ) => {
-        $crate::create_algorithm_and_builder! {
+        define_algorithm_and_builder! {
             @impl
             ($(#[$meta])*) $algorithm, $selector, $survivor,
-            extras: [ $( $ef : $ety ),+ ],
+            selection: [ $( $( $larg : $lty ),* )? ],
+            survival:  [ $( $( $sarg : $sty ),* )? ],
+            shared:    [ $( $( $ss   : $ssty),* )? ],
             override_build: $ov
         }
     };
 
-    // Public API — with `extras = [...]` and default override_build = false
-    ($(#[$meta:meta])* $algorithm:ident, $selector:ty, $survivor:ty,
-        extras = [ $( $ef:ident : $ety:ty ),+ $(,)? ]
+    // === API: w.o override_build_method (default = false) ===
+    (
+        $(#[$meta:meta])*
+        $algorithm:ident, $selector:ty, $survivor:ty
+        $(, selection_args = [ $( $larg:ident : $lty:ty ),* $(,)? ])?
+        $(, survival_args  = [ $( $sarg:ident : $sty:ty ),* $(,)? ])?
+        $(, shared_survival_args = [ $( $ss:ident : $ssty:ty ),* $(,)? ])?
+        $(,)? // trailing comma opcional
     ) => {
-        $crate::create_algorithm_and_builder! {
-            @impl
-            ($(#[$meta])*) $algorithm, $selector, $survivor,
-            extras: [ $( $ef : $ety ),+ ],
-            override_build: false
-        }
+        define_algorithm_and_builder!(
+            $(#[$meta])*
+            $algorithm, $selector, $survivor,
+            selection_args = [ $( $( $larg : $lty ),* )? ],
+            survival_args  = [ $( $( $sarg : $sty ),* )? ],
+            shared_survival_args = [ $( $( $ss : $ssty ),* )? ],
+            override_build_method = false
+        );
     };
 
-    // Public API — without extras + explicit override_build flag
-    ($(#[$meta:meta])* $algorithm:ident, $selector:ty, $survivor:ty,
-        override_build_method = $ov:tt
-    ) => {
-        $crate::create_algorithm_and_builder! {
-            @impl
-            ($(#[$meta])*) $algorithm, $selector, $survivor,
-            extras: [ ],
-            override_build: $ov
-        }
-    };
-
-    // Public API — without extras, default override_build = false
-    ($(#[$meta:meta])* $algorithm:ident, $selector:ty, $survivor:ty) => {
-        $crate::create_algorithm_and_builder! {
-            @impl
-            ($(#[$meta])*) $algorithm, $selector, $survivor,
-            extras: [ ],
-            override_build: false
-        }
-    };
-
-    // -------- Single implementation (no duplication of setters/forwarders) --------
+    // ============================ Impl block =============================
     (@impl
         ($(#[$meta:meta])*) $algorithm:ident, $selector:ty, $survivor:ty,
-        extras: [ $( $ef:ident : $ety:ty ),* ],
+        selection: [ $( $larg:ident : $lty:ty ),* ],
+        survival:  [ $( $sarg:ident : $sty:ty ),* ],
+        shared:    [ $( $ss:ident   : $ssty:ty ),* ],
         override_build: $ov:tt
     ) => {
         ::paste::paste! {
-            // Public type alias
             $(#[$meta])*
             pub type $algorithm<S, Cross, Mut, F, G, DC> =
                 $crate::algorithms::GeneticAlgorithm<
                     S, $selector, $survivor, Cross, Mut, F, G, DC
                 >;
 
-            // Specialized builder
+            // -------- Builder -------------------------------------------------
             pub struct [<$algorithm Builder>]<S, Cross, Mut, F, G, DC>
             where
                 S: $crate::operators::SamplingOperator,
@@ -76,10 +69,11 @@ macro_rules! create_algorithm_and_builder {
                 inner: $crate::algorithms::AlgorithmBuilder<
                     S, $selector, $survivor, Cross, Mut, F, G, DC
                 >,
-                $( $ef: Option<$ety>, )*
+
+                $( $larg: ::core::option::Option<$lty>, )*
+                $( $sarg: ::core::option::Option<$sty>, )*
             }
 
-            // Default
             impl<S, Cross, Mut, F, G, DC> ::core::default::Default
                 for [<$algorithm Builder>]<S, Cross, Mut, F, G, DC>
             where
@@ -96,21 +90,14 @@ macro_rules! create_algorithm_and_builder {
                 >: ::core::default::Default,
             {
                 fn default() -> Self {
-                    let inner =
-                        < $crate::algorithms::AlgorithmBuilder<
-                            S, $selector, $survivor, Cross, Mut, F, G, DC
-                        > as ::core::default::Default >::default()
-                            .selector(<$selector as ::core::default::Default>::default())
-                            .survivor(<$survivor as ::core::default::Default>::default());
-
                     Self {
-                        inner,
-                        $( $ef: None, )*
+                        inner: ::core::default::Default::default(),
+                        $( $larg: ::core::option::Option::None, )*
+                        $( $sarg: ::core::option::Option::None, )*
                     }
                 }
             }
 
-            // Setters (extras, if any) + forwarders (once)
             impl<S, Cross, Mut, F, G, DC> [<$algorithm Builder>]<S, Cross, Mut, F, G, DC>
             where
                 S: $crate::operators::SamplingOperator,
@@ -122,15 +109,23 @@ macro_rules! create_algorithm_and_builder {
                 G: $crate::evaluator::ConstraintsFn,
                 DC: $crate::duplicates::PopulationCleaner,
             {
+                // === Public setters (selection/survival) ====================
                 $(
                     #[inline]
-                    pub fn $ef(mut self, v: $ety) -> Self {
-                        self.$ef = Some(v);
+                    pub fn $larg(mut self, v: $lty) -> Self {
+                        self.$larg = ::core::option::Option::Some(v);
+                        self
+                    }
+                )*
+                $(
+                    #[inline]
+                    pub fn $sarg(mut self, v: $sty) -> Self {
+                        self.$sarg = ::core::option::Option::Some(v);
                         self
                     }
                 )*
 
-                // Forwarding methods to `inner`
+                // === Inner Forwards ============================
                 #[inline] pub fn sampler(mut self, v: S) -> Self { self.inner = self.inner.sampler(v); self }
                 #[inline] pub fn crossover(mut self, v: Cross) -> Self { self.inner = self.inner.crossover(v); self }
                 #[inline] pub fn mutation(mut self, v: Mut) -> Self { self.inner = self.inner.mutation(v); self }
@@ -148,38 +143,77 @@ macro_rules! create_algorithm_and_builder {
                 #[inline] pub fn keep_infeasible(mut self, v: bool) -> Self { self.inner = self.inner.keep_infeasible(v); self }
                 #[inline] pub fn verbose(mut self, v: bool) -> Self { self.inner = self.inner.verbose(v); self }
                 #[inline] pub fn seed(mut self, v: u64) -> Self { self.inner = self.inner.seed(v); self }
-            }
-        }
 
-        // Conditionally add `build` depending on the override_build flag.
-        $crate::create_algorithm_and_builder! {
-            @maybe_build $algorithm, $selector, $survivor, override_build: $ov
-        }
-    };
+                // === Build =====================================================
+                pub fn build(mut self) -> ::core::result::Result<
+                    $algorithm<S, Cross, Mut, F, G, DC>,
+                    $crate::algorithms::AlgorithmBuilderError
+                > {
+                    if $ov {
+                        // We do not rebuild selector/survivor: use what is already set
+                        return self.inner.build();
+                    }
 
-    // Emit `build` when override_build_method = false
-    (@maybe_build $algorithm:ident, $selector:ty, $survivor:ty, override_build: false) => {
-        ::paste::paste! {
-            impl<S, Cross, Mut, F, G, DC> [<$algorithm Builder>]<S, Cross, Mut, F, G, DC>
-            where
-                S: $crate::operators::SamplingOperator,
-                $selector: $crate::operators::SelectionOperator<FDim = F::Dim>,
-                $survivor: $crate::operators::SurvivalOperator<FDim = F::Dim>,
-                Cross: $crate::operators::CrossoverOperator,
-                Mut: $crate::operators::MutationOperator,
-                F: $crate::evaluator::FitnessFn,
-                G: $crate::evaluator::ConstraintsFn,
-                DC: $crate::duplicates::PopulationCleaner,
-            {
-                pub fn build(self)
-                    -> Result<$algorithm<S, Cross, Mut, F, G, DC>, $crate::algorithms::AlgorithmBuilderError>
-                {
-                    Ok(self.inner.build()?)
+                    // --- Selector::new( selection_args... ) ---
+                    $(
+                        let $larg = self.$larg.ok_or(
+                            $crate::algorithms::AlgorithmBuilderError::UninitializedField(
+                                ::core::concat!(::core::module_path!(), "::", ::core::stringify!($larg))
+                            )
+                        )?;
+                    )*
+                    let selector_val = define_algorithm_and_builder!(@call_selector $selector ; ( $( $larg ),* ));
+                    self.inner = self.inner.selector(selector_val);
+
+                    // --- Survivor::new( shared..., survival_args... ) ---
+                    $(
+                        let $ss = self.inner.[<$ss>].ok_or(
+                            $crate::algorithms::AlgorithmBuilderError::UninitializedField(
+                                ::core::concat!(::core::module_path!(), "::", ::core::stringify!($ss))
+                            )
+                        )?;
+                    )*
+                    $(
+                        let $sarg = self.$sarg.ok_or(
+                            $crate::algorithms::AlgorithmBuilderError::UninitializedField(
+                                ::core::concat!(::core::module_path!(), "::", ::core::stringify!($sarg))
+                            )
+                        )?;
+                    )*
+
+                    let survivor_val = define_algorithm_and_builder!(
+                        @call_survivor $survivor ; ( $( $sarg ),* ) ( $( $ss ),* )
+                    );
+
+                    self.inner = self.inner.survivor(survivor_val);
+
+                    self.inner.build()
                 }
             }
         }
     };
 
-    // Do not emit `build` when override_build_method = true
-    (@maybe_build $algorithm:ident, $selector:ty, $survivor:ty, override_build: true) => {};
+    (@call_selector $ty:ty ; () ) => { < $ty >::new() };
+    (@call_selector $ty:ty ; ( $( $a:ident ),+ ) ) => { < $ty >::new( $( $a ),+ ) };
+
+    // 0/0
+    (@call_survivor $ty:ty ; () () ) => {
+        < $ty >::new()
+    };
+
+    // A/0  (A = survival_args)
+    (@call_survivor $ty:ty ; ( $( $a:ident ),+ ) () ) => {
+        < $ty >::new( $( $a ),+ )
+    };
+
+    // 0/B  (B = shared_survival_args)
+    (@call_survivor $ty:ty ; () ( $( $b:ident ),+ ) ) => {
+        < $ty >::new( $( $b ),+ )
+    };
+
+    // A/B  (survival first, then shared)
+    (@call_survivor $ty:ty ; ( $( $a:ident ),+ ) ( $( $b:ident ),+ ) ) => {
+        < $ty >::new( $( $a ),+ , $( $b ),+ )
+    };
+
 }

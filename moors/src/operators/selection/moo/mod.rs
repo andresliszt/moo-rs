@@ -1,5 +1,19 @@
+pub(crate) mod ageomoea;
+pub(crate) mod ibea;
+pub(crate) mod nsga2;
+pub(crate) mod nsga3;
 pub(crate) mod random_tournament;
 pub(crate) mod rank_and_survival_scoring_tournament;
+pub(crate) mod revea;
+pub(crate) mod rnsga2;
+pub(crate) mod spea2;
 
+pub use ageomoea::AgeMoeaRankCrowdingSelection;
+pub use ibea::IbeaScoringSelection;
+pub use nsga2::Nsga2RankAndScoringSelection;
+pub use nsga3::Nsga3RandomSelection;
 pub use random_tournament::RandomSelection;
 pub use rank_and_survival_scoring_tournament::RankAndScoringSelection;
+pub use revea::ReveaRandomSelection;
+pub use rnsga2::Rnsga2RankScoringSelection;
+pub use spea2::Spea2ScoringSelection;

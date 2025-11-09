@@ -1,9 +1,9 @@
 use crate::{
-    create_algorithm_and_builder, selection::moo::RankAndScoringSelection,
+    define_algorithm_and_builder, selection::moo::AgeMoeaRankCrowdingSelection,
     survival::moo::AgeMoeaSurvival,
 };
 
-create_algorithm_and_builder!(
+define_algorithm_and_builder!(
     /// AGE-MOEA algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -24,6 +24,6 @@ create_algorithm_and_builder!(
     /// pp. 595–603, July 2019.
     /// DOI: 10.1145/3321707.3321839
     AgeMoea,
-    RankAndScoringSelection,
+    AgeMoeaRankCrowdingSelection,
     AgeMoeaSurvival
 );

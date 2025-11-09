@@ -10,9 +10,6 @@ These operators are modular and can be used with any algorithm:
 - **Crossover**: Recombines parents to produce offspring.
 - **Mutation**: Perturbs offspring to maintain diversity and exploration.
 
-## What Differentiates Algorithms
-- **Selection** and **Survival** are algorithm-specific components.
-- **Survival** is typically the most distinctive part, as it determines which individuals proceed to the next generation.
 
 ## Ranking & Survival Scoring
 
@@ -30,26 +27,22 @@ In algorithms that do not use ranking, this score can be used to select the top 
 
 ## Writing a New Algorithm in `moors`
 
-To create a new algorithm, define a new survival struct and optionally a new selection operator. This is optional because `moors` already provides two widely used selection operators:
-
-- {{ docs_rs("struct", "operators.selection.moo.RandomSelection") }}
-- {{ docs_rs("struct", "operators.selection.moo.TournamentSelection") }}
-
-All existing algorithms in `moors` use one of these. Nevertheless, we explain how to define a new one.
+Creating a new algorithm is relatively simple in `moors`, We use [NSGA-II](../user_guide/algorithms/nsga2.md) and as [NSGA-III](../user_guide/algorithms/nsga3.md) an example. User must define the specific survival and selection operator.
 
 
-Creating a new algorithm is relatively simple in `moors`, We use [NSGA-II](../user_guide/algorithms/nsga2.md) and as [NSGA-III](../user_guide/algorithms/nsga3.md) an example.
+### Survival and selection operators without arguments
 
+The following example is the implementation of the `NSGA-II` algorithm, we use the macro `create_algorithm_and_builder`
 
 ```Rust
 use crate::{
-    create_algorithm_and_builder,
+    define_algorithm_and_builder,
     operators::{
-        selection::moo::RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival,
+        selection::moo::Nsga2RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival,
     },
 };
 
-create_algorithm_and_builder!(
+define_algorithm_and_builder!(
     /// NSGA-II algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -69,88 +62,86 @@ create_algorithm_and_builder!(
     /// *IEEE Transactions on Evolutionary Computation*, vol. 6, no. 2,
     /// pp. 182–197, Apr. 2002.
     /// DOI: 10.1109/4235.996017
-    Nsga2, RankAndScoringSelection, Nsga2RankCrowdingSurvival
+    Nsga2, Nsga2RankAndScoringSelection, Nsga2RankCrowdingSurvival
 );
 
 ```
 
-`create_algorithm_and_builder` generates two structs: `Nsga2` and `Nsga2Builder`
+This macro generates two structs: `Nsga2` and `Nsga2Builder`. The new generated struct `Nsga2` is just a type alias of the core `GeneticAlgorithm` struct, fixing the generic selection/survival operators to `RankAndScoringSelection` and `Nsga2RankCrowdingSurvival` respectively. The `Nsga2Builder` is the builder struct, that allows to use the [Rust builder design pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html) to create `Nsga2` instances.
 
+Internally, `Nsga2Builder` wraps the {{ docs_rs("struct", "algorithms.AlgorithmBuilder") }} as in the example
 
-
-### Writing a New Survival Operator
-
-First, determine whether your algorithm uses ranking. If it does, implement the trait: {{ docs_rs("trait", "operators.survival.moo.FrontsAndRankingBasedSurvival") }}. If not, implement: {{ docs_rs("trait", "operators.survival.moo.SurvivalOperator") }}
-
-We use [NSGA-II](../user_guide/algorithms/nsga2.md) as an example, which uses both ranking and survival scoring.
-
-```rust
-use ndarray::{Array1, Array2};
-
-use crate::{
-    genetic::{D12, Fronts},
-    operators::survival::moo::FrontsAndRankingBasedSurvival,
-    random::RandomGenerator,
-};
-
-#[derive(Debug, Clone, Default)]
-pub struct Nsga2RankCrowdingSurvival;
-
-impl Nsga2RankCrowdingSurvival {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl FrontsAndRankingBasedSurvival for Nsga2RankCrowdingSurvival {
-    fn set_front_survival_score<ConstrDim>(
-        &self,
-        fronts: &mut Fronts<ConstrDim>,
-        _rng: &mut impl RandomGenerator,
-    ) where
-        ConstrDim: D12,
-    {
-        for front in fronts.iter_mut() {
-            let crowding_distance = crowding_distance(&front.fitness);
-            front.set_survival_score(crowding_distance);
-        }
-    }
-}
-
-/// Computes the crowding distance for a given Pareto population_fitness.
-///
-/// # Parameters:
-/// - `population_fitness`: A 2D array where each row represents an individual's fitness values.
-///
-/// # Returns:
-/// - A 1D array of crowding distances for each individual in the population_fitness.
-fn crowding_distance(population_fitness: &Array2<f64>) -> Array1<f64> {
-    // Omitted for simplicity
-}
-```
-
-### Notes on Fronts and Traits
-
-- `Fronts` is a type alias for a `Vec` of {{ docs_rs("type", "genetic.PopulationMOO") }}.
-- `PopulationMOO` is a container for individuals, including `genes`, `fitness`, `constraints` (if any), `rank` (if any), and `survival_score` (if any).
-- Fronts are sorted by dominance (0-dominated first, then 1-dominated, etc.).
-- {{ docs_rs("type", "genetic.D12") }} is a trait for constraint output dimensions, allowing flexibility between `Array1` and `Array2`.
-
-
-In the `moors` framework, implementing a survival strategy for multi-objective optimization algorithms involves defining the trait {{ docs_rs("trait", "operators.survival.moo.FrontsAndRankingBasedSurvival", tymethod = "set_front_survival_score", label = "set_front_survival_score") }}. `set_front_survival_score` method receives a vector of populations (`Vec<PopulationMOO>`), where each element represents a Pareto front. Each front contains:
-
-- `genes`: An `Array2<f64>` representing the genetic encoding of individuals.
-- `fitness`: An `Array2<f64>` where each row corresponds to the fitness values of an individual.
-- `rank`: An `Array1<f64>` indicating the dominance rank of each individual.
-
-The purpose of `set_front_survival_score` is to assign a **survival score** to each individual within a front. In the provided example, this score is computed using the `crowding_distance` function, which returns an `Array1<f64>` where each element corresponds to the survival score of an individual.
-
-After survival scores are assigned, the {{ docs_rs("trait", "operators.survival.moo.FrontsAndRankingBasedSurvival", method = "operate", label = "operate") }} method is responsible for selecting the individuals that will survive to the next generation.
-
-The splitting front approach is used for selecting the survivors for the next generation, by default `moors` will prefer an individual with higher survival score, you can modify this by overwritting the method selection `Minimize` enum member
 
 ```Rust
-fn scoring_comparison(&self) -> SurvivalScoringComparison {
-    SurvivalScoringComparison::Minimize
+pub struct Nsga2Builder<S, Cross, Mut, F, G, DC>
+where
+    S: SamplingOperator,
+    Nsga2RankAndScoringSelection: SelectionOperator<FDim = F::Dim>,
+    Nsga2RankCrowdingSurvival: SurvivalOperator<FDim = F::Dim>,
+    Cross: CrossoverOperator,
+    Mut: MutationOperator,
+    F: FitnessFn,
+    G: ConstraintsFn,
+    DC: PopulationCleaner,
+{
+    inner: AlgorithmBuilder<S, Nsga2RankAndScoringSelection, Nsga2RankCrowdingSurvival, Cross, Mut, F, G, DC>,
+
 }
+
 ```
+
+This struct delegates all the builder methods to the inner, which was built using [derive builder crate](https://crates.io/crates/derive_builder)
+
+
+### Survival and selection operators with arguments
+
+When either survival or selection operators take arguments, the macro needs to know about those. The following example is the implementation of the `NSGA-III` algorithm. The survival operator takes two arguments `reference_points` and the boolean `are_aspirational`, for more information refer the [algorithm docs](../user_guide/algorithms/nsga3.md).
+
+```Rust
+use ndarray::Array2;
+
+use crate::{
+    define_algorithm_and_builder,
+    operators::{
+        selection::moo::Nsga3RandomSelection,
+        survival::moo::Nsga3ReferencePointsSurvival,
+    },
+};
+
+define_algorithm_and_builder!(
+    /// NSGA-III algorithm wrapper.
+    ///
+    /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
+    /// the NSGA-III survival and selection strategy.
+    ///
+    /// * **Selection:** [`RandomSelection`]
+    /// * **Survival:**  [`Nsga3ReferencePointsSurvival`] (elitist, reference-point based)
+    ///
+    /// Construct it with [`Nsga3Builder`](crate::algorithms::Nsga3Builder).
+    /// After building, call [`run`](GeneticAlgorithm::run)
+    /// and then [`population`](GeneticAlgorithm::population) to retrieve the
+    /// final non-dominated set.
+    ///
+    /// For algorithmic details, see:
+    /// Kalyanmoy Deb and Himanshu Jain (2014),
+    /// "An Evolutionary Many-Objective Optimization Algorithm Using Reference-Point-Based
+    /// Nondominated Sorting Approach, Part I: Solving Problems with Box Constraints",
+    /// *IEEE Transactions on Evolutionary Computation*, vol. 18, no. 4,
+    /// pp. 577–601, Aug. 2014.
+    /// DOI: 10.1109/TEVC.2013.2281535
+    Nsga3,
+    Nsga3RandomSelection,
+    Nsga3ReferencePointsSurvival,
+    survival_args = [ reference_points: Array2<f64>, are_aspirational: bool ]
+);
+```
+
+In this case `Nsga3Builder` extends the {{ docs_rs("struct", "algorithms.AlgorithmBuilder") }} setters by adding `reference_points` and `are_aspirational`, and they are passed to the survival operator in the build method.
+
+Same for the selection operator, if it takes any extra argument then use `selection_args` in the macro
+
+
+
+### Writing a New Survival Operator and New Selector operator
+
+We refer to the [survival section](../user_guide/operators/operators.md#survival) and [selection section](../user_guide/operators/operators.md#selection) in the user guide

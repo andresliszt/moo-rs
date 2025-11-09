@@ -69,6 +69,7 @@ fn test_nsga3_dtlz2_three_objectives() {
         .crossover(SimulatedBinaryCrossover::new(20.0))
         .mutation(GaussianMutation::new(0.05, 0.1))
         .reference_points(rp)
+        .are_aspirational(false)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
         .constraints_fn(MyConstr)

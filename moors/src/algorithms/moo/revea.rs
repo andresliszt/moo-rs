@@ -32,17 +32,11 @@
 use ndarray::Array2;
 
 use crate::{
-    algorithms::AlgorithmBuilderError,
-    create_algorithm_and_builder,
-    duplicates::PopulationCleaner,
-    evaluator::{ConstraintsFn, FitnessFn},
-    operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator, SelectionOperator, SurvivalOperator,
-        selection::moo::RandomSelection, survival::moo::ReveaReferencePointsSurvival,
-    },
+    define_algorithm_and_builder,
+    operators::{selection::moo::RandomSelection, survival::moo::ReveaReferencePointsSurvival},
 };
 
-create_algorithm_and_builder!(
+define_algorithm_and_builder!(
     /// REVEA algorithm wrapper.
     ///
     /// Thin facade around [`GeneticAlgorithm`] pre-configured with
@@ -62,38 +56,8 @@ create_algorithm_and_builder!(
     Revea,
     RandomSelection,
     ReveaReferencePointsSurvival,
-    extras = [reference_points: Array2<f64>, alpha: f64, frequency: f64],
-    override_build_method = true
+    survival_args  = [ reference_points: Array2<f64>, alpha: f64, frequency: f64],
+    shared_survival_args = [ num_iterations: usize ] // <- no hay setter propio; se
+
+
 );
-
-impl<S, Cross, Mut, F, G, DC> ReveaBuilder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    RandomSelection: SelectionOperator<FDim = F::Dim>,
-    ReveaReferencePointsSurvival: SurvivalOperator<FDim = F::Dim>,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-{
-    pub fn build(mut self) -> Result<Revea<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
-        let alpha = self.alpha.unwrap_or(2.5);
-        let frequency = self.frequency.unwrap_or(0.2);
-
-        let rp = self
-            .reference_points
-            .ok_or(AlgorithmBuilderError::UninitializedField(
-                "reference_points",
-            ))?;
-
-        let iterations = self
-            .inner
-            .num_iterations
-            .ok_or(AlgorithmBuilderError::UninitializedField("num_iterations"))?;
-
-        let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency, iterations);
-        self.inner = self.inner.survivor(survivor);
-        Ok(self.inner.build()?)
-    }
-}

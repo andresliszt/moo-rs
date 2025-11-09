@@ -20,18 +20,13 @@
 use ndarray::Array1;
 
 use crate::{
-    algorithms::AlgorithmBuilderError,
-    create_algorithm_and_builder,
-    duplicates::PopulationCleaner,
-    evaluator::{ConstraintsFn, FitnessFn},
+    define_algorithm_and_builder,
     operators::{
-        CrossoverOperator, MutationOperator, SamplingOperator, SelectionOperator, SurvivalOperator,
-        selection::moo::RankAndScoringSelection,
-        survival::moo::{IbeaHyperVolumeSurvivalOperator, SurvivalScoringComparison},
+        selection::moo::IbeaScoringSelection, survival::moo::IbeaHyperVolumeSurvivalOperator,
     },
 };
 
-create_algorithm_and_builder!(
+define_algorithm_and_builder!(
     /// IBEA algorithm wrapper.
     ///
     /// Thin façade over [`GeneticAlgorithm`] preset with IBEA’s selection/survival strategy.
@@ -47,38 +42,7 @@ create_algorithm_and_builder!(
     /// Zitzler & Künzli (2004), *Indicator-Based Evolutionary Algorithm for Multiobjective Optimization*,
     /// EMO 2004, LNCS 3248, Springer.
     Ibea,
-    RankAndScoringSelection,
+    IbeaScoringSelection,
     IbeaHyperVolumeSurvivalOperator,
-    extras = [reference: Array1<f64>, kappa: f64],
-    override_build_method = true
+    survival_args = [reference: Array1<f64>, kappa: f64],
 );
-
-impl<S, Cross, Mut, F, G, DC> IbeaBuilder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    RankAndScoringSelection: SelectionOperator<FDim = F::Dim>,
-    IbeaHyperVolumeSurvivalOperator: SurvivalOperator<FDim = F::Dim>,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-{
-    pub fn build(mut self) -> Result<Ibea<S, Cross, Mut, F, G, DC>, AlgorithmBuilderError> {
-        let kappa = self.kappa.unwrap_or(0.05);
-
-        let rp = self
-            .reference
-            .ok_or(AlgorithmBuilderError::UninitializedField(
-                "reference_points",
-            ))?;
-
-        let survivor = IbeaHyperVolumeSurvivalOperator::new(rp, kappa);
-        // Selector operator uses scoring survival given by the raw fitness but it doesn't use rank
-        let selector =
-            RankAndScoringSelection::new(false, true, SurvivalScoringComparison::Maximize);
-        self.inner = self.inner.survivor(survivor);
-        self.inner = self.inner.selector(selector);
-        Ok(self.inner.build()?)
-    }
-}

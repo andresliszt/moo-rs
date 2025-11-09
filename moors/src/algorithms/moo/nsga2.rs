@@ -21,13 +21,13 @@
 //! you need custom behaviour.
 
 use crate::{
-    create_algorithm_and_builder,
+    define_algorithm_and_builder,
     operators::{
-        selection::moo::RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival,
+        selection::moo::Nsga2RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival,
     },
 };
 
-create_algorithm_and_builder!(
+define_algorithm_and_builder!(
     /// NSGA-II algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -47,5 +47,7 @@ create_algorithm_and_builder!(
     /// *IEEE Transactions on Evolutionary Computation*, vol. 6, no. 2,
     /// pp. 182–197, Apr. 2002.
     /// DOI: 10.1109/4235.996017
-    Nsga2, RankAndScoringSelection, Nsga2RankCrowdingSurvival
+    Nsga2,
+    Nsga2RankAndScoringSelection,
+    Nsga2RankCrowdingSurvival
 );

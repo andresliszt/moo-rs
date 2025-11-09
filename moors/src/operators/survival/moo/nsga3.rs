@@ -13,22 +13,6 @@ use crate::{
 
 /// Implementation of the survival operator for the NSGA3 algorithm presented in the paper
 /// An Evolutionary Many-Objective Optimization Algorithm Using Reference-point Based Non-dominated Sorting Approach
-
-#[derive(Debug, Clone, Default)]
-pub struct Nsga3ReferencePoints {
-    points: Array2<f64>,
-    are_aspirational: bool,
-}
-
-impl Nsga3ReferencePoints {
-    pub fn new(points: Array2<f64>, are_aspirational: bool) -> Self {
-        Self {
-            points,
-            are_aspirational,
-        }
-    }
-}
-
 struct Nsga3HyperPlaneNormalization;
 
 impl Nsga3HyperPlaneNormalization {
@@ -76,12 +60,16 @@ impl HyperPlaneNormalization for Nsga3HyperPlaneNormalization {
 
 #[derive(Debug, Clone, Default)]
 pub struct Nsga3ReferencePointsSurvival {
-    reference_points: Nsga3ReferencePoints, // Each row is a reference point
+    reference_points: Array2<f64>, // Each row is a reference point
+    are_aspirational: bool,
 }
 
 impl Nsga3ReferencePointsSurvival {
-    pub fn new(reference_points: Nsga3ReferencePoints) -> Self {
-        Self { reference_points }
+    pub fn new(reference_points: Array2<f64>, are_aspirational: bool) -> Self {
+        Self {
+            reference_points,
+            are_aspirational,
+        }
     }
 }
 
@@ -136,12 +124,12 @@ impl SurvivalOperator for Nsga3ReferencePointsSurvival {
                     let normalized_fitness = &translated_population / (&intercepts - &z_min);
                     // Now as the paper says, if the points are aspirational then normalize
                     // Use Cow so that when aspirational is false, we borrow the reference points.
-                    let zr: Cow<Array2<f64>> = if self.reference_points.are_aspirational {
+                    let zr: Cow<Array2<f64>> = if self.are_aspirational {
                         let normalized_zr =
-                            (&self.reference_points.points - &z_min) / (&intercepts - &z_min);
+                            (&self.reference_points - &z_min) / (&intercepts - &z_min);
                         Cow::Owned(normalized_zr)
                     } else {
-                        Cow::Borrowed(&self.reference_points.points)
+                        Cow::Borrowed(&self.reference_points)
                     };
                     let (assignments, distances) = associate(&normalized_fitness, &zr);
                     // Compute niching count for every individual except in the splitting front
@@ -485,8 +473,7 @@ mod tests {
         let population = PopulationMOO::new_unconstrained(fitness.clone(), fitness.clone());
 
         // Use a simple reference points matrix: for 2 objectives we use the 2x2 identity.
-        let reference_points = Nsga3ReferencePoints::new(Array2::eye(2), false);
-        let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);
+        let mut survival_operator = Nsga3ReferencePointsSurvival::new(Array2::eye(2), false);
         let mut rng = FakeRandomGenerator::new();
         // Set num_survive to 3 so that splitting must occur on the single front.
         let survivors = survival_operator.operate(population, 3, &mut rng);
@@ -527,8 +514,10 @@ mod tests {
         // For simplicity, genes = fitness
         let population = PopulationMOO::new_unconstrained(fitness.clone(), fitness.clone());
         // Use the identity as reference points for 2 objectives.
-        let reference_points = Nsga3ReferencePoints::new(Array2::eye(2), false);
-        let mut survival_operator = Nsga3ReferencePointsSurvival::new(reference_points);
+        let reference_points = Array2::eye(2);
+        let are_aspirational = false;
+        let mut survival_operator =
+            Nsga3ReferencePointsSurvival::new(reference_points, are_aspirational);
         let mut rng = FakeRandomGenerator::new();
         // Total individuals if merged completely would be 7.
         // Set num_survive to 5 so that the first front (3 individuals) is completely taken

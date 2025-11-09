@@ -145,6 +145,7 @@ fn test_nsga3() {
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
         .reference_points(rp)
+        .are_aspirational(false)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
         .constraints_fn(MyConstr)
