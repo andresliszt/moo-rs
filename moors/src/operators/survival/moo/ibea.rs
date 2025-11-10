@@ -65,7 +65,7 @@ pub trait Indicator {
 /// - HV({x}) = ∏_d (r_d - x_d)
 /// - HV({a,b}) = HV(a)+HV(b) - ∏_d (r_d - max(a_d,b_d))
 /// - I_HV(a,b) = HV({a,b}) - HV({a})
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct HyperVolumeIndicator {
     reference: Array1<f64>,
     kappa: f64,
@@ -114,7 +114,7 @@ impl Indicator for HyperVolumeIndicator {
 ///    - remove k
 ///    - F ← F - M[k,·]    // removes k's contribution
 ///    - F[k] = +∞         // don't pick k again
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct IbeaSurvivalOperator<I: Indicator> {
     indicator: I,
 }

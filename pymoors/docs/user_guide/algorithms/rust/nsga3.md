@@ -13,8 +13,6 @@ use moors::{
         GaussianMutation,
         RandomSamplingFloat,
         SimulatedBinaryCrossover,
-        Nsga3ReferencePointsSurvival,
-        Nsga3ReferencePoints,
         DanAndDenisReferencePoints,
         StructuredReferencePoints
     },
@@ -119,13 +117,13 @@ impl_constraints_fn!(BoundConstraints, lower_bound = 0.0, upper_bound = 1.0);
 
 let population: Population<Ix2, Ix2> = {
     let rp = DanAndDenisReferencePoints::new(100, 3).generate();
-    let nsga3_rp = Nsga3ReferencePoints::new(rp, false);
-    let survivor = Nsga3ReferencePointsSurvival::new(nsga3_rp);
+
     let mut algorithm = Nsga3Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(10.0)) // distribution_index = 10
         .mutation(GaussianMutation::new(0.1, 0.01))     // gene_mutation_rate = 0.1, sigma = 0.01
-        .survivor(survivor)
+        .reference_points(reference_points)
+        .are_aspirational(false)
         .fitness_fn(evaluate_dtlz2)
         .constraints_fn(BoundConstraints)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-8))
@@ -143,7 +141,7 @@ let population: Population<Ix2, Ix2> = {
 
     // Run the algorithm
     algorithm.run().expect("NSGA3 run failed");
-    algorithm.population().unwrap().clone()
+    algorithm.population.unwrap().clone()
 };
 
 // Define again rp just for plotting

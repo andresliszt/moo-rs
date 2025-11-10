@@ -76,7 +76,7 @@ let population: Population<Ix2, Ix1> = {
 
     algorithm.run().expect("NSGA2 run failed");
 
-    let population = algorithm.population().expect("populationulation should have been initialized");
+    let population = algorithm.population.expect("populationulation should have been initialized");
     population.clone()
 };
 ```

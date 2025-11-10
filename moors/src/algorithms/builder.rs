@@ -89,6 +89,7 @@ pub struct GeneticAlgorithmParams<
     num_vars: usize,
     population_size: usize,
     num_offsprings: usize,
+    #[builder(field(vis = "pub"))]
     num_iterations: usize,
     #[builder(default = "0.2")]
     mutation_rate: f64,

@@ -73,7 +73,7 @@ let population: Population<Ix2, Ix2> = {
         .unwrap();
 
     algorithm.run().expect("NSGA2 run failed");
-    algorithm.population().unwrap().clone()
+    algorithm.population.unwrap().clone()
 };
 
 // General: theoretical Pareto front curve.

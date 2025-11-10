@@ -16,16 +16,17 @@
 //! * **Selection:** [`RandomSelection`] (uniform binary tournament)
 //! * **Survival:**  [`Nsga3ReferencePointsSurvival`] (rank + reference‑point niching)
 //! * **Crossover / Mutation / Sampling:** user‑provided via the builder.
-//!
-//! You supply the *reference points*—typically generated with
-//! [`Nsga3ReferencePoints::from_simplex_lattice`] or a custom constructor—and
-//! the algorithm handles association and niche preservation automatically.
+
+use ndarray::Array2;
 
 use crate::{
-    create_algorithm, selection::moo::RandomSelection, survival::moo::Nsga3ReferencePointsSurvival,
+    define_algorithm_and_builder,
+    operators::{
+        selection::moo::Nsga3RandomSelection, survival::moo::Nsga3ReferencePointsSurvival,
+    },
 };
 
-create_algorithm!(
+define_algorithm_and_builder!(
     /// NSGA-III algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -47,35 +48,7 @@ create_algorithm!(
     /// pp. 577–601, Aug. 2014.
     /// DOI: 10.1109/TEVC.2013.2281535
     Nsga3,
-    RandomSelection,
-    Nsga3ReferencePointsSurvival
+    Nsga3RandomSelection,
+    Nsga3ReferencePointsSurvival,
+    survival_args = [ reference_points: Array2<f64>, are_aspirational: bool ]
 );
-
-impl<S, Cross, Mut, F, G, DC> Default for Nsga3Builder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-    AlgorithmBuilder<S, RandomSelection, Nsga3ReferencePointsSurvival, Cross, Mut, F, G, DC>:
-        Default,
-{
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RandomSelection,
-            Nsga3ReferencePointsSurvival,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
-        inner = inner.selector(RandomSelection);
-        Nsga3Builder {
-            inner_builder: inner,
-        }
-    }
-}

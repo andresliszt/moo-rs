@@ -73,7 +73,7 @@ let population: Population<Ix2, Ix2> = {
 
     // Run the algorithm
     algorithm.run().expect("AgeMOEA run failed");
-    algorithm.population().unwrap().clone()
+    algorithm.population.unwrap().clone()
 };
 
 // Get the best Pareto front obtained (as a Population instance)

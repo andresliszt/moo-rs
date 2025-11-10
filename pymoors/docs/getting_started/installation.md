@@ -20,4 +20,4 @@ make build-dev
 make build-release
 ```
 
-For detailed requirements to install from source, see the [Developer Guide](../development.md).
+For detailed requirements to install from source, see the [Developer Guide](../development/setup_environment.md).

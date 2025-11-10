@@ -1,41 +1,77 @@
 
-The survival operator follows the same logic than selection operator, in that each pre‑defined algorithm in `moors` defines exactly one selection operator. For example, the `NSGA-II` algorithm uses a *ranking‑by‑crowding‑distance* survival operator, while `NSGA-III` uses a reference points based operator. The user can only provide their own survival operator to a custom algorithm—not to the algorithms that come pre‑defined in moors.
+The survival operator follows the same logic than selection operator, in that each pre‑defined algorithm in `moors` defines exactly one selection operator. For example, the `NSGA-II` algorithm uses a *ranking‑by‑crowding‑distance* survival operator, while `NSGA-III` uses a reference points based operator.
 
-A survival operator in `moors` is any type that implements the {{ docs_rs("trait", "operators.survival.SurvivalOperator") }} trait. For example:
+First, determine whether your algorithm uses ranking. If it does, implement the trait: {{ docs_rs("trait", "operators.survival.moo.FrontsAndRankingBasedSurvival") }}. If not, implement: {{ docs_rs("trait", "operators.survival.moo.SurvivalOperator") }}
 
-```Rust
-use crate::genetic::{D01, IndividualMOO};
-use crate::operators::selection::{DuelResult, SelectionOperator};
-use crate::random::RandomGenerator;
+We use [NSGA-II](../../algorithms/nsga2.md) as an example, which uses both ranking and survival scoring.
 
-#[derive(Debug, Clone)]
-pub struct RandomSelection;
+```rust
+use ndarray::{Array1, Array2};
 
-impl SelectionOperator for RandomSelection {
-    type FDim = ndarray::Ix2;
+use crate::{
+    genetic::{D12, Fronts},
+    operators::survival::moo::FrontsAndRankingBasedSurvival,
+    random::RandomGenerator,
+};
 
-    fn tournament_duel<'a, ConstrDim>(
+#[derive(Debug, Clone, Default)]
+pub struct Nsga2RankCrowdingSurvival;
+
+impl Nsga2RankCrowdingSurvival {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl FrontsAndRankingBasedSurvival for Nsga2RankCrowdingSurvival {
+    fn set_front_survival_score<ConstrDim>(
         &self,
-        p1: &IndividualMOO<'a, ConstrDim>,
-        p2: &IndividualMOO<'a, ConstrDim>,
-        rng: &mut impl RandomGenerator,
-    ) -> DuelResult
-    where
-        ConstrDim: D01,
+        fronts: &mut Fronts<ConstrDim>,
+        _rng: &mut impl RandomGenerator,
+    ) where
+        ConstrDim: D12,
     {
-        if let result @ DuelResult::LeftWins | result @ DuelResult::RightWins =
-            Self::feasibility_dominates(p1, p2)
-        {
-            return result;
-        }
-        // Otherwise, both are feasible or both are infeasible => random winner.
-        if rng.gen_bool(0.5) {
-            DuelResult::LeftWins
-        } else {
-            DuelResult::RightWins
+        for front in fronts.iter_mut() {
+            let crowding_distance = crowding_distance(&front.fitness);
+            front.set_survival_score(crowding_distance);
         }
     }
 }
+
+/// Computes the crowding distance for a given Pareto population_fitness.
+///
+/// # Parameters:
+/// - `population_fitness`: A 2D array where each row represents an individual's fitness values.
+///
+/// # Returns:
+/// - A 1D array of crowding distances for each individual in the population_fitness.
+fn crowding_distance(population_fitness: &Array2<f64>) -> Array1<f64> {
+    // Omitted for simplicity
+}
 ```
 
-Note that we have defined an associated type `type FDim = ndarray::Ix2`, this is because, in this example, this operator will be used for a multi‑objective algorithm. The selection operators defined in moors must specify the fitness dimension. Note that this is the selection operator used by the NSGA‑III algorithm: it performs a random selection that gives priority to feasibility, which is why we use the trait’s static method `Self::feasibility_dominates`.
+### Notes on Fronts and Traits
+
+- `Fronts` is a type alias for a `Vec` of {{ docs_rs("type", "genetic.PopulationMOO") }}.
+- `PopulationMOO` is a container for individuals, including `genes`, `fitness`, `constraints` (if any), `rank` (if any), and `survival_score` (if any).
+- Fronts are sorted by dominance (0-dominated first, then 1-dominated, etc.).
+- {{ docs_rs("type", "genetic.D12") }} is a trait for constraint output dimensions, allowing flexibility between `Array1` and `Array2`.
+
+
+In the `moors` framework, implementing a survival strategy for multi-objective optimization algorithms involves defining the trait {{ docs_rs("trait", "operators.survival.moo.FrontsAndRankingBasedSurvival", tymethod = "set_front_survival_score", label = "set_front_survival_score") }}. `set_front_survival_score` method receives a vector of populations (`Vec<PopulationMOO>`), where each element represents a Pareto front. Each front contains:
+
+- `genes`: An `Array2<f64>` representing the genetic encoding of individuals.
+- `fitness`: An `Array2<f64>` where each row corresponds to the fitness values of an individual.
+- `rank`: An `Array1<f64>` indicating the dominance rank of each individual.
+
+The purpose of `set_front_survival_score` is to assign a **survival score** to each individual within a front. In the provided example, this score is computed using the `crowding_distance` function, which returns an `Array1<f64>` where each element corresponds to the survival score of an individual.
+
+After survival scores are assigned, the {{ docs_rs("trait", "operators.survival.moo.FrontsAndRankingBasedSurvival", method = "operate", label = "operate") }} method is responsible for selecting the individuals that will survive to the next generation.
+
+The splitting front approach is used for selecting the survivors for the next generation, by default `moors` will prefer an individual with higher survival score, you can modify this by overwritting the method selection `Minimize` enum member
+
+```Rust
+fn scoring_comparison(&self) -> SurvivalScoringComparison {
+    SurvivalScoringComparison::Minimize
+}
+```

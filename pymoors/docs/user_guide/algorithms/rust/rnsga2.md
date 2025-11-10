@@ -8,7 +8,7 @@ use moors::{
     impl_constraints_fn,
     algorithms::Rnsga2Builder,
     duplicates::CloseDuplicatesCleaner,
-    operators::{GaussianMutation, RandomSamplingFloat, ExponentialCrossover, Rnsga2ReferencePointsSurvival},
+    operators::{GaussianMutation, RandomSamplingFloat, ExponentialCrossover},
     genetic::Population,
 };
 use plotters::prelude::*
@@ -56,12 +56,13 @@ let population: Population<Ix2, Ix2> = {
     // Define two reference points (for example, points on the Pareto front)
     let rp: Array2<f64> = array![[0.5, 0.2], [0.1, 0.6]];
     let epsilon = 0.005;
-    let survivor = Rnsga2ReferencePointsSurvival::new(rp, epsilon);
+
     let mut algorithm = Rnsga2Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(ExponentialCrossover::new(0.75))
         .mutation(GaussianMutation::new(0.1, 0.01))
-        .survivor(survivor)
+        .reference_points(rp)
+        .epsilon(epsilon)
         .fitness_fn(evaluate_ztd1)
         .constraints_fn(BoundConstraints)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-8))
@@ -79,7 +80,7 @@ let population: Population<Ix2, Ix2> = {
 
     // Run the algorithm
     algorithm.run().expect("RNSGA2 run failed");
-    algorithm.population().unwrap().clone()
+    algorithm.population.unwrap().clone()
 };
 
 // Compute the theoretical Pareto front for ZTD1

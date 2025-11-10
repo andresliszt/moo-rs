@@ -29,11 +29,14 @@
 //! * `frequency` – how often (in generations) the reference set is refreshed.
 //!
 
+use ndarray::Array2;
+
 use crate::{
-    create_algorithm, selection::moo::RandomSelection, survival::moo::ReveaReferencePointsSurvival,
+    define_algorithm_and_builder,
+    operators::{selection::moo::RandomSelection, survival::moo::ReveaReferencePointsSurvival},
 };
 
-create_algorithm!(
+define_algorithm_and_builder!(
     /// REVEA algorithm wrapper.
     ///
     /// Thin facade around [`GeneticAlgorithm`] pre-configured with
@@ -52,34 +55,9 @@ create_algorithm!(
     /// Pareto approximation.
     Revea,
     RandomSelection,
-    ReveaReferencePointsSurvival
-);
+    ReveaReferencePointsSurvival,
+    survival_args  = [ reference_points: Array2<f64>, alpha: f64, frequency: f64],
+    shared_survival_args = [ num_iterations: usize ] // <- no hay setter propio; se
 
-impl<S, Cross, Mut, F, G, DC> Default for ReveaBuilder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-    AlgorithmBuilder<S, RandomSelection, ReveaReferencePointsSurvival, Cross, Mut, F, G, DC>:
-        Default,
-{
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RandomSelection,
-            ReveaReferencePointsSurvival,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
-        inner = inner.selector(RandomSelection);
-        ReveaBuilder {
-            inner_builder: inner,
-        }
-    }
-}
+
+);

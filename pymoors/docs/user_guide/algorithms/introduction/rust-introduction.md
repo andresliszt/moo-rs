@@ -59,7 +59,7 @@ fn main() -> Result<(), MultiObjectiveAlgorithmError> {
     algo.run()?;
 
     // Access the final population if needed
-    let population_genes = algo.population()?;
+    let population_genes = algo.population?;
     println!("Done. Final population size: {}", population_genes.len());
 
     Ok(())

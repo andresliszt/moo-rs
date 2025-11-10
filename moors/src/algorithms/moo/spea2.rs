@@ -20,13 +20,13 @@
 //! The default configuration keeps a secondary **archive** whose size equals
 //! the main population; truncation is handled by the k‑NN density measure.
 //!
+
 use crate::{
-    create_algorithm,
-    selection::moo::RankAndScoringSelection,
-    survival::moo::{Spea2KnnSurvival, SurvivalScoringComparison},
+    define_algorithm_and_builder,
+    operators::{selection::moo::Spea2ScoringSelection, survival::moo::Spea2KnnSurvival},
 };
 
-create_algorithm!(
+define_algorithm_and_builder!(
     /// SPEA-II algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -46,39 +46,6 @@ create_algorithm!(
     /// TIK-Report 103, Computer Engineering and Networks Laboratory,
     /// ETH Zurich, Switzerland, 2001.
     Spea2,
-    RankAndScoringSelection,
+    Spea2ScoringSelection,
     Spea2KnnSurvival
 );
-
-impl<S, Cross, Mut, F, G, DC> Default for Spea2Builder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-    AlgorithmBuilder<S, RankAndScoringSelection, Spea2KnnSurvival, Cross, Mut, F, G, DC>: Default,
-{
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RankAndScoringSelection,
-            Spea2KnnSurvival,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
-
-        // Selector operator uses scoring survival given by the raw fitness but it doesn't use rank
-        let selector =
-            RankAndScoringSelection::new(false, true, SurvivalScoringComparison::Maximize);
-
-        inner = inner.selector(selector).survivor(Spea2KnnSurvival);
-        Spea2Builder {
-            inner_builder: inner,
-        }
-    }
-}

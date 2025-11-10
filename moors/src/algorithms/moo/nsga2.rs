@@ -21,11 +21,13 @@
 //! you need custom behaviour.
 
 use crate::{
-    create_algorithm, selection::moo::RankAndScoringSelection,
-    survival::moo::Nsga2RankCrowdingSurvival,
+    define_algorithm_and_builder,
+    operators::{
+        selection::moo::Nsga2RankAndScoringSelection, survival::moo::Nsga2RankCrowdingSurvival,
+    },
 };
 
-create_algorithm!(
+define_algorithm_and_builder!(
     /// NSGA-II algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -46,37 +48,6 @@ create_algorithm!(
     /// pp. 182–197, Apr. 2002.
     /// DOI: 10.1109/4235.996017
     Nsga2,
-    RankAndScoringSelection,
+    Nsga2RankAndScoringSelection,
     Nsga2RankCrowdingSurvival
 );
-
-impl<S, Cross, Mut, F, G, DC> Default for Nsga2Builder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-    AlgorithmBuilder<S, RankAndScoringSelection, Nsga2RankCrowdingSurvival, Cross, Mut, F, G, DC>:
-        Default,
-{
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RankAndScoringSelection,
-            Nsga2RankCrowdingSurvival,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
-        inner = inner
-            .selector(RankAndScoringSelection::default())
-            .survivor(Nsga2RankCrowdingSurvival);
-        Nsga2Builder {
-            inner_builder: inner,
-        }
-    }
-}

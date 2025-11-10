@@ -68,10 +68,10 @@ fn test_empty_mating_finish_algorithm_earlier() {
         .build()
         .expect("Failed to Build Nsga2");
 
-    nsga2.inner.run().expect("Failed to run Nsga2");
+    nsga2.run().expect("Failed to run Nsga2");
 
     // Just check the context, current iteration should be set as 0
-    assert_eq!(nsga2.inner.context.current_iteration, 0);
+    assert_eq!(nsga2.context.current_iteration, 0);
 }
 
 #[test]
@@ -186,7 +186,7 @@ fn test_invalid_params() {
 }
 
 #[test]
-fn test_invalid_algorithm_not_initialized() {
+fn test_algorithm_population_not_initialized() {
     let nsga2 = Nsga2Builder::default()
         .fitness_fn(dummy_fitness)
         .constraints_fn(dummy_constraints)
@@ -201,18 +201,5 @@ fn test_invalid_algorithm_not_initialized() {
         .build()
         .expect("Failed to Build Nsga2");
 
-    let err = match nsga2.population() {
-        Ok(_) => panic!("Should not be Ok in this"),
-        Err(e) => e,
-    };
-    match err {
-        AlgorithmError::Initialization(inner) => {
-            let msg = inner.to_string();
-            assert_eq!(
-                msg,
-                "Algorithm is not initialized yet: population is not set",
-            );
-        }
-        other => panic!("Incorrect error raised: {:?}", other),
-    }
+    assert!(nsga2.population.is_none())
 }

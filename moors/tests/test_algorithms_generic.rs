@@ -4,13 +4,9 @@ use std::collections::HashSet;
 
 use moors::{
     AgeMoeaBuilder, ArithmeticCrossover, CloseDuplicatesCleaner, GaussianMutation, IbeaBuilder,
-    Nsga2Builder, Nsga3Builder, Nsga3ReferencePointsSurvival, PopulationMOO, RandomSamplingFloat,
-    ReveaBuilder, Rnsga2Builder, SimulatedBinaryCrossover, Spea2Builder, UniformRealMutation,
-    impl_constraints_fn,
-    survival::moo::{
-        DanAndDenisReferencePoints, IbeaHyperVolumeSurvivalOperator, Nsga3ReferencePoints,
-        ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, StructuredReferencePoints,
-    },
+    Nsga2Builder, Nsga3Builder, PopulationMOO, RandomSamplingFloat, ReveaBuilder, Rnsga2Builder,
+    SimulatedBinaryCrossover, Spea2Builder, UniformRealMutation, impl_constraints_fn,
+    survival::moo::{DanAndDenisReferencePoints, StructuredReferencePoints},
 };
 
 /// Bi-objective fitness:
@@ -74,7 +70,7 @@ fn test_nsga2() {
 
     algorithm.run().expect("NSGA2 run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }
@@ -102,7 +98,7 @@ fn test_agemoea() {
 
     algorithm.run().expect("AgeMoea run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }
@@ -111,13 +107,13 @@ fn test_agemoea() {
 fn test_ibea() {
     let hv_reference = array![1.1, 1.1];
     let kappa = 0.05;
-    let survivor = IbeaHyperVolumeSurvivalOperator::new(hv_reference.clone(), kappa);
 
     let mut algorithm = IbeaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
-        .survivor(survivor)
+        .reference(hv_reference)
+        .kappa(kappa)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
         .constraints_fn(MyConstr)
@@ -135,22 +131,21 @@ fn test_ibea() {
 
     algorithm.run().expect("IBEA run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }
 
 #[test]
 fn test_nsga3() {
-    let reference_points = DanAndDenisReferencePoints::new(100, 2);
-    let rp = Nsga3ReferencePoints::new(reference_points.generate(), false);
-    let survivor = Nsga3ReferencePointsSurvival::new(rp);
+    let rp = DanAndDenisReferencePoints::new(100, 2).generate();
 
     let mut algorithm = Nsga3Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
-        .survivor(survivor)
+        .reference_points(rp)
+        .are_aspirational(false)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
         .constraints_fn(MyConstr)
@@ -168,7 +163,7 @@ fn test_nsga3() {
 
     algorithm.run().expect("NSGA3 run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }
@@ -177,12 +172,13 @@ fn test_nsga3() {
 fn test_rnsga2() {
     let rp: Array2<f64> = array![[0.8, 0.8], [0.9, 0.9]];
     let epsilon = 0.001;
-    let survivor = Rnsga2ReferencePointsSurvival::new(rp, epsilon);
+
     let mut algorithm = Rnsga2Builder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
-        .survivor(survivor)
+        .epsilon(epsilon)
+        .reference_points(rp)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
         .constraints_fn(MyConstr)
@@ -200,7 +196,7 @@ fn test_rnsga2() {
 
     algorithm.run().expect("RNSGA2 run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }
@@ -210,20 +206,21 @@ fn test_revea() {
     let rp = DanAndDenisReferencePoints::new(100, 2).generate();
     let alpha = 2.5;
     let frequency = 0.2;
-    let num_iterations = 100;
-    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency, num_iterations);
+
     let mut algorithm = ReveaBuilder::default()
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.5, 0.01))
-        .survivor(survivor)
+        .reference_points(rp)
+        .alpha(alpha)
+        .frequency(frequency)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_biobjective)
         .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
-        .num_iterations(num_iterations)
+        .num_iterations(100)
         .mutation_rate(0.1)
         .crossover_rate(0.95)
         .keep_infeasible(false)
@@ -233,7 +230,7 @@ fn test_revea() {
 
     algorithm.run().expect("Revea run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }
@@ -262,7 +259,7 @@ fn test_spea2() {
 
     algorithm.run().expect("SPEA2 run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_small_real_front(&population);
 }
@@ -290,7 +287,7 @@ fn test_same_seed_same_result() {
 
     algorithm1.run().expect("NSGA2 run failed");
     let population1 = algorithm1
-        .population()
+        .population
         .expect("population should have been initialized");
 
     let mut algorithm2 = Nsga2Builder::default()
@@ -314,7 +311,7 @@ fn test_same_seed_same_result() {
 
     algorithm2.run().expect("NSGA2 run failed");
     let population2 = algorithm2
-        .population()
+        .population
         .expect("population should have been initialized");
 
     assert_eq!(population1.genes, population2.genes)

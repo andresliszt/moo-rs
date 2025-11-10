@@ -12,7 +12,7 @@ use crate::{
 /// Implementation of the survival operator for the R-NSGA2 algorithm presented in the paper
 /// Reference Point Based Multi-Objective Optimization Using Evolutionary Algorithms
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Rnsga2ReferencePointsSurvival {
     reference_points: Array2<f64>,
     epsilon: f64,

@@ -17,13 +17,16 @@
 //!
 //! The default configuration keeps a single population (no external archive).
 
+use ndarray::Array1;
+
 use crate::{
-    create_algorithm,
-    selection::moo::RankAndScoringSelection,
-    survival::moo::{IbeaHyperVolumeSurvivalOperator, SurvivalScoringComparison},
+    define_algorithm_and_builder,
+    operators::{
+        selection::moo::IbeaScoringSelection, survival::moo::IbeaHyperVolumeSurvivalOperator,
+    },
 };
 
-create_algorithm!(
+define_algorithm_and_builder!(
     /// IBEA algorithm wrapper.
     ///
     /// Thin façade over [`GeneticAlgorithm`] preset with IBEA’s selection/survival strategy.
@@ -39,48 +42,7 @@ create_algorithm!(
     /// Zitzler & Künzli (2004), *Indicator-Based Evolutionary Algorithm for Multiobjective Optimization*,
     /// EMO 2004, LNCS 3248, Springer.
     Ibea,
-    RankAndScoringSelection,
-    IbeaHyperVolumeSurvivalOperator
+    IbeaScoringSelection,
+    IbeaHyperVolumeSurvivalOperator,
+    survival_args = [reference: Array1<f64>, kappa: f64],
 );
-
-impl<S, Cross, Mut, F, G, DC> Default for IbeaBuilder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-    AlgorithmBuilder<
-        S,
-        RankAndScoringSelection,
-        IbeaHyperVolumeSurvivalOperator,
-        Cross,
-        Mut,
-        F,
-        G,
-        DC,
-    >: Default,
-{
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RankAndScoringSelection,
-            IbeaHyperVolumeSurvivalOperator,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
-
-        // Selector operator uses scoring survival given by the raw fitness but it doesn't use rank
-        let selector =
-            RankAndScoringSelection::new(false, true, SurvivalScoringComparison::Maximize);
-
-        inner = inner.selector(selector);
-        IbeaBuilder {
-            inner_builder: inner,
-        }
-    }
-}

@@ -19,6 +19,7 @@ impl AgeMoeaHyperPlaneNormalization {
         Self
     }
 }
+
 impl HyperPlaneNormalization for AgeMoeaHyperPlaneNormalization {
     fn compute_extreme_points(&self, population_fitness: &Array2<f64>) -> Array2<f64> {
         let extreme_indices: Vec<usize> = population_fitness
@@ -43,6 +44,12 @@ impl HyperPlaneNormalization for AgeMoeaHyperPlaneNormalization {
 
 #[derive(Debug, Clone)]
 pub struct AgeMoeaSurvival;
+
+impl AgeMoeaSurvival {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
     fn set_front_survival_score<ConstrDim>(

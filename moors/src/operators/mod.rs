@@ -98,8 +98,8 @@ pub use survival::{
     SurvivalOperator,
     moo::{
         AgeMoeaSurvival, DanAndDenisReferencePoints, FrontsAndRankingBasedSurvival,
-        IbeaHyperVolumeSurvivalOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePoints,
-        Nsga3ReferencePointsSurvival, ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival,
-        Spea2KnnSurvival, StructuredReferencePoints,
+        IbeaHyperVolumeSurvivalOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePointsSurvival,
+        ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, Spea2KnnSurvival,
+        StructuredReferencePoints,
     },
 };

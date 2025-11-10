@@ -10,7 +10,7 @@ use crate::{
     random::RandomGenerator,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Spea2KnnSurvival;
 
 impl Spea2KnnSurvival {

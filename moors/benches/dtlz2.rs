@@ -7,8 +7,8 @@ use ndarray::{Array2, Axis, stack};
 
 use moors::{
     CloseDuplicatesCleaner, DanAndDenisReferencePoints, GaussianMutation, Nsga3Builder,
-    Nsga3ReferencePoints, Nsga3ReferencePointsSurvival, RandomSamplingFloat,
-    SimulatedBinaryCrossover, StructuredReferencePoints, impl_constraints_fn,
+    Nsga3ReferencePointsSurvival, RandomSamplingFloat, SimulatedBinaryCrossover,
+    StructuredReferencePoints, impl_constraints_fn,
 };
 
 /// DTLZ2 for 3 objectives (m = 3) with k = 0 (so num_vars = m−1 = 2):
@@ -34,8 +34,7 @@ fn fitness_dtlz2_3obj(pop: &Array2<f64>) -> Array2<f64> {
 
 fn bench_nsga3_dtlz2(c: &mut Criterion) {
     // 1) prepare 3-objective reference points once
-    let base_rp = DanAndDenisReferencePoints::new(1000, 3).generate();
-    let nsga3_rp = Nsga3ReferencePoints::new(base_rp, false);
+    let rp = DanAndDenisReferencePoints::new(1000, 3).generate();
     impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
     c.bench_function("nsga3_dtlz2_3obj", |b| {
@@ -45,7 +44,8 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
                 .sampler(RandomSamplingFloat::new(0.0, 1.0))
                 .crossover(SimulatedBinaryCrossover::new(20.0))
                 .mutation(GaussianMutation::new(0.05, 0.1))
-                .survivor(Nsga3ReferencePointsSurvival::new(nsga3_rp.clone()))
+                .reference_points(rp.clone())
+                .are_aspirational(false)
                 .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
                 .fitness_fn(fitness_dtlz2_3obj)
                 .constraints_fn(MyConstr)
@@ -63,7 +63,7 @@ fn bench_nsga3_dtlz2(c: &mut Criterion) {
 
             algorithm.run().expect("NSGA3 run failed");
             // prevent optimizer from eliding the result
-            black_box(algorithm.population().expect("Population getter failed"));
+            black_box(algorithm.population.expect("Population getter failed"));
         })
     });
 }

@@ -25,14 +25,16 @@
 //! to [`Rnsga2::new`]; the survivor will treat individuals whose distance to a
 //! point ≤ ε as equally preferred.
 //!
+use ndarray::Array2;
 
 use crate::{
-    create_algorithm,
-    selection::moo::RankAndScoringSelection,
-    survival::moo::{Rnsga2ReferencePointsSurvival, SurvivalScoringComparison},
+    define_algorithm_and_builder,
+    operators::{
+        selection::moo::Rnsga2RankScoringSelection, survival::moo::Rnsga2ReferencePointsSurvival,
+    },
 };
 
-create_algorithm!(
+define_algorithm_and_builder!(
     /// R-NSGA-II algorithm wrapper.
     ///
     /// Thin facade around [`GeneticAlgorithm`] pre-configured with
@@ -50,47 +52,7 @@ create_algorithm!(
     /// with [`Rnsga2::new`]; then call `run()` and `population()` to retrieve the
     /// preference-biased Pareto set.
     Rnsga2,
-    RankAndScoringSelection,
-    Rnsga2ReferencePointsSurvival
+    Rnsga2RankScoringSelection,
+    Rnsga2ReferencePointsSurvival,
+    survival_args = [reference_points: Array2<f64>, epsilon: f64],
 );
-
-impl<S, Cross, Mut, F, G, DC> Default for Rnsga2Builder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-    AlgorithmBuilder<
-        S,
-        RankAndScoringSelection,
-        Rnsga2ReferencePointsSurvival,
-        Cross,
-        Mut,
-        F,
-        G,
-        DC,
-    >: Default,
-{
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RankAndScoringSelection,
-            Rnsga2ReferencePointsSurvival,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
-
-        let selector =
-            RankAndScoringSelection::new(true, true, SurvivalScoringComparison::Minimize);
-
-        inner = inner.selector(selector);
-        Rnsga2Builder {
-            inner_builder: inner,
-        }
-    }
-}

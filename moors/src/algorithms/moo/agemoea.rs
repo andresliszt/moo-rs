@@ -1,8 +1,9 @@
 use crate::{
-    create_algorithm, selection::moo::RankAndScoringSelection, survival::moo::AgeMoeaSurvival,
+    define_algorithm_and_builder, selection::moo::AgeMoeaRankCrowdingSelection,
+    survival::moo::AgeMoeaSurvival,
 };
 
-create_algorithm!(
+define_algorithm_and_builder!(
     /// AGE-MOEA algorithm wrapper.
     ///
     /// This struct is a thin facade over [`GeneticAlgorithm`] preset with
@@ -23,36 +24,6 @@ create_algorithm!(
     /// pp. 595–603, July 2019.
     /// DOI: 10.1145/3321707.3321839
     AgeMoea,
-    RankAndScoringSelection,
+    AgeMoeaRankCrowdingSelection,
     AgeMoeaSurvival
 );
-
-impl<S, Cross, Mut, F, G, DC> Default for AgeMoeaBuilder<S, Cross, Mut, F, G, DC>
-where
-    S: SamplingOperator,
-    Cross: CrossoverOperator,
-    Mut: MutationOperator,
-    F: FitnessFn<Dim = ndarray::Ix2>,
-    G: ConstraintsFn,
-    DC: PopulationCleaner,
-    AlgorithmBuilder<S, RankAndScoringSelection, AgeMoeaSurvival, Cross, Mut, F, G, DC>: Default,
-{
-    fn default() -> Self {
-        let mut inner: AlgorithmBuilder<
-            S,
-            RankAndScoringSelection,
-            AgeMoeaSurvival,
-            Cross,
-            Mut,
-            F,
-            G,
-            DC,
-        > = Default::default();
-        inner = inner
-            .selector(RankAndScoringSelection::default())
-            .survivor(AgeMoeaSurvival);
-        AgeMoeaBuilder {
-            inner_builder: inner,
-        }
-    }
-}

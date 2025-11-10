@@ -5,10 +5,7 @@ use moors::{
     duplicates::CloseDuplicatesCleaner,
     genetic::PopulationMOO,
     impl_constraints_fn,
-    operators::{
-        GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
-        survival::moo::IbeaHyperVolumeSurvivalOperator,
-    },
+    operators::{GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover},
 };
 
 /// ------------------------------
@@ -112,7 +109,6 @@ fn test_ibea_expo2() {
     // Safe HV reference point (minimization ⇒ worse-than-worst in the search space):
     let hv_reference = array![6.0, 6.0];
     let kappa = 0.05;
-    let survivor = IbeaHyperVolumeSurvivalOperator::new(hv_reference.clone(), kappa);
 
     // Box constraints on decision variables
     impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
@@ -122,7 +118,8 @@ fn test_ibea_expo2() {
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(15.0))
         .mutation(GaussianMutation::new(0.05, 0.10))
-        .survivor(survivor)
+        .reference(hv_reference.clone())
+        .kappa(kappa)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_expo2)
         .constraints_fn(MyConstr)
@@ -144,7 +141,7 @@ fn test_ibea_expo2() {
     // -------------------
     // Comparison vs. true front
     // -------------------
-    let population = algorithm.population().expect("population must exist");
+    let population = algorithm.population.expect("population must exist");
     let obtained_front = best_front_to_array2(&population);
 
     let true_front = expo2_true_front(2000);

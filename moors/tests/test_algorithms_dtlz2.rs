@@ -9,10 +9,7 @@ use moors::{
     operators::{
         ArithmeticCrossover, GaussianMutation, RandomSamplingFloat, SimulatedBinaryCrossover,
         UniformRealMutation,
-        survival::moo::{
-            DanAndDenisReferencePoints, IbeaHyperVolumeSurvivalOperator, Nsga3ReferencePoints,
-            Nsga3ReferencePointsSurvival, ReveaReferencePointsSurvival, StructuredReferencePoints,
-        },
+        survival::moo::{DanAndDenisReferencePoints, StructuredReferencePoints},
     },
 };
 
@@ -64,8 +61,6 @@ fn assert_full_unit_sphere(pop: &PopulationMOO) {
 fn test_nsga3_dtlz2_three_objectives() {
     // 1) build 3-objective reference points
     let rp = DanAndDenisReferencePoints::new(100, 3).generate();
-    let nsga3_rp = Nsga3ReferencePoints::new(rp, false);
-    let survivor = Nsga3ReferencePointsSurvival::new(nsga3_rp);
     impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
     // 2) instantiate via builder
@@ -73,7 +68,8 @@ fn test_nsga3_dtlz2_three_objectives() {
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(SimulatedBinaryCrossover::new(20.0))
         .mutation(GaussianMutation::new(0.05, 0.1))
-        .survivor(survivor)
+        .reference_points(rp)
+        .are_aspirational(false)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
         .constraints_fn(MyConstr)
@@ -92,7 +88,7 @@ fn test_nsga3_dtlz2_three_objectives() {
     // 3) run & assert
     algorithm.run().expect("NSGA3 run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_full_unit_sphere(&population);
 }
@@ -103,8 +99,6 @@ fn test_revea_dtlz2_three_objectives() {
     let rp = DanAndDenisReferencePoints::new(100, 3).generate();
     let alpha = 2.5;
     let frequency = 0.2;
-    let num_iterations = 200;
-    let survivor = ReveaReferencePointsSurvival::new(rp, alpha, frequency, num_iterations);
     impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
     // instantiate via builder
@@ -112,14 +106,16 @@ fn test_revea_dtlz2_three_objectives() {
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(ArithmeticCrossover)
         .mutation(UniformRealMutation::new(0.5, 0.0, 1.0))
-        .survivor(survivor)
+        .reference_points(rp)
+        .alpha(alpha)
+        .frequency(frequency)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
         .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
-        .num_iterations(num_iterations)
+        .num_iterations(200)
         .mutation_rate(0.05)
         .crossover_rate(0.9)
         .keep_infeasible(false)
@@ -130,7 +126,7 @@ fn test_revea_dtlz2_three_objectives() {
     // 3) run & assert
     algorithm.run().expect("REVEA run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_full_unit_sphere(&population);
 }
@@ -140,8 +136,6 @@ fn test_ibea_three_objectives() {
     // build 3-objective reference points
     let rp = array![1.005, 1.005, 1.005];
     let kappa = 0.005;
-    let num_iterations = 200;
-    let survivor = IbeaHyperVolumeSurvivalOperator::new(rp, kappa);
     impl_constraints_fn!(MyConstr, lower_bound = 0.0, upper_bound = 1.0);
 
     // instantiate via builder
@@ -149,14 +143,15 @@ fn test_ibea_three_objectives() {
         .sampler(RandomSamplingFloat::new(0.0, 1.0))
         .crossover(ArithmeticCrossover)
         .mutation(UniformRealMutation::new(0.5, 0.0, 1.0))
-        .survivor(survivor)
+        .reference(rp)
+        .kappa(kappa)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
         .fitness_fn(fitness_dtlz2_3obj)
         .constraints_fn(MyConstr)
         .num_vars(2)
         .population_size(100)
         .num_offsprings(100)
-        .num_iterations(num_iterations)
+        .num_iterations(200)
         .mutation_rate(0.05)
         .crossover_rate(0.9)
         .keep_infeasible(false)
@@ -167,7 +162,7 @@ fn test_ibea_three_objectives() {
     // 3) run & assert
     algorithm.run().expect("IBEA run failed");
     let population = algorithm
-        .population()
+        .population
         .expect("population should have been initialized");
     assert_full_unit_sphere(&population);
 }

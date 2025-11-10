@@ -54,36 +54,10 @@
 //!         .build()?;               // ← macro‑generated .build()
 //!
 //!     algorithm.run()?;
-//!     println!("Done – final pop: {}", algorithm.population()?.len());
+//!     println!("Done – final pop: {}", algorithm.population?.len());
 //!     Ok(())
 //! }
 //! ```
-//!
-//! ### Writing your **own** algorithm
-//!
-//! 1. **Pick / implement** a [`SelectionOperator`] and a [`SurvivalOperator`].
-//! 2. Use them with helper macro `create_algorithm!`:
-//!
-//!    ```rust, ignore
-//!    create_algorithm!(MyNewAlgorithm, NewSelector, NewSurvival);
-//!    ```
-//!
-//! From there, a new algorithm struct will be created
-//! ```rust, ignore
-//!    pub struct MyAlgo<S, Cross, Mut, F, G, DC> {
-//!        inner: GeneticAlgorithm<S, NewSelector, NewSurvival, Cross, Mut, F, G, DC>
-//!    }
-//!    ```
-//! Also, the its respective builder is availble `MyAlgoBuilder`
-//!
-//! ## GeneticAlgorithm – generic core
-//!
-//! The struct [`GeneticAlgorithm`] is **not** intended to be used
-//! directly by most users; it’s the reusable engine that handles initial
-//! sampling, iterative evolution, evaluation and survivor selection.  Concrete
-//! algorithms customise its behaviour exclusively through trait objects, so
-//! they stay **zero‑cost abstractions** once monomorphised.
-
 //! ---
 //!
 //! *Evolution is a mystery*  Feel free to open an issue or PR if you implement a new

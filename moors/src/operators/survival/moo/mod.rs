@@ -18,7 +18,7 @@ pub(crate) mod spea2;
 pub use agemoea::AgeMoeaSurvival;
 pub use ibea::IbeaHyperVolumeSurvivalOperator;
 pub use nsga2::Nsga2RankCrowdingSurvival;
-pub use nsga3::{Nsga3ReferencePoints, Nsga3ReferencePointsSurvival};
+pub use nsga3::Nsga3ReferencePointsSurvival;
 pub use reference_points::{DanAndDenisReferencePoints, StructuredReferencePoints};
 pub use revea::ReveaReferencePointsSurvival;
 pub use rnsga2::Rnsga2ReferencePointsSurvival;
