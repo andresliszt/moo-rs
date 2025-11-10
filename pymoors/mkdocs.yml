@@ -25,17 +25,22 @@ theme:
         name: Switch to light mode
   highlightjs: true
   features:
-    - search.suggest
-    - search.highlight
     - content.tabs.link
-    - navigation.indexes
-    - content.tooltips
-    - navigation.path
     - content.code.annotate
     - content.code.copy
-    - content.code.select
+    - announce.dismiss
     - navigation.tabs
-    - navigation.footer
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.preview
+    - navigation.instant.progress
+    - navigation.path
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - toc.follow
+
 repo_url: https://github.com/andresliszt/moo-rs
 repo_name: "andresliszt/moo-rs"
 
@@ -62,13 +67,13 @@ extra_css:
 
 nav:
   - Get Started:
-    - Moo-rs : index.md
+    - Welcome to moo-rs: index.md
     - Installation: getting_started/installation.md
     - Knapsack Problem: getting_started/knapsack.md
     - Small Real Valued Problem: getting_started/real_valued.md
   - Development:
-    - Setting up an Environment: development/setup_environment.md
-    - Setting up a new Algorithm: development/setup_algorithm.md
+    - Environment Setup: development/setup_environment.md
+    - Genetic Algorithm Setup: development/setup_algorithm.md
   - User Guide:
     - Fitness and Constraints: user_guide/fitness_and_constraints/fitness_and_constraints.md
     - Genetic Operators: user_guide/operators/operators.md

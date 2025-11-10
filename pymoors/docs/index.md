@@ -1,5 +1,3 @@
-
-
 # moo-rs
 
 > _Evolution is a mystery_

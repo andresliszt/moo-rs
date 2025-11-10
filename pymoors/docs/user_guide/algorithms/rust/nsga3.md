@@ -123,6 +123,7 @@ let population: Population<Ix2, Ix2> = {
         .crossover(SimulatedBinaryCrossover::new(10.0)) // distribution_index = 10
         .mutation(GaussianMutation::new(0.1, 0.01))     // gene_mutation_rate = 0.1, sigma = 0.01
         .reference_points(reference_points)
+        .are_aspirational(false)
         .fitness_fn(evaluate_dtlz2)
         .constraints_fn(BoundConstraints)
         .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-8))

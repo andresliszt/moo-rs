@@ -1,7 +1,6 @@
+# Genetic Algorithm Setup
 
-# Setting Up Genetic Algorithms
-
-**Procedure:** In `moors`, genetic algorithms follow a [structured approach](../user_guide/algorithms/introduction/introduction.md#algorithms) involving three families of operators: **mating**, **selection**, and **survival**.
+**Procedure:** In `moors`, genetic algorithms follow a [structured approach](../user_guide/algorithms/introduction/introduction.md#algorithms) that involves three families of operators: **mating**, **selection**, and **survival**.
 
 ## Mating Operators (Shared Across Algorithms)
 These operators are modular and can be used with any algorithm:
@@ -9,7 +8,6 @@ These operators are modular and can be used with any algorithm:
 - **Sampling**: Generates the initial population (e.g., random, Latin hypercube).
 - **Crossover**: Recombines parents to produce offspring.
 - **Mutation**: Perturbs offspring to maintain diversity and exploration.
-
 
 ## Ranking & Survival Scoring
 
@@ -27,12 +25,11 @@ In algorithms that do not use ranking, this score can be used to select the top 
 
 ## Writing a New Algorithm in `moors`
 
-Creating a new algorithm is relatively simple in `moors`, We use [NSGA-II](../user_guide/algorithms/nsga2.md) and as [NSGA-III](../user_guide/algorithms/nsga3.md) an example. User must define the specific survival and selection operator.
+Creating a new algorithm in `moors` is relatively simple. We use [NSGA-II](../user_guide/algorithms/nsga2.md) and [NSGA-III](../user_guide/algorithms/nsga3.md) as examples. The user must define the specific survival and selection operators.
 
+### Survival and Selection Operators Without Arguments
 
-### Survival and selection operators without arguments
-
-The following example is the implementation of the `NSGA-II` algorithm, we use the macro `create_algorithm_and_builder`
+The following example shows the implementation of the `NSGA-II` algorithm using the macro `create_algorithm_and_builder`:
 
 ```Rust
 use crate::{
@@ -64,13 +61,11 @@ define_algorithm_and_builder!(
     /// DOI: 10.1109/4235.996017
     Nsga2, Nsga2RankAndScoringSelection, Nsga2RankCrowdingSurvival
 );
-
 ```
 
-This macro generates two structs: `Nsga2` and `Nsga2Builder`. The new generated struct `Nsga2` is just a type alias of the core `GeneticAlgorithm` struct, fixing the generic selection/survival operators to `RankAndScoringSelection` and `Nsga2RankCrowdingSurvival` respectively. The `Nsga2Builder` is the builder struct, that allows to use the [Rust builder design pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html) to create `Nsga2` instances.
+This macro generates two structs: `Nsga2` and `Nsga2Builder`. The new struct `Nsga2` is a type alias of the core `GeneticAlgorithm` struct, fixing the generic selection/survival operators to `RankAndScoringSelection` and `Nsga2RankCrowdingSurvival` respectively. The `Nsga2Builder` is the builder struct that uses the [Rust builder design pattern](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html) to create `Nsga2` instances.
 
-Internally, `Nsga2Builder` wraps the {{ docs_rs("struct", "algorithms.AlgorithmBuilder") }} as in the example
-
+Internally, `Nsga2Builder` wraps the {{ docs_rs("struct", "algorithms.AlgorithmBuilder") }} as shown below:
 
 ```Rust
 pub struct Nsga2Builder<S, Cross, Mut, F, G, DC>
@@ -85,17 +80,14 @@ where
     DC: PopulationCleaner,
 {
     inner: AlgorithmBuilder<S, Nsga2RankAndScoringSelection, Nsga2RankCrowdingSurvival, Cross, Mut, F, G, DC>,
-
 }
-
 ```
 
-This struct delegates all the builder methods to the inner, which was built using [derive builder crate](https://crates.io/crates/derive_builder)
+This struct delegates all builder methods to the inner builder, which was created using the [derive builder crate](https://crates.io/crates/derive_builder).
 
+### Survival and Selection Operators With Arguments
 
-### Survival and selection operators with arguments
-
-When either survival or selection operators take arguments, the macro needs to know about those. The following example is the implementation of the `NSGA-III` algorithm. The survival operator takes two arguments `reference_points` and the boolean `are_aspirational`, for more information refer the [algorithm docs](../user_guide/algorithms/nsga3.md).
+When either survival or selection operators take arguments, the macro needs to know about them. The following example shows the implementation of the `NSGA-III` algorithm. The survival operator takes two arguments: `reference_points` and the boolean `are_aspirational`. For more information, refer to the [algorithm docs](../user_guide/algorithms/nsga3.md).
 
 ```Rust
 use ndarray::Array2;
@@ -136,12 +128,10 @@ define_algorithm_and_builder!(
 );
 ```
 
-In this case `Nsga3Builder` extends the {{ docs_rs("struct", "algorithms.AlgorithmBuilder") }} setters by adding `reference_points` and `are_aspirational`, and they are passed to the survival operator in the build method.
+In this case, `Nsga3Builder` extends the {{ docs_rs("struct", "algorithms.AlgorithmBuilder") }} setters by adding `reference_points` and `are_aspirational`, which are passed to the survival operator in the build method.
 
-Same for the selection operator, if it takes any extra argument then use `selection_args` in the macro
+Similarly, if the selection operator takes extra arguments, use `selection_args` in the macro.
 
+### Writing a New Survival Operator and Selector Operator
 
-
-### Writing a New Survival Operator and New Selector operator
-
-We refer to the [survival section](../user_guide/operators/operators.md#survival) and [selection section](../user_guide/operators/operators.md#selection) in the user guide
+Refer to the [survival section](../user_guide/operators/operators.md#survival) and [selection section](../user_guide/operators/operators.md#selection) in the user guide.
