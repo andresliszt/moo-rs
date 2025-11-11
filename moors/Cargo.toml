@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 rand = "0.9.2"
 rand_distr = "0.5.1"
 num-traits = "0.2.19"
-ndarray = "0.16.1"
+ndarray = "0.17.1"
 ordered-float = "5.0.0"
 ndarray-stats = "0.6.0"
 faer-ext = { version = "0.7.1", features = ["ndarray"] }
