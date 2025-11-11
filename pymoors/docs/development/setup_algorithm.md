@@ -29,7 +29,7 @@ Creating a new algorithm in `moors` is relatively simple. We use [NSGA-II](../us
 
 ### Survival and Selection Operators Without Arguments
 
-The following example shows the implementation of the `NSGA-II` algorithm using the macro `create_algorithm_and_builder`:
+The following example shows the implementation of the `NSGA-II` algorithm using the macro `define_algorithm_and_builder`:
 
 ```Rust
 use crate::{

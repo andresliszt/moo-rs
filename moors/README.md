@@ -21,7 +21,7 @@
 
 ```toml
 [dependencies]
-moors = "0.2.8"
+moors = "0.2.9"
 ```
 
 ## Quickstart
