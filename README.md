@@ -45,9 +45,8 @@ moo-rs/
 
 ### Installation
 
-```toml
-[dependencies]
-moors = "0.2.3"
+```sh
+cargo add moors
 ```
 
 ### Quickstart
