@@ -1,0 +1,1594 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-objective optimization using genetic algorithms in Rust and Python.">
+      
+      
+        <meta name="author" content="Andrés Sandoval">
+      
+      
+      
+        <link rel="prev" href="revea.html">
+      
+      
+        <link rel="next" href="ibea.html">
+      
+      
+      <link rel="icon" href="../../images/moors-logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.12">
+    
+    
+      
+        <title>SPEA-II - moo-rs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2afb09e1.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#spea-ii" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="moo-rs" class="md-header__button md-logo" aria-label="moo-rs" data-md-component="logo">
+      
+  <img src="../../images/moors-logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            moo-rs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              SPEA-II
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/andresliszt/moo-rs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    andresliszt/moo-rs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../index.html" class="md-tabs__link">
+          
+  
+  
+  Get Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/setup_environment.html" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../fitness_and_constraints/fitness_and_constraints.html" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://docs.rs/moors/latest/moors/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API docs (moors)
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="moo-rs" class="md-nav__button md-logo" aria-label="moo-rs" data-md-component="logo">
+      
+  <img src="../../images/moors-logo.png" alt="logo">
+
+    </a>
+    moo-rs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/andresliszt/moo-rs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    andresliszt/moo-rs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Get Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Get Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Welcome to moo-rs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/installation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/knapsack.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knapsack Problem
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/real_valued.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Small Real Valued Problem
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/setup_environment.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Environment Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/setup_algorithm.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Genetic Algorithm Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitness_and_constraints/fitness_and_constraints.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fitness and Constraints
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operators/operators.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Genetic Operators
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duplicates/duplicates.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Duplicates Cleaner
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Algorithms
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Algorithms
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="introduction/introduction.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="custom/custom.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Defined Genetic Operators
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="nsga2.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    NSGA-II
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="rnsga2.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RNSGA-II
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="nsga3.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    NSGA-III
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="agemoea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AGE-MOEA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="revea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    REVEA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    SPEA-II
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="spea2.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    SPEA-II
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-in-moo-rs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation in moo-rs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zdt6-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      ZDT6 Problem
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ibea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IBEA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://docs.rs/moors/latest/moors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API docs (moors)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-in-moo-rs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation in moo-rs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zdt6-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      ZDT6 Problem
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="spea-ii">SPEA-II</h1>
+<p>SPEA-II is an elitist multi‐objective evolutionary algorithm that, unlike NSGA-II, does <strong>not</strong> use Pareto fronts. Instead, at each generation it splits the combined parents + offspring set into <strong>non-dominated</strong> and <strong>dominated</strong> individuals and maintains a separate archive of elites.</p>
+<h2 id="key-features">Key Features</h2>
+<ul>
+<li><strong>Strength &amp; Raw Fitness</strong></li>
+<li><strong>Strength</strong> of individual <span class="arithmatex">\(i\)</span>:
+     <span class="arithmatex">\(<span class="arithmatex">\(S(i) = \bigl|\{\,j \in P \cup A \mid i \text{ dominates } j\}\bigr|\)</span>\)</span>
+     where <span class="arithmatex">\(P\)</span> is the current population (size <span class="arithmatex">\(N\)</span>) and <span class="arithmatex">\(A\)</span> the elite archive.</li>
+<li>
+<p><strong>Raw fitness</strong> of <span class="arithmatex">\(i\)</span>:
+     $$R(i) = \sum_{\substack{j \in P \cup A\j \text{ dominates } i}} S(j)\,. $$</p>
+</li>
+<li>
+<p><strong>Density Estimation</strong>
+  For tie-breaking among equal <span class="arithmatex">\(R(i)\)</span>, compute
+  <span class="arithmatex">\(<span class="arithmatex">\(D(i) = \frac{1}{\sigma_i^k + 2},\)</span>\)</span>
+  where <span class="arithmatex">\(\sigma_i^k\)</span> is the distance to the <span class="arithmatex">\(k\)</span>-th nearest neighbor in objective space. Typically <span class="arithmatex">\(k = \lfloor\sqrt{N + A_{\max}}\rfloor\)</span>.</p>
+</li>
+<li>
+<p><strong>Elitist Archive</strong></p>
+</li>
+<li>Fixed size <span class="arithmatex">\(A_{\max}\)</span> (often set equal to <span class="arithmatex">\(N\)</span>).</li>
+<li>
+<p>Each generation:</p>
+<ol>
+<li>Form <span class="arithmatex">\(Q = P \cup A\)</span>.</li>
+<li>Extract all <strong>non-dominated</strong> from <span class="arithmatex">\(Q\)</span> → provisional <span class="arithmatex">\(A'\)</span>.</li>
+<li>If <span class="arithmatex">\(|A'| &gt; A_{\max}\)</span>, truncate by iteratively removing the individual with the smallest <span class="arithmatex">\(D(i)\)</span> until <span class="arithmatex">\(|A'| = A_{\max}\)</span>.</li>
+<li>If <span class="arithmatex">\(|A'| &lt; A_{\max}\)</span>, fill up with the best <strong>dominated</strong> individuals from <span class="arithmatex">\(Q\setminus A'\)</span> in ascending order of <span class="arithmatex">\(F(i)=R(i)+D(i)\)</span>.</li>
+</ol>
+</li>
+<li>
+<p><strong>Environmental Selection for Mating</strong></p>
+</li>
+<li>Parents are selected <strong>only</strong> from the updated archive <span class="arithmatex">\(A_{t+1}\)</span> (size <span class="arithmatex">\(A_{\max}\)</span>) by binary‐tournament on <span class="arithmatex">\(F(i)=R(i)+D(i)\)</span>.</li>
+<li>
+<p>Generate exactly <span class="arithmatex">\(N\)</span> offspring (so offspring count = population size).</p>
+</li>
+<li>
+<p><strong>Survival of Population</strong></p>
+</li>
+<li>
+<p><strong>Population replacement</strong> is generational: after mating, the new population <span class="arithmatex">\(P_{t+1}\)</span> consists <strong>solely</strong> of the <span class="arithmatex">\(N\)</span> offspring (no mixing with <span class="arithmatex">\(P_t\)</span>).</p>
+</li>
+<li>
+<p><strong>Constraint Handling</strong>
+  For constrained problems:</p>
+</li>
+<li><strong>Feasible</strong> solutions always outrank infeasible ones in both archive update and tournament.</li>
+<li>In ties raw fitness <span class="arithmatex">\(R(i)\)</span> is heavily penalized.</li>
+<li>Density <span class="arithmatex">\(D(i)\)</span> is computed only within the feasible set to preserve feasible diversity.</li>
+</ul>
+<hr />
+<h2 id="implementation-in-moo-rs">Implementation in moo-rs</h2>
+<p>In pymoors the algorithm does not maintain a separate set A — instead, P_t itself serves as the elite archive of best individuals. Each iteration proceeds as follows:</p>
+<ol>
+<li>
+<p><strong>Offspring generation</strong>
+   An offspring set <span class="arithmatex">\(O_t\)</span> of size O is produced by binary-tournament selection on <span class="arithmatex">\(P_t\)</span> using the composite fitness
+   <span class="arithmatex">\(F(i) = R(i) + D(i)\)</span>.</p>
+</li>
+<li>
+<p><strong>Combine parents and offspring</strong>
+   The union <span class="arithmatex">\(Q = P_t ∪ O_t\)</span> is formed.</p>
+</li>
+<li>
+<p><strong>Compute metrics</strong>
+   For every individual in <span class="arithmatex">\(Q\)</span>, compute:</p>
+</li>
+<li>Strength <span class="arithmatex">\(S(i)\)</span></li>
+<li>Raw fitness <span class="arithmatex">\(R(i)\)</span></li>
+<li>
+<p>Density <span class="arithmatex">\(D(i)\)</span></p>
+</li>
+<li>
+<p><strong>Build new population/archive</strong>
+   Extract all non-dominated individuals from <span class="arithmatex">\(Q\)</span>.</p>
+</li>
+<li>If <span class="arithmatex">\(\text{|non-dominated|} &gt; N\)</span>, remove those with smallest <span class="arithmatex">\(D(i)\)</span> one by one until exactly <span class="arithmatex">\(N\)</span> remain.</li>
+<li>
+<p>If <span class="arithmatex">\(\text{|non-dominated|} &lt; N\)</span>, fill up with the best dominated individuals sorted by increasing <span class="arithmatex">\(F(i)\)</span> until the total is <span class="arithmatex">\(N\)</span>.</p>
+</li>
+<li>
+<p><strong>Advance to next generation</strong>
+   The selected <span class="arithmatex">\(N\)</span> individuals become <span class="arithmatex">\(P_{t+1}\)</span>, which also functions as the archive for the next iteration.</p>
+</li>
+</ol>
+<p>This design lets the population evolve generation by generation while concurrently acting as the elite memory, without any additional archive structure.</p>
+<h2 id="zdt6-problem">ZDT6 Problem</h2>
+<p><strong>ZDT6</strong> is a challenging two-objective benchmark that tests an algorithm’s ability to handle highly non-linear, multi-modal behavior and a non-uniform Pareto front.</p>
+<ul>
+<li><strong>Two Conflicting Objectives:</strong></li>
+<li><span class="arithmatex">\(f_{1}(\mathbf{x}) = 1 - \exp\bigl(-4\,x_{1}\bigr)\,\bigl[\sin\bigl(6\pi\,x_{1}\bigr)\bigr]^{6}\)</span></li>
+<li>
+<p><span class="arithmatex">\(f_{2}(\mathbf{x}) = g(\mathbf{x})\,h\bigl(f_{1}(\mathbf{x}),\,g(\mathbf{x})\bigr)\)</span></p>
+</li>
+<li>
+<p><strong>Auxiliary Functions:</strong></p>
+</li>
+<li><span class="arithmatex">\(g(\mathbf{x}) = 1 + 9\,\dfrac{\sum_{i=2}^{n} x_{i}}{n - 1}\)</span></li>
+<li>
+<p><span class="arithmatex">\(h\bigl(f_{1}, g\bigr) = 1 - \bigl(\tfrac{f_{1}}{g}\bigr)^{2}\)</span></p>
+</li>
+<li>
+<p><strong>Key Characteristics:</strong></p>
+</li>
+<li><strong>Multi-modal front shape:</strong> <span class="arithmatex">\(f_{1}\)</span> has many local optima due to the <span class="arithmatex">\(\sin^{6}(6\pi\,x_{1})\)</span> term, making convergence difficult.</li>
+<li><strong>Non-uniform Pareto front:</strong> Optimal solutions concentrate in a narrow region of the objective space, challenging diversity preservation.</li>
+<li><strong>Biased distribution:</strong> Pareto-optimal <span class="arithmatex">\(x_{1}\)</span> values are skewed toward the middle of the decision range.</li>
+<li>
+<p><strong>Non-convexity:</strong> The <span class="arithmatex">\(h\)</span> function introduces strong curvature, requiring careful balance between convergence and spread.</p>
+</li>
+<li>
+<p><strong>Domain:</strong>
+  Each decision variable <span class="arithmatex">\(x_{i}\in[0,1]\)</span>, typically with <span class="arithmatex">\(n=30\)</span>.</p>
+</li>
+</ul>
+<p>ZDT6 is ideal for evaluating how well an algorithm balances exploration of multiple local optima in <span class="arithmatex">\(f_{1}\)</span> with exploitation toward a concentrated, non-uniform Pareto front.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Rust</label><label for="__tabbed_1_2">Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="p">:</span><span class="nc">dep</span><span class="w"> </span><span class="n">ndarray</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;*&quot;</span>
+<span class="p">:</span><span class="nc">dep</span><span class="w"> </span><span class="n">moors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;*&quot;</span>
+<span class="p">:</span><span class="nc">dep</span><span class="w"> </span><span class="n">plotters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;0.3.6&quot;</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">ndarray</span><span class="p">::{</span><span class="n">Array2</span><span class="p">,</span><span class="w"> </span><span class="n">Axis</span><span class="p">,</span><span class="w"> </span><span class="n">Ix2</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="n">moors</span><span class="p">::{</span>
+<span class="w">    </span><span class="n">impl_constraints_fn</span><span class="p">,</span>
+<span class="w">    </span><span class="n">algorithms</span><span class="p">::</span><span class="n">Spea2Builder</span><span class="p">,</span>
+<span class="w">    </span><span class="n">duplicates</span><span class="p">::</span><span class="n">CloseDuplicatesCleaner</span><span class="p">,</span>
+<span class="w">    </span><span class="n">operators</span><span class="p">::{</span><span class="n">GaussianMutation</span><span class="p">,</span><span class="w"> </span><span class="n">RandomSamplingFloat</span><span class="p">,</span><span class="w"> </span><span class="n">ExponentialCrossover</span><span class="p">},</span>
+<span class="w">    </span><span class="n">genetic</span><span class="p">::</span><span class="n">Population</span>
+<span class="p">};</span>
+
+<span class="k">use</span><span class="w"> </span><span class="n">plotters</span><span class="p">::</span><span class="n">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="sd">/// Evaluate the ZDT6 objectives in a fully vectorized manner.</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">evaluate_zdt6</span><span class="p">(</span><span class="n">population</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Array2</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Array2</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">population</span><span class="p">.</span><span class="n">nrows</span><span class="p">();</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">population</span><span class="p">.</span><span class="n">ncols</span><span class="p">();</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">x1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">population</span><span class="p">.</span><span class="n">column</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">to_owned</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// g = 1 + (9/(n-1)) * sum(x[1:])</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">tail</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">population</span><span class="p">.</span><span class="n">slice</span><span class="p">(</span><span class="n">s</span><span class="o">!</span><span class="p">[</span><span class="o">..</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="o">..</span><span class="p">]);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">sums</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tail</span><span class="p">.</span><span class="n">sum_axis</span><span class="p">(</span><span class="n">Axis</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sums</span><span class="p">.</span><span class="n">mapv</span><span class="p">(</span><span class="o">|</span><span class="n">s</span><span class="o">|</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="mf">9.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">((</span><span class="n">m</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">f64</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">s</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// f1 = 1 - exp(-4*x1) * sin^6(6*pi*x1)</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">sin6</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x1</span><span class="p">.</span><span class="n">mapv</span><span class="p">(</span><span class="o">|</span><span class="n">v</span><span class="o">|</span><span class="w"> </span><span class="p">(</span><span class="mf">6.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="kt">f64</span><span class="p">::</span><span class="n">consts</span><span class="p">::</span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v</span><span class="p">).</span><span class="n">sin</span><span class="p">().</span><span class="n">powi</span><span class="p">(</span><span class="mi">6</span><span class="p">));</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">f1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x1</span><span class="p">.</span><span class="n">mapv</span><span class="p">(</span><span class="o">|</span><span class="n">v</span><span class="o">|</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">x1</span><span class="p">.</span><span class="n">mapv</span><span class="p">(</span><span class="o">|</span><span class="n">v</span><span class="o">|</span><span class="w"> </span><span class="p">(</span><span class="o">-</span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v</span><span class="p">).</span><span class="n">exp</span><span class="p">())</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin6</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// h = 1 - (f1/g)^2</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">ratio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">f1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="o">&amp;</span><span class="n">g</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ratio</span><span class="p">.</span><span class="n">mapv</span><span class="p">(</span><span class="o">|</span><span class="n">r</span><span class="o">|</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">powi</span><span class="p">(</span><span class="mi">2</span><span class="p">));</span>
+
+<span class="w">    </span><span class="c1">// f2 = g * h</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">f2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">g</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="o">&amp;</span><span class="n">h</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Array2</span><span class="p">::</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">::</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">));</span>
+<span class="w">    </span><span class="n">result</span><span class="p">.</span><span class="n">column_mut</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">assign</span><span class="p">(</span><span class="o">&amp;</span><span class="n">f1</span><span class="p">);</span>
+<span class="w">    </span><span class="n">result</span><span class="p">.</span><span class="n">column_mut</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">assign</span><span class="p">(</span><span class="o">&amp;</span><span class="n">f2</span><span class="p">);</span>
+<span class="w">    </span><span class="n">result</span>
+<span class="p">}</span>
+
+<span class="sd">/// Compute the theoretical Pareto front for ZDT6.</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">zdt6_theoretical_front</span><span class="p">(</span><span class="n">num_points</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">f1</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">with_capacity</span><span class="p">(</span><span class="n">num_points</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">f2</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Vec</span><span class="p">::</span><span class="n">with_capacity</span><span class="p">(</span><span class="n">num_points</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="mi">0</span><span class="o">..</span><span class="n">num_points</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">x1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">num_points</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">i</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">num_points</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">f64</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="mf">0.0</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">f1_i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="o">-</span><span class="mf">4.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x1</span><span class="p">).</span><span class="n">exp</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="mf">6.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">std</span><span class="p">::</span><span class="kt">f64</span><span class="p">::</span><span class="n">consts</span><span class="p">::</span><span class="n">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x1</span><span class="p">).</span><span class="n">sin</span><span class="p">().</span><span class="n">powi</span><span class="p">(</span><span class="mi">6</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// when g = 1 → f2 = 1 - f1^2</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">f2_i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">f1_i</span><span class="p">.</span><span class="n">powi</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+<span class="w">        </span><span class="n">f1</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">f1_i</span><span class="p">);</span>
+<span class="w">        </span><span class="n">f2</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">f2_i</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">(</span><span class="n">f1</span><span class="p">,</span><span class="w"> </span><span class="n">f2</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Set up the SPEA2 algorithm for ZDT6</span>
+<span class="n">impl_constraints_fn</span><span class="o">!</span><span class="p">(</span><span class="n">BoundConstraints</span><span class="p">,</span><span class="w"> </span><span class="n">lower_bound</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">upper_bound</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">population</span><span class="p">:</span><span class="w"> </span><span class="nc">Population</span><span class="o">&lt;</span><span class="n">Ix2</span><span class="p">,</span><span class="w"> </span><span class="n">Ix2</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">algorithm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Spea2Builder</span><span class="p">::</span><span class="n">default</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">RandomSamplingFloat</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">crossover</span><span class="p">(</span><span class="n">ExponentialCrossover</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mf">0.75</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">mutation</span><span class="p">(</span><span class="n">GaussianMutation</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.01</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">duplicates_cleaner</span><span class="p">(</span><span class="n">CloseDuplicatesCleaner</span><span class="p">::</span><span class="n">new</span><span class="p">(</span><span class="mf">1e-8</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">fitness_fn</span><span class="p">(</span><span class="n">evaluate_zdt6</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">constraints_fn</span><span class="p">(</span><span class="n">BoundConstraints</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">num_vars</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">population_size</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">num_offsprings</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">num_iterations</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">mutation_rate</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">crossover_rate</span><span class="p">(</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">keep_infeasible</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">verbose</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;Failed to build SPEA2&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Run SPEA2 on ZDT6</span>
+<span class="w">    </span><span class="n">algorithm</span><span class="p">.</span><span class="n">run</span><span class="p">().</span><span class="n">expect</span><span class="p">(</span><span class="s">&quot;SPEA2 run failed&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">algorithm</span><span class="p">.</span><span class="n">population</span><span class="p">.</span><span class="n">unwrap</span><span class="p">().</span><span class="n">clone</span><span class="p">()</span>
+<span class="p">};</span>
+
+
+<span class="c1">// Get the best Pareto front obtained (as a Population instance)</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">fitness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">population</span><span class="p">.</span><span class="n">fitness</span><span class="p">;</span>
+
+<span class="c1">// Extract the obtained fitness values (each row is [f1, f2])</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">f1_found</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fitness</span><span class="p">.</span><span class="n">column</span><span class="p">(</span><span class="mi">0</span><span class="p">).</span><span class="n">to_vec</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">f2_found</span><span class="p">:</span><span class="w"> </span><span class="nb">Vec</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fitness</span><span class="p">.</span><span class="n">column</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">to_vec</span><span class="p">();</span>
+
+<span class="c1">// Compute the theoretical Pareto front for ZDT6</span>
+<span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="n">f1_theo</span><span class="p">,</span><span class="w"> </span><span class="n">f2_theo</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zdt6_theoretical_front</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+
+<span class="c1">// Plot the theoretical Pareto front and the obtained front</span>
+<span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">svg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span><span class="p">::</span><span class="n">new</span><span class="p">();</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">backend</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SVGBackend</span><span class="p">::</span><span class="n">with_string</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">svg</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span><span class="w"> </span><span class="mi">700</span><span class="p">));</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">backend</span><span class="p">.</span><span class="n">into_drawing_area</span><span class="p">();</span>
+<span class="w">    </span><span class="n">root</span><span class="p">.</span><span class="n">fill</span><span class="p">(</span><span class="o">&amp;</span><span class="n">WHITE</span><span class="p">).</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Compute min/max from actual data</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="k">mut</span><span class="w"> </span><span class="n">x_min</span><span class="p">,</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">x_max</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">f1_theo</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">f1_theo</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="p">(</span><span class="k">mut</span><span class="w"> </span><span class="n">y_min</span><span class="p">,</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">y_max</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">f2_theo</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="n">f2_theo</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="o">&amp;</span><span class="n">x</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">f1_theo</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">chain</span><span class="p">(</span><span class="n">f1_found</span><span class="p">.</span><span class="n">iter</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">x_min</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x_min</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">x_max</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x_max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="o">&amp;</span><span class="n">y</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">f2_theo</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">chain</span><span class="p">(</span><span class="n">f2_found</span><span class="p">.</span><span class="n">iter</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">y_min</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">y_min</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">y</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">y_max</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">y_max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">y</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Add a small margin (5%)</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">xr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">x_max</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">x_min</span><span class="p">).</span><span class="n">max</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">yr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">y_max</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">y_min</span><span class="p">).</span><span class="n">max</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">);</span>
+<span class="w">    </span><span class="n">x_min</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">xr</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.05</span><span class="p">;</span>
+<span class="w">    </span><span class="n">x_max</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">xr</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.05</span><span class="p">;</span>
+<span class="w">    </span><span class="n">y_min</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">yr</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.05</span><span class="p">;</span>
+<span class="w">    </span><span class="n">y_max</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">yr</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">0.05</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">chart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ChartBuilder</span><span class="p">::</span><span class="n">on</span><span class="p">(</span><span class="o">&amp;</span><span class="n">root</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">caption</span><span class="p">(</span><span class="s">&quot;ZDT6 Pareto Front: Theoretical vs Obtained (SPEA2)&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="s">&quot;DejaVu Sans&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">22</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">margin</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">x_label_area_size</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">y_label_area_size</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">build_cartesian_2d</span><span class="p">(</span><span class="n">x_min</span><span class="o">..</span><span class="n">x_max</span><span class="p">,</span><span class="w"> </span><span class="n">y_min</span><span class="o">..</span><span class="n">y_max</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">chart</span><span class="p">.</span><span class="n">configure_mesh</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">x_desc</span><span class="p">(</span><span class="s">&quot;f1&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">y_desc</span><span class="p">(</span><span class="s">&quot;f2&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="n">axis_desc_style</span><span class="p">((</span><span class="s">&quot;DejaVu Sans&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">light_line_style</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RGBColor</span><span class="p">(</span><span class="mi">220</span><span class="p">,</span><span class="w"> </span><span class="mi">220</span><span class="p">,</span><span class="w"> </span><span class="mi">220</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">draw</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Plot theoretical front as blue markers.</span>
+<span class="w">    </span><span class="n">chart</span><span class="p">.</span><span class="n">draw_series</span><span class="p">(</span>
+<span class="w">        </span><span class="n">f1_theo</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">zip</span><span class="p">(</span><span class="n">f2_theo</span><span class="p">.</span><span class="n">iter</span><span class="p">()).</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="o">&amp;</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">y</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Circle</span><span class="p">::</span><span class="n">new</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="n">RGBColor</span><span class="p">(</span><span class="mi">31</span><span class="p">,</span><span class="w"> </span><span class="mi">119</span><span class="p">,</span><span class="w"> </span><span class="mi">180</span><span class="p">).</span><span class="n">filled</span><span class="p">())</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">    </span><span class="p">).</span><span class="n">unwrap</span><span class="p">()</span>
+<span class="w">     </span><span class="p">.</span><span class="n">label</span><span class="p">(</span><span class="s">&quot;Theoretical Pareto Front&quot;</span><span class="p">)</span>
+<span class="w">     </span><span class="p">.</span><span class="n">legend</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="n">Circle</span><span class="p">::</span><span class="n">new</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="n">RGBColor</span><span class="p">(</span><span class="mi">31</span><span class="p">,</span><span class="w"> </span><span class="mi">119</span><span class="p">,</span><span class="w"> </span><span class="mi">180</span><span class="p">).</span><span class="n">filled</span><span class="p">()));</span>
+
+<span class="w">    </span><span class="c1">// Plot obtained front as red circles.</span>
+<span class="w">    </span><span class="n">chart</span><span class="p">.</span><span class="n">draw_series</span><span class="p">(</span>
+<span class="w">        </span><span class="n">f1_found</span><span class="p">.</span><span class="n">iter</span><span class="p">().</span><span class="n">zip</span><span class="p">(</span><span class="n">f2_found</span><span class="p">.</span><span class="n">iter</span><span class="p">()).</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="o">&amp;</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">y</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Circle</span><span class="p">::</span><span class="n">new</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="n">RGBColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">).</span><span class="n">filled</span><span class="p">())</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">    </span><span class="p">).</span><span class="n">unwrap</span><span class="p">()</span>
+<span class="w">     </span><span class="p">.</span><span class="n">label</span><span class="p">(</span><span class="s">&quot;Obtained Front&quot;</span><span class="p">)</span>
+<span class="w">     </span><span class="p">.</span><span class="n">legend</span><span class="p">(</span><span class="o">|</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="n">Circle</span><span class="p">::</span><span class="n">new</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="n">RGBColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">).</span><span class="n">filled</span><span class="p">()));</span>
+
+<span class="w">    </span><span class="n">chart</span><span class="p">.</span><span class="n">configure_series_labels</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">border_style</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RGBAColor</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">background_style</span><span class="p">(</span><span class="o">&amp;</span><span class="n">WHITE</span><span class="p">.</span><span class="n">mix</span><span class="p">(</span><span class="mf">0.9</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">label_font</span><span class="p">((</span><span class="s">&quot;DejaVu Sans&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">13</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="n">draw</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">unwrap</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">root</span><span class="p">.</span><span class="n">present</span><span class="p">().</span><span class="n">unwrap</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="c1">// Emit as rich output for evcxr</span>
+<span class="fm">println!</span><span class="p">(</span><span class="s">&quot;EVCXR_BEGIN_CONTENT image/svg+xml</span><span class="se">\n</span><span class="s">{}</span><span class="se">\n</span><span class="s">EVCXR_END_CONTENT&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">svg</span><span class="p">);</span>
+</code></pre></div>
+<p><img alt="svg" src="images/spea2_rust.svg" /></p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymoors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Spea2</span><span class="p">,</span>
+    <span class="n">RandomSamplingFloat</span><span class="p">,</span>
+    <span class="n">GaussianMutation</span><span class="p">,</span>
+    <span class="n">ExponentialCrossover</span><span class="p">,</span>
+    <span class="n">CloseDuplicatesCleaner</span><span class="p">,</span>
+    <span class="n">Constraints</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymoors.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">Population</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymoors.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoDArray</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_zdt6</span><span class="p">(</span><span class="n">population</span><span class="p">:</span> <span class="n">TwoDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TwoDArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluate the ZDT6 objectives in a fully vectorized manner.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">population</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># g = 1 + (9/(n-1)) * sum(x[1:])</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">9</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">population</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># f1 = 1 - exp(-4*x1) * sin^6(6*pi*x1)</span>
+    <span class="n">f1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span> <span class="o">*</span> <span class="n">x1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">6</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">6</span>
+    <span class="c1"># h = 1 - (f1/g)^2</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">f1</span> <span class="o">/</span> <span class="n">g</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="c1"># f2 = g * h</span>
+    <span class="n">f2</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">h</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">zdt6_theoretical_front</span><span class="p">(</span><span class="n">num_points</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the theoretical Pareto front for ZDT6.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_points</span><span class="p">)</span>
+    <span class="n">f1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span> <span class="o">*</span> <span class="n">x1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">6</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">6</span>
+    <span class="c1"># when g = 1 → f2 = 1 - f1^2</span>
+    <span class="n">f2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">f1</span><span class="o">**</span><span class="mi">2</span>
+    <span class="k">return</span> <span class="n">f1</span><span class="p">,</span> <span class="n">f2</span>
+
+
+<span class="c1"># Set up the SPEA2 algorithm for ZDT6</span>
+<span class="n">algorithm</span> <span class="o">=</span> <span class="n">Spea2</span><span class="p">(</span>
+    <span class="n">sampler</span><span class="o">=</span><span class="n">RandomSamplingFloat</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">crossover</span><span class="o">=</span><span class="n">ExponentialCrossover</span><span class="p">(</span><span class="n">exponential_crossover_rate</span><span class="o">=</span><span class="mf">0.75</span><span class="p">),</span>
+    <span class="n">mutation</span><span class="o">=</span><span class="n">GaussianMutation</span><span class="p">(</span><span class="n">gene_mutation_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.01</span><span class="p">),</span>
+    <span class="n">fitness_fn</span><span class="o">=</span><span class="n">evaluate_zdt6</span><span class="p">,</span>
+    <span class="n">constraints_fn</span><span class="o">=</span><span class="n">Constraints</span><span class="p">(</span><span class="n">lower_bound</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">upper_bound</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
+    <span class="n">duplicates_cleaner</span><span class="o">=</span><span class="n">CloseDuplicatesCleaner</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">),</span>
+    <span class="n">num_vars</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">population_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">num_offsprings</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">num_iterations</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">keep_infeasible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Run SPEA2 on ZDT6</span>
+<span class="n">algorithm</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Extract the obtained Pareto front</span>
+<span class="n">best</span><span class="p">:</span> <span class="n">Population</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">best_as_population</span>
+<span class="n">obtained_fitness</span> <span class="o">=</span> <span class="n">best</span><span class="o">.</span><span class="n">fitness</span>
+<span class="n">f1_found</span> <span class="o">=</span> <span class="n">obtained_fitness</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">f2_found</span> <span class="o">=</span> <span class="n">obtained_fitness</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># Compute the theoretical front</span>
+<span class="n">f1_theo</span><span class="p">,</span> <span class="n">f2_theo</span> <span class="o">=</span> <span class="n">zdt6_theoretical_front</span><span class="p">()</span>
+
+<span class="c1"># Plot theoretical vs obtained</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">f1_theo</span><span class="p">,</span> <span class="n">f2_theo</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Theoretical Pareto Front&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">f1_found</span><span class="p">,</span> <span class="n">f2_found</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Obtained Front&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;$f_1$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;$f_2$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;ZDT6 Pareto Front: Theoretical vs Obtained&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+<p><img alt="png" src="images/spea2_python.png" /></p>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.tabs.link", "content.code.annotate", "content.code.copy", "announce.dismiss", "navigation.tabs", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.preview", "navigation.instant.progress", "navigation.path", "navigation.sections", "navigation.top", "navigation.tracking", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+        <script src="../../js/custom_mathjax.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
