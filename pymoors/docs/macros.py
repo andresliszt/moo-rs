@@ -7,7 +7,13 @@ def define_env(env):
     base = f"https://docs.rs/moors/{version}/moors/"
 
     @env.macro
-    def docs_rs(item_type: str, path: str, label: str | None = None, method: str | None = None, tymethod: str | None = None) -> str:
+    def docs_rs(
+        item_type: str,
+        path: str,
+        label: str | None = None,
+        method: str | None = None,
+        tymethod: str | None = None,
+    ) -> str:
         parts = path.split(".")
         name, *rest = parts[::-1]
         # reconstruct the URL path
