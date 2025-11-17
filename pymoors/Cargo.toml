@@ -30,7 +30,7 @@ extension-module = ["pyo3/extension-module"]
 
 [dev-dependencies]
 criterion = "0.5.1"
-rstest = "0.25.0"
+rstest = "0.26.1"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage,coverage_nightly)'] }
