@@ -13,9 +13,52 @@ def test_individual_is_best():
         genes=genes, fitness=fitness, rank=0, constraints=constraints
     )
     assert individual.is_best
+    assert (
+        repr(individual)
+        == str(individual)
+        == (
+            "Individual(rank=0, "
+            "fitness=[0.9, 0.8, 0.7], "
+            "constraints = [ 0. , -0.1, -0.2], "
+            "feasible=True, "
+            "genes=[0.1, 0.2, 0.3])"
+        )
+    )
 
     individual.rank = 1
     assert not individual.is_best
+    assert (
+        repr(individual)
+        == str(individual)
+        == (
+            "Individual(rank=1, "
+            "fitness=[0.9, 0.8, 0.7], "
+            "constraints = [ 0. , -0.1, -0.2], "
+            "feasible=True, "
+            "genes=[0.1, 0.2, 0.3])"
+        )
+    )
+
+
+def test_individual_str_repr_large_arrays():
+    genes = np.array([1] * 100)
+    fitness = np.array([0.5] * 100)
+    constraints = np.array([1] * 200)
+
+    individual = Individual(
+        genes=genes, fitness=fitness, rank=2, constraints=constraints
+    )
+    assert (
+        str(individual)
+        == repr(individual)
+        == (
+            "Individual(rank=2, "
+            "fitness=[0.5, 0.5, 0.5, ..., 0.5, 0.5, 0.5], "
+            "constraints = [1, 1, 1, ..., 1, 1, 1], "
+            "feasible=False, "
+            "genes=[1, 1, 1, ..., 1, 1, 1])"
+        )
+    )
 
 
 def test_individual_is_feasible():
@@ -33,9 +76,20 @@ def test_individual_is_feasible():
     individual.constraints = np.array([0.0, 0.1, -0.2])
     assert not individual.is_feasible
 
-    # No constraints
+    # No constraints --- Also check that str/repr properly set constraints to None
     individual.constraints = None
     assert individual.is_feasible
+    assert (
+        repr(individual)
+        == str(individual)
+        == (
+            "Individual(rank=0, "
+            "fitness=[0.9, 0.8, 0.7], "
+            "constraints = None, "
+            "feasible=True, "
+            "genes=[0.1, 0.2, 0.3])"
+        )
+    )
 
 
 def test_population_length():
@@ -46,6 +100,11 @@ def test_population_length():
 
     pop = Population(genes=genes, fitness=fitness, rank=rank, constraints=constraints)
     assert len(pop) == 3
+    assert (
+        str(pop)
+        == repr(pop)
+        == "Population(Size: 3, Num Genes: 2, Num Objectives: 2, Num Constraints: 2)"
+    )
 
 
 def test_population_best():
