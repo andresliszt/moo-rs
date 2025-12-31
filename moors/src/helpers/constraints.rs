@@ -154,7 +154,6 @@ mod tests {
     use ndarray::{Array1, Array2, Axis, array};
 
     use crate::ConstraintsFn;
-    use crate::impl_constraints_fn;
 
     /* ───────────────── helper constraint fns ───────────────── */
 
