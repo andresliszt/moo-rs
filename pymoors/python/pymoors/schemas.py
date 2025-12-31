@@ -35,6 +35,26 @@ class Individual:
             return True
         return bool(np.all(np.array(self.constraints) <= 0))
 
+    def __str__(self) -> str:
+        genes_str = np.array2string(
+            self.genes, threshold=5, edgeitems=3, separator=", "
+        )
+        fitness_str = np.array2string(
+            self.fitness, threshold=5, edgeitems=3, separator=", "
+        )
+        constr_str = (
+            np.array2string(self.constraints, threshold=5, edgeitems=3, separator=", ")
+            if self.constraints is not None
+            else None
+        )
+
+        return (
+            f"Individual(rank={self.rank}, fitness={fitness_str}, constraints = {constr_str}, "
+            f"feasible={self.is_feasible}, genes={genes_str})"
+        )
+
+    __repr__ = __str__
+
 
 class Population:
     def __init__(
@@ -63,6 +83,22 @@ class Population:
         # Set private attribute for whose individuals with rank = 0
         self._best = None
         self._best_as_population = None
+
+    def __str__(self) -> str:
+        population_size = len(self.genes)
+        num_genes = self.genes.shape[1]
+        num_objectives = self.fitness.shape[1]
+        num_constraints = (
+            self.constraints.shape[1] if self.constraints is not None else 0
+        )
+
+        return (
+            f"Population(Size: {str(population_size)}, "
+            f"Num Genes: {str(num_genes)}, Num Objectives: {str(num_objectives)}, "
+            f"Num Constraints: {str(num_constraints)})"
+        )
+
+    __repr__ = __str__
 
     @overload
     def __getitem__(self, index: int) -> Individual: ...
