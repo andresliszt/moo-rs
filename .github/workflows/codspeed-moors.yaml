@@ -35,9 +35,10 @@ jobs:
         working-directory: moors
         run: cargo codspeed build
 
-      - name: Run & upload to CodSpeed
-        uses: CodSpeedHQ/action@v3
+      - name: Run moors CodSpeed benchmarks
+        uses: CodSpeedHQ/action@v4
         with:
+          mode: simulation
           working-directory: moors
-          run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
+          run: cargo codspeed run

@@ -90,11 +90,10 @@ jobs:
           uv pip install --no-build-isolation --force-reinstall "file://${{ steps.find_wheel.outputs.wheel }}"
           echo "VENV = $VIRTUAL_ENV"
 
-      - name: Run benchmarks
-        uses: CodSpeedHQ/action@v3
+      - name: Run pymoors CodSpeed benchmarks
+        uses: CodSpeedHQ/action@v4
         with:
+          mode: walltime
           working-directory: pymoors
-          run: |
-            uv run pytest tests/benchmarks --codspeed
-        env:
-          CODSPEED_RUNNER_MODE: "walltime"
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: uv run pytest tests/benchmarks --codspeed
