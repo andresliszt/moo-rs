@@ -55,7 +55,7 @@ jobs:
         run: cargo install cargo-llvm-cov
 
       - name: Run coverage
-        run: cargo llvm-cov --workspace --release --lcov --output-path lcov.info --remap-path-prefix "$GITHUB_WORKSPACE/=."
+        run: cargo llvm-cov --workspace --release --lcov --output-path lcov.info --remap-path-prefix ${{ github.workspace }}=.
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
