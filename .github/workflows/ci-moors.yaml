@@ -60,6 +60,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
+          working-directory: moors
           disable_search: true
           files: lcov.info
           flags: moors
