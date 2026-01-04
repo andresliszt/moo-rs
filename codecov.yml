@@ -1,0 +1,3 @@
+fixes:
+  - "python/::pymoors/python/"
+  - "pymoors/::pymoors/"
