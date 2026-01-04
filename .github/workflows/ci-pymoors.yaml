@@ -17,6 +17,11 @@ jobs:
   coverage-python:
     name: Python Coverage
     runs-on: ubuntu-latest
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_LLVM_COV: "1"
+      RUST_BACKTRACE: "1"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,31 +31,30 @@ jobs:
           python-version: ${{ env.DEFAULT_PYTHON }}
 
       - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
-
-      - name: Install rustfilt & coverage-prepare
-        run: cargo install rustfilt coverage-prepare
-
-      - name: Install llvm-tools-preview
-        run: rustup component add llvm-tools-preview
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
-      - name: Install Pymoors (dev dependencies)
-        run: make build-dev
-        env:
-          RUST_BACKTRACE: 1
-          RUSTFLAGS: '-C instrument-coverage'
+      - name: Run tests
+        shell: bash
+        run: |
+          source <(cargo llvm-cov show-env --export-prefix)
+          export CARGO_TARGET_DIR=$CARGO_LLVM_COV_TARGET_DIR
+          export CARGO_INCREMENTAL=1
+          cargo llvm-cov clean --workspace
+          uv sync --group testing
+          uv run -- maturin develop --uv
+          uv run -- pytest tests --cov pymoors --cov-report xml:coverage.xml --ignore=tests/benchmarks
+          cargo llvm-cov report --lcov --output-path coverage.lcov
 
-      - name: Run coverage
-        run: make coverage
-
-      - name: Upload Python coverage to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: coverage.xml,codecov.json
-          working-directory: pymoors
+          files: pymoors/coverage.xml,pymoors/coverage.lcov
+          directory: pymoors
           disable_search: true
           flags: pymoors
           fail_ci_if_error: true
