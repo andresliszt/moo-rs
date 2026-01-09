@@ -41,18 +41,38 @@ jobs:
         run: make build-dev
         env:
           RUST_BACKTRACE: 1
-          RUSTFLAGS: '-C instrument-coverage'
+          RUSTFLAGS: '-C instrument-coverage -C link-dead-code'
+          CARGO_LLVM_COV: '1'
+          LLVM_PROFILE_FILE: 'coverage-%p-%m.profraw'
 
       - name: Run coverage
         run: make coverage
+        env:
+          LLVM_PROFILE_FILE: 'coverage-%p-%m.profraw'
+
+      - name: Generate Rust LCOV from profraw
+        run: |
+          cargo llvm-cov --lcov --output-path coverage.lcov --no-report
+        env:
+          LLVM_PROFILE_FILE: 'coverage-%p-%m.profraw'
 
       - name: Upload Python coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: coverage.xml,codecov.json
+          files: coverage.xml
           working-directory: pymoors
           disable_search: true
           flags: pymoors
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Rust coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.lcov
+          working-directory: pymoors-rust
+          disable_search: true
+          flags: pymoors-rust
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
