@@ -70,7 +70,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           files: coverage.lcov
-          working-directory: pymoors-rust
+          working-directory: pymoors
           disable_search: true
           flags: pymoors-rust
           fail_ci_if_error: true
