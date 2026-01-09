@@ -76,8 +76,7 @@ coverage:  ## Run coverage & generate lcov
 	@echo "[pymoors] coverage" \
 	  && uv sync --group testing \
 	  && uv run coverage run -m pytest --ignore=tests/benchmarks \
-	  && uv run coverage xml \
-	  && coverage-prepare lcov python/pymoors/*.so
+	  && uv run coverage xml
 
 docs:  ## Build documentation
 	@echo "[pymoors] docs" \
