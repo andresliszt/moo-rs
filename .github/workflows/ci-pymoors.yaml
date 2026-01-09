@@ -17,6 +17,13 @@ jobs:
   coverage-python:
     name: Python Coverage
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-C instrument-coverage"
+      CARGO_INCREMENTAL: "0"
+      CARGO_LLVM_COV: "1"
+      RUST_BACKTRACE: "1"
+      LLVM_PROFILE_FILE: "pymoors-%p-%m.profraw"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -38,23 +45,17 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Install Pymoors (dev dependencies)
-        run: make build-dev
-        env:
-          RUST_BACKTRACE: 1
-          RUSTFLAGS: '-C instrument-coverage -C link-dead-code'
-          CARGO_LLVM_COV: '1'
-          LLVM_PROFILE_FILE: 'coverage-%p-%m.profraw'
+        run: |
+          cargo llvm-cov clean --workspace
+          make build-dev
 
       - name: Run coverage
         run: make coverage
-        env:
-          LLVM_PROFILE_FILE: 'coverage-%p-%m.profraw'
 
       - name: Generate Rust LCOV from profraw
         run: |
-          cargo llvm-cov --lcov --output-path coverage.lcov --no-report
-        env:
-          LLVM_PROFILE_FILE: 'coverage-%p-%m.profraw'
+          cargo llvm-cov report --lcov --output-path coverage.lcov
+
 
       - name: Upload Python coverage to Codecov
         uses: codecov/codecov-action@v5
