@@ -22,7 +22,7 @@ jobs:
       CARGO_INCREMENTAL: "0"
       CARGO_LLVM_COV: "1"
       RUST_BACKTRACE: "1"
-      LLVM_PROFILE_FILE: "pymoors-%p-%m.profraw"
+      LLVM_PROFILE_FILE: "profraw/coverage-%p-%m.profraw"
 
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +54,7 @@ jobs:
 
       - name: Generate Rust LCOV from profraw
         run: |
-          cargo llvm-cov report --lcov --output-path coverage.lcov
+          cargo llvm-cov report --lcov --output-path coverage.lcov --profraw-dir profraw
 
 
       - name: Upload Python coverage to Codecov
