@@ -58,7 +58,7 @@ jobs:
         run: make coverage
 
       - name: Generate Rust LCOV from profraw
-        run: cargo llvm-cov report --lcov --output-path coverage.lcov
+        run: cargo llvm-cov report --lcov --remap-path-prefix --output-path coverage.lcov
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
