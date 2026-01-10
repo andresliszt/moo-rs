@@ -54,38 +54,19 @@ jobs:
           cargo llvm-cov clean --workspace
           make build-dev
 
-      - name: DEBUG - After build, env & directories
-        run: |
-          echo "LLVM_PROFILE_FILE=${LLVM_PROFILE_FILE}"
-          echo "PWD=$(pwd)"
-          ls -la target/llvm-cov-target || true
-
       - name: Run coverage (Python tests call into Rust)
         run: make coverage
 
       - name: Generate Rust LCOV from profraw
         run: cargo llvm-cov report --lcov --output-path coverage.lcov
 
-      - name: Generate Rust LCOV from profraw
-        run: cargo llvm-cov report --lcov --output-path coverage.lcov
-
-      - name: Upload Python coverage to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: coverage.xml
+          files: coverage.xml,coverage.lcov
           working-directory: pymoors
           disable_search: true
           flags: pymoors
-          fail_ci_if_error: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload Rust coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: coverage.lcov
-          working-directory: pymoors
-          disable_search: true
-          flags: pymoors-rust
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
