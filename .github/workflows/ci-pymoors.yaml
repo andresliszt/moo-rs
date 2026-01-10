@@ -64,6 +64,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           files: coverage.xml,coverage.lcov
+          root_dir: pymoors
           working-directory: pymoors
           disable_search: true
           flags: pymoors
