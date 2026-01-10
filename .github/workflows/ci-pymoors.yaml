@@ -43,6 +43,7 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Configure coverage env for Python tests
+        shell: bash
         run: |
           cargo llvm-cov show-env --export-prefix | sed 's/^export //g' >> "$GITHUB_ENV"
           cargo llvm-cov clean --workspace
