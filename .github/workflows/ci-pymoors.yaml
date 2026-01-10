@@ -22,7 +22,6 @@ jobs:
       CARGO_INCREMENTAL: "0"
       CARGO_LLVM_COV: "1"
       RUST_BACKTRACE: "1"
-      LLVM_PROFILE_FILE: "target/llvm-cov-target/coverage-%p-%m.profraw"
 
     steps:
       - uses: actions/checkout@v4
@@ -44,63 +43,31 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
-      - name: Install Pymoors (dev dependencies)
+      - name: Configure coverage env for Python tests
+        run: |
+          cargo llvm-cov show-env --export-prefix | sed 's/^export //g' >> "$GITHUB_ENV"
+          cargo llvm-cov clean --workspace
+          echo "Resolved LLVM_PROFILE_FILE: ${LLVM_PROFILE_FILE}"
+
+      - name: Build Pymoors (dev dependencies) with coverage instrumentation
         run: |
           cargo llvm-cov clean --workspace
           make build-dev
 
-      # === DEBUG BEFORE COVERAGE ===
-      - name: DEBUG - Environment and paths before coverage
+      - name: DEBUG - After build, env & directories
         run: |
-          echo "=== DEBUG BEFORE COVERAGE ==="
-          echo "PWD: $(pwd)"
-          echo "User: $(whoami)"
-          echo "Kernel: $(uname -a)"
-          echo "RUSTFLAGS: ${RUSTFLAGS}"
-          echo "CARGO_INCREMENTAL: ${CARGO_INCREMENTAL}"
-          echo "CARGO_LLVM_COV: ${CARGO_LLVM_COV}"
-          echo "RUST_BACKTRACE: ${RUST_BACKTRACE}"
-          echo "LLVM_PROFILE_FILE: ${LLVM_PROFILE_FILE}"
-          echo "--- Working directory listing ---"
-          ls -la
-          echo "--- Resolving profraw directory (dirname of LLVM_PROFILE_FILE) ---"
-          PROF_DIR="$(dirname "${LLVM_PROFILE_FILE}")"
-          echo "PROF_DIR: ${PROF_DIR}"
-          ls -la "${PROF_DIR}" || echo "Directory ${PROF_DIR} does not exist yet."
-          echo "--- Local target directory ---"
-          ls -la target || echo "./target does not exist"
-          echo "--- Parent target directory (just in case) ---"
-          ls -la ../target || echo "../target does not exist"
-          echo "--- Searching for .profraw before coverage ---"
-          find . -type f -name '*.profraw' -maxdepth 5 || true
-          echo "=== END DEBUG BEFORE COVERAGE ==="
+          echo "LLVM_PROFILE_FILE=${LLVM_PROFILE_FILE}"
+          echo "PWD=$(pwd)"
+          ls -la target/llvm-cov-target || true
 
-
-      - name: Run coverage
+      - name: Run coverage (Python tests call into Rust)
         run: make coverage
 
-      # === DEBUG AFTER COVERAGE ===
-      - name: DEBUG - Inspect profraw and target after coverage
-        run: |
-          echo "=== DEBUG AFTER COVERAGE ==="
-          echo "PWD: $(pwd)"
-          echo "LLVM_PROFILE_FILE: ${LLVM_PROFILE_FILE}"
-          PROF_DIR="$(dirname "${LLVM_PROFILE_FILE}")"
-          echo "PROF_DIR: ${PROF_DIR}"
-          echo "--- Listing profraw directory ---"
-          ls -la "${PROF_DIR}" || echo "profraw directory not found."
-          echo "--- Search for .profraw across workspace ---"
-          find . -type f -name '*.profraw' || true
-          echo "--- Local target directory ---"
-          ls -la target || echo "./target does not exist"
-          echo "--- Recursive listing of target (limited) ---"
-          ls -R target | head -n 500 || echo "Unable to list target."
-          echo "=== END DEBUG AFTER COVERAGE ==="
+      - name: Generate Rust LCOV from profraw
+        run: cargo llvm-cov report --lcov --output-path coverage.lcov
 
       - name: Generate Rust LCOV from profraw
-        run: |
-          cargo llvm-cov report --lcov --output-path coverage.lcov
-
+        run: cargo llvm-cov report --lcov --output-path coverage.lcov
 
       - name: Upload Python coverage to Codecov
         uses: codecov/codecov-action@v5
