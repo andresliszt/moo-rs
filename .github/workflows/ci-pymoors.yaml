@@ -22,7 +22,7 @@ jobs:
       CARGO_INCREMENTAL: "0"
       CARGO_LLVM_COV: "1"
       RUST_BACKTRACE: "1"
-      LLVM_PROFILE_FILE: "profraw/coverage-%p-%m.profraw"
+      LLVM_PROFILE_FILE: "target/llvm-cov-target/coverage-%p-%m.profraw"
 
     steps:
       - uses: actions/checkout@v4
