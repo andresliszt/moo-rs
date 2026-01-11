@@ -9,7 +9,10 @@ use ndarray::{
     RemoveAxis, concatenate,
 };
 
-use crate::private::{SealedD01, SealedD12};
+use crate::{
+    non_dominated_sorting::build_fronts,
+    private::{SealedD01, SealedD12},
+};
 
 pub type Constraints<D> = ArrayBase<OwnedRepr<f64>, D>;
 pub type Fitness<D> = ArrayBase<OwnedRepr<f64>, D>;
@@ -223,22 +226,6 @@ where
         self.genes.nrows()
     }
 
-    /// Returns a new `Population` containing only the individuals with rank = 0.
-    /// If no ranking information is available, the entire population is returned.
-    pub fn best(&self) -> Self {
-        if let Some(ranks) = &self.rank {
-            let indices: Vec<usize> = ranks
-                .iter()
-                .enumerate()
-                .filter_map(|(i, &r)| if r == 0 { Some(i) } else { None })
-                .collect();
-            self.selected(&indices)
-        } else {
-            // If rank is not set, return the entire population.
-            self.clone()
-        }
-    }
-
     /// Updates the population's `survival_score` field.
     pub fn set_survival_score(&mut self, score: Array1<f64>) {
         self.survival_score = Some(score);
@@ -346,6 +333,59 @@ pub type IndividualMOO<'a, ConstrDim> = Individual<'a, Ix1, ConstrDim>;
 pub type IndividualSOO<'a, ConstrDim> = Individual<'a, Ix0, ConstrDim>;
 /// Type alias for a vector of `Population` representing multiple fronts.
 pub type Fronts<ConstrDim> = Vec<PopulationMOO<ConstrDim>>;
+
+impl<ConstrDim> PopulationMOO<ConstrDim>
+where
+    ConstrDim: D12,
+{
+    pub fn best(&self) -> Self {
+        // Obtain ranks, either from `self.rank`, or by building them once.
+        let ranks = match &self.rank {
+            Some(r) => r.clone(),
+            None => {
+                let fronts = build_fronts(self.clone(), self.len());
+                let population_with_rank = fronts.to_population();
+                population_with_rank
+                    .rank
+                    .expect("rank must be set after building fronts")
+            }
+        };
+
+        // Common logic: collect indices whose rank == 0
+        let indices: Vec<usize> = ranks
+            .iter()
+            .enumerate()
+            .filter_map(|(i, &r)| (r == 0).then_some(i))
+            .collect();
+
+        self.selected(&indices)
+    }
+}
+
+impl<ConstrDim> PopulationSOO<ConstrDim>
+where
+    ConstrDim: D12,
+{
+    /// Returns a new `Population` containing only the individuals with rank = 0.
+    /// If no ranking information is available, the entire population is returned.
+    pub fn best(&self) -> Self {
+        // FIX ME: What is "best" is single objetive?
+        // We know best is simply the argmin of the fitness 1D array
+        // but what about precission? for example if the min f = 0,
+        // individuals with f1 = 0, and f2 = 0.0000000000001 are best
+        if let Some(ranks) = &self.rank {
+            let indices: Vec<usize> = ranks
+                .iter()
+                .enumerate()
+                .filter_map(|(i, &r)| if r == 0 { Some(i) } else { None })
+                .collect();
+            self.selected(&indices)
+        } else {
+            // If rank is not set, return the entire population.
+            self.clone()
+        }
+    }
+}
 
 /// An extension trait for `Fronts` that adds a `.to_population()` method
 /// which flattens multiple fronts into a single `Population`.
@@ -467,18 +507,18 @@ mod tests {
     }
 
     #[test]
-    fn test_population_moo_best_without_rank() {
+    fn test_population_moo_computes_best_if_rank_not_given() {
         // Create a population without rank information.
         let genes = array![[1.0, 2.0], [3.0, 4.0]];
         let fitness = array![[0.5, 1.0], [1.5, 2.0]];
         let pop = PopulationMOO::new_unconstrained(genes.clone(), fitness.clone());
-        // Since there is no rank, best() should return the whole population.
+        // Since there is no rank, best() will compute ranks internally.
         let best = pop.best();
-        assert_eq!(
-            best.len(),
-            pop.len(),
-            "Best population should equal the original population when rank is None"
-        );
+
+        let expected_genes = array![[1.0, 2.0]];
+        let expected_fitness = array![[0.5, 1.0]];
+        assert_eq!(best.genes, expected_genes);
+        assert_eq!(best.fitness, expected_fitness);
     }
 
     #[test]
