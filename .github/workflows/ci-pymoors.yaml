@@ -60,6 +60,122 @@ jobs:
       - name: Generate Rust LCOV from profraw
         run: cargo llvm-cov report --lcov --remap-path-prefix --output-path coverage.lcov
 
+      - name: Debug coverage paths (auto-suggestions)
+        working-directory: pymoors
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "=== DEBUG: entorno y ubicación ==="
+          echo "PWD: $(pwd)"
+          echo "Repo root (git rev-parse): $(git rev-parse --show-toplevel)"
+          echo "Branch: ${GITHUB_REF:-unknown}"
+          echo "Commit: ${GITHUB_SHA:-unknown}"
+
+          echo "=== DEBUG: existencia y tamaño de reportes ==="
+          for f in coverage.xml coverage.lcov; do
+            if [ ! -f "$f" ]; then
+              echo "::error::No existe $f en $(pwd). Verifica rutas o working-directory."
+              exit 1
+            fi
+            sz=$(wc -c < "$f" || echo 0)
+            echo "$f size: $sz bytes"
+            if [ "$sz" -lt 200 ]; then
+              echo "::warning::$f parece muy pequeño. ¿Se generaron tests e instrumentación?"
+            fi
+          done
+
+          echo "=== DEBUG: LCOV - muestras de SF (file paths) ==="
+          grep -E '^SF:' coverage.lcov | sed 's/^SF://' | sort | uniq | head -n 20 | nl -ba || true
+
+          echo "=== DEBUG: LCOV - primeras entradas DA (line hits) ==="
+          grep -nE '^(SF:|DA:)' coverage.lcov | head -n 40 || true
+
+          echo "=== DEBUG: XML - fuentes declaradas en <sources> ==="
+          awk '/<sources>/,/<\/sources>/{print}' coverage.xml | sed -n '1,120p' || true
+
+          echo "=== DEBUG: XML - ejemplos de filename=\"...\" ==="
+          grep -o 'filename="[^"]\+"' coverage.xml | sed 's/filename="//; s/"$//' | sort | uniq | head -n 30 | nl -ba || true
+
+          echo "=== DEBUG: Detección de prefijos comunes ==="
+          LCOV_PREFIX=$(grep -E '^SF:' coverage.lcov | sed 's/^SF://' \
+            | awk -F/ '{print "/"$2"/"$3"/"$4}' \
+            | sort | uniq -c | sort -nr | awk 'NR==1{print $2}' || true)
+          XML_PREFIX=$(grep -o 'filename="[^"]\+"' coverage.xml | sed 's/filename="//; s/"$//' \
+            | awk -F/ '{print "/"$2"/"$3"/"$4}' \
+            | sort | uniq -c | sort -nr | awk 'NR==1{print $2}' || true)
+          echo "LCOV_PREFIX candidato: ${LCOV_PREFIX:-<no-detectado>}"
+          echo "XML_PREFIX candidato: ${XML_PREFIX:-<no-detectado>}"
+
+          echo "=== DEBUG: Árbol del repo (top 200) ==="
+          ( cd "$(git rev-parse --show-toplevel)" && git ls-files | head -n 200 | nl -ba )
+
+          echo "=== DEBUG: Sugerencias de codecov.yml: fixes ==="
+          SUGGESTIONS="fixes:\n"
+          if [ -n "${LCOV_PREFIX:-}" ] && [ "$LCOV_PREFIX" != "/" ]; then
+            SUGGESTIONS+="  - \"${LCOV_PREFIX}/::\"\n"
+          fi
+          if [ -n "${XML_PREFIX:-}" ] && [ "$XML_PREFIX" != "/" ] && [ "$XML_PREFIX" != "$LCOV_PREFIX" ]; then
+            SUGGESTIONS+="  - \"${XML_PREFIX}/::\"\n"
+          fi
+          SUGGESTIONS+="  # Ejemplos alternativos:\n"
+          SUGGESTIONS+="  # - \"pymoors/::moo-rs/pymoors/\"\n"
+          SUGGESTIONS+="  # - \"moo-rs/pymoors/::pymoors/\"\n"
+          echo -e "$SUGGESTIONS"
+          echo -e "### Codecov fixes suggestions\n\`\`\`yaml\n$SUGGESTIONS\`\`\`\n" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "=== DEBUG: Validación de mapeo (LCOV vs repo) ==="
+          SF_SAMPLE=$(grep -E '^SF:' coverage.lcov | sed 's/^SF://' | head -n 1 || true)
+          if [ -n "$SF_SAMPLE" ]; then
+            echo "Sample SF: $SF_SAMPLE"
+            CANDIDATES=("$SF_SAMPLE")
+            if [ -n "${LCOV_PREFIX:-}" ]; then
+              CANDIDATES+=("$(echo "$SF_SAMPLE" | sed "s|^${LCOV_PREFIX}/||")")
+            fi
+            CANDIDATES+=("$(basename "$SF_SAMPLE")")
+            FOUND=0
+            for c in "${CANDIDATES[@]}"; do
+              if [ -f "$c" ]; then
+                echo "::notice::LCOV mapea con repo (existe): $c"
+                FOUND=1; break
+              fi
+              if [ -f "$(git rev-parse --show-toplevel)/$c" ]; then
+                echo "::notice::LCOV mapea con repo (existe): $(git rev-parse --show-toplevel)/$c"
+                FOUND=1; break
+              fi
+            done
+            if [ "$FOUND" -eq 0 ]; then
+              echo "::warning::Ningún SF sample mapeó a un archivo del repo. Añade fixes en codecov.yml o revisa --remap-path-prefix."
+            fi
+          fi
+
+          echo "=== DEBUG: Validación de mapeo (XML filename vs repo) ==="
+          FN_SAMPLE=$(grep -o 'filename="[^"]\+"' coverage.xml | sed 's/filename="//; s/"$//' | head -n 1 || true)
+          if [ -n "$FN_SAMPLE" ]; then
+            echo "Sample filename: $FN_SAMPLE"
+            CANDIDATES_XML=("$FN_SAMPLE")
+            if [ -n "${XML_PREFIX:-}" ]; then
+              CANDIDATES_XML+=("$(echo "$FN_SAMPLE" | sed "s|^${XML_PREFIX}/||")")
+            fi
+            CANDIDATES_XML+=("$(basename "$FN_SAMPLE")")
+            FOUND_XML=0
+            for c in "${CANDIDATES_XML[@]}"; do
+              if [ -f "$c" ]; then
+                echo "::notice::XML mapea con repo (existe): $c"
+                FOUND_XML=1; break
+              fi
+              if [ -f "$(git rev-parse --show-toplevel)/$c" ]; then
+                echo "::notice::XML mapea con repo (existe): $(git rev-parse --show-toplevel)/$c"
+                FOUND_XML=1; break
+              fi
+            done
+            if [ "$FOUND_XML" -eq 0 ]; then
+              echo "::warning::Ningún filename sample mapeó a un archivo del repo. Añade fixes en codecov.yml."
+            fi
+          fi
+
+          echo "=== DEBUG: Fin ==="
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
