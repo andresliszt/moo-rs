@@ -1,4 +1,32 @@
-fixes:
-  - "python/::pymoors/python/"
-  - "pymoors/::pymoors/"
-  - "src/::moors/src/"
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0%
+    patch:
+      default:
+        target: 100%
+        threshold: 0%
+
+comment:
+  layout: "diff, components, files"
+
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        threshold: 0%
+
+  individual_components:
+    - component_id: pymoors-rust
+      name: Pymoors Rust (PyO3 bridge)
+      paths:
+        - moo-rs/pymoors/src/**
+
+    - component_id: pymoors-python
+      name: Pymoors Python package
+      paths:
+        - moo-rs/pymoors/python/pymoors/**
