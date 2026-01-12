@@ -1,0 +1,1767 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-objective optimization using genetic algorithms in Rust and Python.">
+      
+      
+        <meta name="author" content="Andrés Sandoval">
+      
+      
+      
+        <link rel="prev" href="../fitness_and_constraints/fitness_and_constraints.html">
+      
+      
+        <link rel="next" href="../duplicates/duplicates.html">
+      
+      
+      <link rel="icon" href="../../images/moors-logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.12">
+    
+    
+      
+        <title>Genetic Operators - moo-rs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2afb09e1.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#genetic-operators" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="moo-rs" class="md-header__button md-logo" aria-label="moo-rs" data-md-component="logo">
+      
+  <img src="../../images/moors-logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            moo-rs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Genetic Operators
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/andresliszt/moo-rs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    andresliszt/moo-rs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../index.html" class="md-tabs__link">
+          
+  
+  
+  Get Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/setup_environment.html" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../fitness_and_constraints/fitness_and_constraints.html" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://docs.rs/moors/latest/moors/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API docs (moors)
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="moo-rs" class="md-nav__button md-logo" aria-label="moo-rs" data-md-component="logo">
+      
+  <img src="../../images/moors-logo.png" alt="logo">
+
+    </a>
+    moo-rs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/andresliszt/moo-rs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    andresliszt/moo-rs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Get Started
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Get Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Welcome to moo-rs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/installation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/knapsack.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Knapsack Problem
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/real_valued.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Small Real Valued Problem
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/setup_environment.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Environment Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/setup_algorithm.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Genetic Algorithm Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    User Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            User Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitness_and_constraints/fitness_and_constraints.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fitness and Constraints
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Genetic Operators
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="operators.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Genetic Operators
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mutation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mutation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crossover" class="md-nav__link">
+    <span class="md-ellipsis">
+      Crossover
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sampling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selection
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#survival" class="md-nav__link">
+    <span class="md-ellipsis">
+      Survival
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Survival">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-on-fronts-and-traits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes on Fronts and Traits
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duplicates/duplicates.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Duplicates Cleaner
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Algorithms
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Algorithms
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/introduction/introduction.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/custom/custom.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Defined Genetic Operators
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/nsga2.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    NSGA-II
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/rnsga2.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    RNSGA-II
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/nsga3.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    NSGA-III
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/agemoea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AGE-MOEA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/revea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    REVEA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/spea2.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SPEA-II
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/ibea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IBEA
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://docs.rs/moors/latest/moors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API docs (moors)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mutation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mutation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crossover" class="md-nav__link">
+    <span class="md-ellipsis">
+      Crossover
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sampling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selection
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#survival" class="md-nav__link">
+    <span class="md-ellipsis">
+      Survival
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Survival">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notes-on-fronts-and-traits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes on Fronts and Traits
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="genetic-operators">Genetic Operators</h1>
+<p>Genetic operators are the core of any genetic algorithm; they are responsible for defining how individuals evolve across generations. They are formal mathematical operators defined on populations of candidate solutions, used to generate new individuals by recombining or perturbing existing ones.</p>
+<h2 id="mutation">Mutation</h2>
+<p>Mutation is a unary genetic operator that introduces random perturbations into an individual’s representation. By randomly flipping, tweaking or replacing genes, mutation maintains population diversity and enables exploration of new regions in the search space.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Rust</label><label for="__tabbed_1_2">Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>A mutation operator in <code>moors</code> is any type that implements the <a href="https://docs.rs/moors/0.2.9/moors/operators/mutation/trait.MutationOperator.html" target="_blank" rel="noopener">MutationOperator</a> trait. For example:</p>
+<div class="highlight"><pre><span></span><code><span class="k">use</span><span class="w"> </span><span class="n">ndarray</span><span class="p">::</span><span class="n">ArrayViewMut1</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::{</span><span class="n">operators</span><span class="p">::</span><span class="n">MutationOperator</span><span class="p">,</span><span class="w"> </span><span class="n">random</span><span class="p">::</span><span class="n">RandomGenerator</span><span class="p">};</span>
+
+<span class="cp">#[derive(Debug, Clone)]</span>
+<span class="sd">/// Mutation operator that flips bits in a binary individual with a specified mutation rate.</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">BitFlipMutation</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="n">gene_mutation_rate</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">BitFlipMutation</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">new</span><span class="p">(</span><span class="n">gene_mutation_rate</span><span class="p">:</span><span class="w"> </span><span class="kt">f64</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="bp">Self</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">gene_mutation_rate</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">MutationOperator</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">BitFlipMutation</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">mutate</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">individual</span><span class="p">:</span><span class="w"> </span><span class="nc">ArrayViewMut1</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="p">,</span><span class="w"> </span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">rng</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="k">impl</span><span class="w"> </span><span class="n">RandomGenerator</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="n">gene</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">individual</span><span class="p">.</span><span class="n">iter_mut</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">rng</span><span class="p">.</span><span class="n">gen_bool</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">gene_mutation_rate</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="o">*</span><span class="n">gene</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="o">*</span><span class="n">gene</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="p">};</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The main method to implement is <code>mutate</code>, which operates at the <strong>individual</strong> level using an <code>ndarray::ArrayViewMut1</code>. Predefined mutation operators include:</p>
+<p><table>
+  <thead>
+    <tr>
+      <th>Mutation Operator</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/mutation/struct.BitFlipMutation.html" target="_blank" rel="noopener">BitFlipMutation</a> </td>
+      <td>Randomly flips one or more bits in the binary representation, introducing small variations.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/mutation/struct.GaussianMutation.html" target="_blank" rel="noopener">GaussianMutation</a> </td>
+      <td>Adds Gaussian noise to each real-valued gene to locally explore the continuous solution space.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/struct.ScrambleMutation.html" target="_blank" rel="noopener">ScrambleMutation</a> </td>
+      <td>Selects a subsequence and randomly shuffles it, preserving the original elements but altering their order.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/mutation/struct.SwapMutation.html" target="_blank" rel="noopener">SwapMutation</a> </td>
+      <td>Swaps the positions of two randomly chosen genes to explore neighboring permutations.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/mutation/struct.DisplacementMutation.html" target="_blank" rel="noopener">DisplacementMutation</a> </td>
+      <td>Extracts a block of the permutation and inserts it at another position, preserving the block’s relative order.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/mutation/struct.UniformRealMutation.html" target="_blank" rel="noopener">UniformRealMutation</a> </td>
+      <td>Resets a real-valued gene based on a uniform distribution.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/mutation/struct.UniformBinaryMutation.html" target="_blank" rel="noopener">UniformBinaryMutation</a> </td>
+      <td> Resets a bit to a random 0 or 1 .</td>
+    </tr></p>
+<p></tbody>
+</table></p>
+</div>
+<div class="tabbed-block">
+<p>A mutation operator in <code>pymoors</code> is just a class that defines the <code>operate</code> method:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pymoors.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoDArray</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BitFlipMutation</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_mutation_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_mutation_rate</span> <span class="o">=</span> <span class="n">gene_mutation_rate</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">operate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">population</span><span class="p">:</span> <span class="n">TwoDArray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TwoDArray</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">population</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_mutation_rate</span>
+        <span class="n">population</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">population</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">population</span>
+</code></pre></div>
+<p><code>operate</code> acts at poblational level, as usual it means that it takes a 2D numpy array and returns 2D array too, where each row is the evaluation of a single individual.</p>
+<p>There are many built-in mutation operators backed at the rust side</p>
+<p><table>
+  <thead>
+    <tr>
+      <th>Mutation Operator</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pymoors.BitFlipMutation</code> </td>
+      <td>Randomly flips one or more bits in the binary representation, introducing small variations.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.GaussianMutation</code></td>
+      <td>Adds Gaussian noise to each real-valued gene to locally explore the continuous solution space.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.ScrambleMutation</code> </td>
+      <td>Selects a subsequence and randomly shuffles it, preserving the original elements but altering their order.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.SwapMutation</code> </td>
+      <td>Swaps the positions of two randomly chosen genes to explore neighboring permutations.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.DisplacementMutation</code></td>
+      <td>Extracts a block of the permutation and inserts it at another position, preserving the block’s relative order.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.UniformRealMutation</code></td>
+      <td>Resets a real-valued gene based on a uniform distribution.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.UniformBinaryMutation</code></td>
+      <td> Resets a bit to a random 0 or 1 .</td>
+    </tr>
+  </tbody>
+</table></p>
+<div class="admonition info">
+<p class="admonition-title"><code>operate</code> at poblational level</p>
+<p>in <code>moors</code> we allow the user to define the crossover at individual or poblational level, but in <code>pymoors</code> we force to
+work with poblational level. Technical reason is that in each user defined <code>operate</code> call we have to adquire python GIL
+in the rust side, poblational call requires just 1 call to the GIL.</p>
+</div>
+</div>
+</div>
+</div>
+<h2 id="crossover">Crossover</h2>
+<p>Crossover is a binary genetic operator that combines genetic material from two parent individuals by exchanging segments of their representations, producing offspring that inherit traits from both parents. It promotes the exploration of new solution combinations while preserving useful building blocks.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Rust</label><label for="__tabbed_2_2">Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>A crossover operator in <code>moors</code> is any type that implements the <a href="https://docs.rs/moors/0.2.9/moors/operators/crossover/trait.CrossoverOperator.html" target="_blank" rel="noopener">CrossoverOperator</a> trait. For example:</p>
+<div class="highlight"><pre><span></span><code><span class="k">use</span><span class="w"> </span><span class="n">ndarray</span><span class="p">::{</span><span class="n">Array1</span><span class="p">,</span><span class="w"> </span><span class="n">Axis</span><span class="p">,</span><span class="w"> </span><span class="n">concatenate</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::</span><span class="n">operators</span><span class="p">::</span><span class="n">CrossoverOperator</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::</span><span class="n">random</span><span class="p">::</span><span class="n">RandomGenerator</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Clone)]</span>
+<span class="sd">/// Single-point crossover operator for binary-encoded individuals.</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">SinglePointBinaryCrossover</span><span class="p">;</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">CrossoverOperator</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">SinglePointBinaryCrossover</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">crossover</span><span class="p">(</span>
+<span class="w">        </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span>
+<span class="w">        </span><span class="n">parent_a</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Array1</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">parent_b</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Array1</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">rng</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="k">impl</span><span class="w"> </span><span class="n">RandomGenerator</span><span class="p">,</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="p">(</span><span class="n">Array1</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">Array1</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">num_genes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parent_a</span><span class="p">.</span><span class="n">len</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// Select a crossover point between 1 and num_genes - 1</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">crossover_point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rng</span><span class="p">.</span><span class="n">gen_range_usize</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">num_genes</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// Split parents at the crossover point and create offspring</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">offspring_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">concatenate</span><span class="o">!</span><span class="p">[</span>
+<span class="w">            </span><span class="n">Axis</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">            </span><span class="n">parent_a</span><span class="p">.</span><span class="n">slice</span><span class="p">(</span><span class="n">s</span><span class="o">!</span><span class="p">[</span><span class="o">..</span><span class="n">crossover_point</span><span class="p">]),</span>
+<span class="w">            </span><span class="n">parent_b</span><span class="p">.</span><span class="n">slice</span><span class="p">(</span><span class="n">s</span><span class="o">!</span><span class="p">[</span><span class="n">crossover_point</span><span class="o">..</span><span class="p">])</span>
+<span class="w">        </span><span class="p">];</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="n">offspring_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">concatenate</span><span class="o">!</span><span class="p">[</span>
+<span class="w">            </span><span class="n">Axis</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">            </span><span class="n">parent_b</span><span class="p">.</span><span class="n">slice</span><span class="p">(</span><span class="n">s</span><span class="o">!</span><span class="p">[</span><span class="o">..</span><span class="n">crossover_point</span><span class="p">]),</span>
+<span class="w">            </span><span class="n">parent_a</span><span class="p">.</span><span class="n">slice</span><span class="p">(</span><span class="n">s</span><span class="o">!</span><span class="p">[</span><span class="n">crossover_point</span><span class="o">..</span><span class="p">])</span>
+<span class="w">        </span><span class="p">];</span>
+<span class="w">        </span><span class="p">(</span><span class="n">offspring_a</span><span class="p">,</span><span class="w"> </span><span class="n">offspring_b</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The main method to implement is <code>crossover</code>, which takes two parents (<code>ndarray::Array1</code>) and produces two offspring. Predefined crossover operators include:</p>
+<p><table>
+  <thead>
+    <tr>
+      <th>Crossover Operator</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/crossover/struct.ExponentialCrossover.html" target="_blank" rel="noopener">ExponentialCrossover</a> </td>
+      <td>For Differential Evolution: starts at a random index and copies consecutive genes from the mutant vector while a uniform random number is below the crossover rate, then fills remaining positions from the target vector.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/crossover/struct.OrderCrossover.html" target="_blank" rel="noopener">OrderCrossover</a> </td>
+      <td>For permutations: copies a segment between two cut points from one parent, then fills the rest of the child with the remaining genes in the order they appear in the other parent.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/crossover/struct.SimulatedBinaryCrossover.html" target="_blank" rel="noopener">SimulatedBinaryCrossover</a> </td>
+      <td>For real-valued vectors: generates offspring by sampling each gene from a distribution centered on parent values, mimicking the spread of single-point binary crossover in continuous space.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/crossover/struct.SinglePointBinaryCrossover.html" target="_blank" rel="noopener">SinglePointBinaryCrossover</a> </td>
+      <td>Selects one crossover point and swaps the tails of two parents at that point to produce two offspring.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/crossover/struct.UniformBinaryCrossover.html" target="_blank" rel="noopener">UniformBinaryCrossover</a> </td>
+      <td>For each bit position, randomly chooses which parent to inherit from (with a given probability), resulting in highly mixed offspring.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/crossover/struct.TwoPointBinaryCrossover.html" target="_blank" rel="noopener">TwoPointBinaryCrossover</a> </td>
+      <td>Exchanges segments between two parents at two randomly chosen points to create offspring.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/crossover/struct.ArithmeticCrossover.html" target="_blank" rel="noopener">ArithmeticCrossover</a> </td>
+      <td>Exchanges segments between two parents at two randomly chosen points to create offspring.</td>
+    </tr>
+  </tbody>
+</table></p>
+</div>
+<div class="tabbed-block">
+<p>A crossover operator in <code>pymoors</code> is just a class that defines the <code>operate</code> method:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pymoors.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoDArray</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SinglePointBinaryCrossover</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">operate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parents_a</span><span class="p">:</span> <span class="n">TwoDArray</span><span class="p">,</span>
+        <span class="n">parents_b</span><span class="p">:</span> <span class="n">TwoDArray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TwoDArray</span><span class="p">:</span>
+        <span class="n">n_pairs</span><span class="p">,</span> <span class="n">n_genes</span> <span class="o">=</span> <span class="n">parents_a</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">offsprings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n_pairs</span><span class="p">,</span> <span class="n">n_genes</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">parents_a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_pairs</span><span class="p">):</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">parents_a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">parents_b</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">point</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_genes</span><span class="p">)</span>
+            <span class="n">c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">a</span><span class="p">[:</span><span class="n">point</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="n">point</span><span class="p">:]))</span>
+            <span class="n">c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">b</span><span class="p">[:</span><span class="n">point</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="n">point</span><span class="p">:]))</span>
+            <span class="n">offsprings</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c1</span>
+            <span class="n">offsprings</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">c2</span>
+        <span class="k">return</span> <span class="n">offsprings</span>
+</code></pre></div>
+<p><code>operate</code> acts at poblational level, as usual it means that it takes <strong>two parents</strong> as 2D numpy arrays and returns a <strong>single</strong> 2D array of length twice the number of crossovers (two children per crossover).</p>
+<p>There are many built-in crossover operators backed at the rust side</p>
+<p><table>
+  <thead>
+    <tr>
+      <th>Crossover Operator</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pymoors.ExponentialCrossover</code></td>
+      <td>For Differential Evolution: starts at a random index and copies consecutive genes from the mutant vector while a uniform random number is below the crossover rate, then fills remaining positions from the target vector.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.OrderCrossover</code></td>
+      <td>For permutations: copies a segment between two cut points from one parent, then fills the rest of the child with the remaining genes in the order they appear in the other parent.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.SimulatedBinaryCrossover</code></td>
+      <td>For real-valued vectors: generates offspring by sampling each gene from a distribution centered on parent values, mimicking the spread of single-point binary crossover in continuous space.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.SinglePointBinaryCrossover</code></td>
+      <td>Selects one crossover point and swaps the tails of two parents at that point to produce two offspring.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.UniformBinaryCrossover</code></td>
+      <td>For each bit position, randomly chooses which parent to inherit from (with a given probability), resulting in highly mixed offspring.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.TwoPointBinaryCrossover</code></td>
+      <td>Exchanges segments between two parents at two randomly chosen points to create offspring.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.ArithmeticCrossover</code></td>
+      <td>Generates offspring by computing a weighted average of two parent solutions (for each gene, child = α·parent₁ + (1−α)·parent₂).</td>
+    </tr>
+  </tbody>
+</table></p>
+<div class="admonition info">
+<p class="admonition-title"><code>operate</code> at poblational level</p>
+<p>in <code>moors</code> we allow the user to define the crossover at individual or poblational level, but in <code>pymoors</code> we force to
+work with poblational level. Technical reason is that in each user defined <code>operate</code> call we have to adquire python GIL
+in the rust side, poblational call requires just 1 call to the GIL.</p>
+</div>
+</div>
+</div>
+</div>
+<h2 id="sampling">Sampling</h2>
+<p>Sampling is a genetic operator that generates new individuals by drawing samples from a defined distribution or the existing population.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Rust</label><label for="__tabbed_3_2">Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>A sampling operator in <code>moors</code> is any type that implements the <a href="https://docs.rs/moors/0.2.9/moors/operators/sampling/trait.SamplingOperator.html" target="_blank" rel="noopener">SamplingOperator</a> trait. For example:</p>
+<div class="highlight"><pre><span></span><code><span class="k">use</span><span class="w"> </span><span class="n">ndarray</span><span class="p">::</span><span class="n">Array1</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::{</span><span class="n">operators</span><span class="p">::</span><span class="n">SamplingOperator</span><span class="p">,</span><span class="w"> </span><span class="n">random</span><span class="p">::</span><span class="n">RandomGenerator</span><span class="p">};</span>
+
+<span class="sd">/// Sampling operator for binary variables.</span>
+<span class="cp">#[derive(Debug, Clone)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">RandomSamplingBinary</span><span class="p">;</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">SamplingOperator</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">RandomSamplingBinary</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">sample_individual</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">num_vars</span><span class="p">:</span><span class="w"> </span><span class="kt">usize</span><span class="p">,</span><span class="w"> </span><span class="n">rng</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="k">impl</span><span class="w"> </span><span class="n">RandomGenerator</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Array1</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="n">num_vars</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">_</span><span class="o">|</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">rng</span><span class="p">.</span><span class="n">gen_bool</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="p">})</span>
+<span class="w">            </span><span class="p">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The main method to implement is <code>sample_individual</code>, which produces an <strong>individual</strong> as an <code>ndarray::Array1</code>. Predefined sampling operators include:</p>
+<p><table>
+  <thead>
+    <tr>
+      <th>Sampling Operator</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/sampling/struct.RandomSamplingBinary.html" target="_blank" rel="noopener">RandomSamplingBinary</a> </td>
+      <td>Generates a vector of random bits, sampling each position independently with equal probability.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/sampling/struct.RandomSamplingFloat.html" target="_blank" rel="noopener">RandomSamplingFloat</a> </td>
+      <td>Creates a real-valued vector by sampling each gene uniformly within specified bounds.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/sampling/struct.RandomSamplingInt.html" target="_blank" rel="noopener">RandomSamplingInt</a> </td>
+      <td>Produces an integer vector by sampling each gene uniformly from a given range.</td>
+    </tr>
+    <tr>
+      <td> <a href="https://docs.rs/moors/0.2.9/moors/operators/sampling/struct.PermutationSampling.html" target="_blank" rel="noopener">PermutationSampling</a> </td>
+      <td>Generates a random permutation by uniformly shuffling all indices.</td>
+    </tr>
+  </tbody>
+</table></p>
+</div>
+<div class="tabbed-block">
+<p>A sampling operator in <code>pymoors</code> is just a class that defines the <code>operate</code> method:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pymoors.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoDArray</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RandomSamplingBinary</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">operate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">TwoDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TwoDArray</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">population</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.5</span>
+        <span class="k">return</span> <span class="n">mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+</code></pre></div>
+<p><code>operate</code> acts at poblational level, as usual it means that it takes a 2D numpy array and returns 2D array too, where each row is a sampled individual.</p>
+<p><table>
+  <thead>
+    <tr>
+      <th>Sampling Operator</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pymoors.RandomSamplingBinary</code></td>
+      <td>Generates a vector of random bits, sampling each position independently with equal probability.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.RandomSamplingFloat</code></td>
+      <td>Creates a real-valued vector by sampling each gene uniformly within specified bounds.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.RandomSamplingInt</code></td>
+      <td>Produces an integer vector by sampling each gene uniformly from a given range.</td>
+    </tr>
+    <tr>
+      <td><code>pymoors.PermutationSampling</code></td>
+      <td>Generates a random permutation by uniformly shuffling all indices.</td>
+    </tr>
+  </tbody>
+</table></p>
+</div>
+</div>
+</div>
+<h2 id="selection">Selection</h2>
+<p>Selection is a genetic operator that chooses individuals from the current population based on their fitness, favoring higher-quality solutions for reproduction.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Rust</label><label for="__tabbed_4_2">Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>The selection operator is a bit more restrictive, in that each pre‑defined algorithm in <code>moors</code> defines exactly one selection operator. For example, the <code>NSGA-II</code> algorithm uses a <em>ranking‑by‑crowding‑distance</em> selection operator, while <code>NSGA-III</code> uses a random selection operator. The user can only provide their own selection operator to a custom algorithm—not to the algorithms that come pre‑defined in moors.</p>
+<p>A selection operator in <code>moors</code> is any type that implements the <a href="https://docs.rs/moors/0.2.9/moors/operators/selection/trait.SelectionOperator.html" target="_blank" rel="noopener">SelectionOperator</a> trait. For example:</p>
+<div class="highlight"><pre><span></span><code><span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::</span><span class="n">genetic</span><span class="p">::{</span><span class="n">D01</span><span class="p">,</span><span class="w"> </span><span class="n">IndividualMOO</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::</span><span class="n">operators</span><span class="p">::</span><span class="n">selection</span><span class="p">::{</span><span class="n">DuelResult</span><span class="p">,</span><span class="w"> </span><span class="n">SelectionOperator</span><span class="p">};</span>
+<span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::</span><span class="n">random</span><span class="p">::</span><span class="n">RandomGenerator</span><span class="p">;</span>
+
+<span class="cp">#[derive(Debug, Clone)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">RandomSelection</span><span class="p">;</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">SelectionOperator</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">RandomSelection</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">type</span><span class="w"> </span><span class="nc">FDim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ndarray</span><span class="p">::</span><span class="n">Ix2</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">tournament_duel</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="p">,</span><span class="w"> </span><span class="n">ConstrDim</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">        </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span>
+<span class="w">        </span><span class="n">p1</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">IndividualMOO</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="p">,</span><span class="w"> </span><span class="n">ConstrDim</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">p2</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">IndividualMOO</span><span class="o">&lt;&#39;</span><span class="na">a</span><span class="p">,</span><span class="w"> </span><span class="n">ConstrDim</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">rng</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="k">impl</span><span class="w"> </span><span class="n">RandomGenerator</span><span class="p">,</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">DuelResult</span>
+<span class="w">    </span><span class="k">where</span>
+<span class="w">        </span><span class="n">ConstrDim</span><span class="p">:</span><span class="w"> </span><span class="nc">D01</span><span class="p">,</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="kd">let</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">@</span><span class="w"> </span><span class="n">DuelResult</span><span class="p">::</span><span class="n">LeftWins</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">@</span><span class="w"> </span><span class="n">DuelResult</span><span class="p">::</span><span class="n">RightWins</span><span class="w"> </span><span class="o">=</span>
+<span class="w">            </span><span class="bp">Self</span><span class="p">::</span><span class="n">feasibility_dominates</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span><span class="w"> </span><span class="n">p2</span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="c1">// Otherwise, both are feasible or both are infeasible =&gt; random winner.</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">rng</span><span class="p">.</span><span class="n">gen_bool</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">DuelResult</span><span class="p">::</span><span class="n">LeftWins</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">DuelResult</span><span class="p">::</span><span class="n">RightWins</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Note that we have defined an associated type <code>type FDim = ndarray::Ix2</code>, this is because, in this example, this operator will be used for a multi‑objective algorithm. The selection operators defined in pymoors must specify the fitness dimension. Note that this is the selection operator used by the NSGA‑III algorithm: it performs a random selection that gives priority to feasibility, which is why we use the trait’s static method <code>Self::feasibility_dominates</code>.</p>
+</div>
+<div class="tabbed-block">
+<p>User-defined selection operators are still in progress: See this <a href="https://github.com/andresliszt/moo-rs/issues/213">issue</a> for more information.</p>
+</div>
+</div>
+</div>
+<h2 id="survival">Survival</h2>
+<p>Survival is a genetic operator that determines which individuals are carried over to the next generation based on a general quality criterion.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Rust</label><label for="__tabbed_5_2">Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>The survival operator follows the same logic than selection operator, in that each pre‑defined algorithm in <code>moors</code> defines exactly one selection operator. For example, the <code>NSGA-II</code> algorithm uses a <em>ranking‑by‑crowding‑distance</em> survival operator, while <code>NSGA-III</code> uses a reference points based operator.</p>
+<p>First, determine whether your algorithm uses ranking. If it does, implement the trait: <a href="https://docs.rs/moors/0.2.9/moors/operators/survival/moo/trait.FrontsAndRankingBasedSurvival.html" target="_blank" rel="noopener">FrontsAndRankingBasedSurvival</a>. If not, implement: <a href="https://docs.rs/moors/0.2.9/moors/operators/survival/moo/trait.SurvivalOperator.html" target="_blank" rel="noopener">SurvivalOperator</a></p>
+<p>We use <a href="../algorithms/nsga2.html">NSGA-II</a> as an example, which uses both ranking and survival scoring.</p>
+<div class="highlight"><pre><span></span><code><span class="k">use</span><span class="w"> </span><span class="n">ndarray</span><span class="p">::{</span><span class="n">Array1</span><span class="p">,</span><span class="w"> </span><span class="n">Array2</span><span class="p">};</span>
+
+<span class="k">use</span><span class="w"> </span><span class="k">crate</span><span class="p">::{</span>
+<span class="w">    </span><span class="n">genetic</span><span class="p">::{</span><span class="n">D12</span><span class="p">,</span><span class="w"> </span><span class="n">Fronts</span><span class="p">},</span>
+<span class="w">    </span><span class="n">operators</span><span class="p">::</span><span class="n">survival</span><span class="p">::</span><span class="n">moo</span><span class="p">::</span><span class="n">FrontsAndRankingBasedSurvival</span><span class="p">,</span>
+<span class="w">    </span><span class="n">random</span><span class="p">::</span><span class="n">RandomGenerator</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="cp">#[derive(Debug, Clone, Default)]</span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Nsga2RankCrowdingSurvival</span><span class="p">;</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">Nsga2RankCrowdingSurvival</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span><span class="w"> </span><span class="nf">new</span><span class="p">()</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Self</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="bp">Self</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">FrontsAndRankingBasedSurvival</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">Nsga2RankCrowdingSurvival</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">set_front_survival_score</span><span class="o">&lt;</span><span class="n">ConstrDim</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">        </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span>
+<span class="w">        </span><span class="n">fronts</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="n">Fronts</span><span class="o">&lt;</span><span class="n">ConstrDim</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">_rng</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">mut</span><span class="w"> </span><span class="k">impl</span><span class="w"> </span><span class="n">RandomGenerator</span><span class="p">,</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="k">where</span>
+<span class="w">        </span><span class="n">ConstrDim</span><span class="p">:</span><span class="w"> </span><span class="nc">D12</span><span class="p">,</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="n">front</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">fronts</span><span class="p">.</span><span class="n">iter_mut</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">crowding_distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">crowding_distance</span><span class="p">(</span><span class="o">&amp;</span><span class="n">front</span><span class="p">.</span><span class="n">fitness</span><span class="p">);</span>
+<span class="w">            </span><span class="n">front</span><span class="p">.</span><span class="n">set_survival_score</span><span class="p">(</span><span class="n">crowding_distance</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="sd">/// Computes the crowding distance for a given Pareto population_fitness.</span>
+<span class="sd">///</span>
+<span class="sd">/// # Parameters:</span>
+<span class="sd">/// - `population_fitness`: A 2D array where each row represents an individual&#39;s fitness values.</span>
+<span class="sd">///</span>
+<span class="sd">/// # Returns:</span>
+<span class="sd">/// - A 1D array of crowding distances for each individual in the population_fitness.</span>
+<span class="k">fn</span><span class="w"> </span><span class="nf">crowding_distance</span><span class="p">(</span><span class="n">population_fitness</span><span class="p">:</span><span class="w"> </span><span class="kp">&amp;</span><span class="nc">Array2</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">Array1</span><span class="o">&lt;</span><span class="kt">f64</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Omitted for simplicity</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="notes-on-fronts-and-traits">Notes on Fronts and Traits</h3>
+<ul>
+<li><code>Fronts</code> is a type alias for a <code>Vec</code> of <a href="https://docs.rs/moors/0.2.9/moors/genetic/type.PopulationMOO.html" target="_blank" rel="noopener">PopulationMOO</a>.</li>
+<li><code>PopulationMOO</code> is a container for individuals, including <code>genes</code>, <code>fitness</code>, <code>constraints</code> (if any), <code>rank</code> (if any), and <code>survival_score</code> (if any).</li>
+<li>Fronts are sorted by dominance (0-dominated first, then 1-dominated, etc.).</li>
+<li><a href="https://docs.rs/moors/0.2.9/moors/genetic/type.D12.html" target="_blank" rel="noopener">D12</a> is a trait for constraint output dimensions, allowing flexibility between <code>Array1</code> and <code>Array2</code>.</li>
+</ul>
+<p>In the <code>moors</code> framework, implementing a survival strategy for multi-objective optimization algorithms involves defining the trait <a href="https://docs.rs/moors/0.2.9/moors/operators/survival/moo/trait.FrontsAndRankingBasedSurvival.html#tymethod.None" target="_blank" rel="noopener">set_front_survival_score</a>. <code>set_front_survival_score</code> method receives a vector of populations (<code>Vec&lt;PopulationMOO&gt;</code>), where each element represents a Pareto front. Each front contains:</p>
+<ul>
+<li><code>genes</code>: An <code>Array2&lt;f64&gt;</code> representing the genetic encoding of individuals.</li>
+<li><code>fitness</code>: An <code>Array2&lt;f64&gt;</code> where each row corresponds to the fitness values of an individual.</li>
+<li><code>rank</code>: An <code>Array1&lt;f64&gt;</code> indicating the dominance rank of each individual.</li>
+</ul>
+<p>The purpose of <code>set_front_survival_score</code> is to assign a <strong>survival score</strong> to each individual within a front. In the provided example, this score is computed using the <code>crowding_distance</code> function, which returns an <code>Array1&lt;f64&gt;</code> where each element corresponds to the survival score of an individual.</p>
+<p>After survival scores are assigned, the <a href="https://docs.rs/moors/0.2.9/moors/operators/survival/moo/trait.FrontsAndRankingBasedSurvival.html#method.operate" target="_blank" rel="noopener">operate</a> method is responsible for selecting the individuals that will survive to the next generation.</p>
+<p>The splitting front approach is used for selecting the survivors for the next generation, by default <code>moors</code> will prefer an individual with higher survival score, you can modify this by overwritting the method selection <code>Minimize</code> enum member</p>
+<div class="highlight"><pre><span></span><code><span class="k">fn</span><span class="w"> </span><span class="nf">scoring_comparison</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="p">-&gt;</span><span class="w"> </span><span class="nc">SurvivalScoringComparison</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">SurvivalScoringComparison</span><span class="p">::</span><span class="n">Minimize</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>User-defined survival operators are still in progress: See this <a href="https://github.com/andresliszt/moo-rs/issues/213">issue</a> for more information.</p>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.tabs.link", "content.code.annotate", "content.code.copy", "announce.dismiss", "navigation.tabs", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.preview", "navigation.instant.progress", "navigation.path", "navigation.sections", "navigation.top", "navigation.tracking", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+        <script src="../../js/custom_mathjax.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
