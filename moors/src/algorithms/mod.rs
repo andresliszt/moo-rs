@@ -1,10 +1,12 @@
 mod builder;
+mod ga;
 pub(crate) mod helpers;
 mod macros;
 mod moo;
 mod soo;
 
-pub use builder::{AlgorithmBuilder, AlgorithmBuilderError, GeneticAlgorithm};
+pub use builder::{AlgorithmBuilder, AlgorithmBuilderError};
+pub use ga::GeneticAlgorithm;
 pub use moo::agemoea::{AgeMoea, AgeMoeaBuilder};
 pub use moo::ibea::{Ibea, IbeaBuilder};
 pub use moo::nsga2::{Nsga2, Nsga2Builder};

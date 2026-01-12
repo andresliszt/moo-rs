@@ -1,4 +1,11 @@
-fixes:
-  - "python/::pymoors/python/"
-  - "pymoors/::pymoors/"
-  - "src/::moors/src/"
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0%
+    patch:
+      default:
+        target: 100%
+        threshold: 0%

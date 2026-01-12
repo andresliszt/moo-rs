@@ -54,15 +54,15 @@ jobs:
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
 
-      - name: Run coverage
+      - name: Run tests
         run: cargo llvm-cov --workspace --release --lcov --output-path lcov.info
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          working-directory: moors
+          directory: moors
           disable_search: true
-          files: lcov.info
+          files: moors/lcov.info
           flags: moors
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
