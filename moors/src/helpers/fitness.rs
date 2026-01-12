@@ -86,8 +86,6 @@ Unit tests
 mod tests {
     use ndarray::{Array1, Array2, Axis, array};
 
-    use crate::fitness_fn;
-
     // Objective 1: sum of squares
     fn f_sphere(genes: &Array2<f64>) -> Array1<f64> {
         genes.map_axis(Axis(1), |row| row.dot(&row))

@@ -34,7 +34,6 @@ lock:   ## Rebuild Python lockfile
 
 build-dev:  ## Build & install in dev mode
 	@echo "[pymoors] dev build" \
-	  && uv sync --group all \
 	  && uv run maturin develop --uv
 
 build-release:  ## Build & install in release mode
@@ -76,8 +75,7 @@ coverage:  ## Run coverage & generate lcov
 	@echo "[pymoors] coverage" \
 	  && uv sync --group testing \
 	  && uv run coverage run -m pytest --ignore=tests/benchmarks \
-	  && uv run coverage xml \
-	  && coverage-prepare lcov python/pymoors/*.so
+	  && uv run coverage xml
 
 docs:  ## Build documentation
 	@echo "[pymoors] docs" \

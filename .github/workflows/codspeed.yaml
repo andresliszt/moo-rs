@@ -1,4 +1,4 @@
-name: CodSpeed - pymoors
+name: CodSpeed
 
 on:
   push:
@@ -12,8 +12,8 @@ env:
   DEFAULT_PYTHON: 3.12
 
 jobs:
-  benchmarks:
-    name: Run benchmarks
+  pymoors-benchmarks:
+    name: Run pymoors benchmarks (Python)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -90,11 +90,45 @@ jobs:
           uv pip install --no-build-isolation --force-reinstall "file://${{ steps.find_wheel.outputs.wheel }}"
           echo "VENV = $VIRTUAL_ENV"
 
-      - name: Run benchmarks
-        uses: CodSpeedHQ/action@v3
+      - name: Run pymoors CodSpeed benchmarks
+        uses: CodSpeedHQ/action@v4
         with:
+          mode: walltime
           working-directory: pymoors
-          run: |
-            uv run pytest tests/benchmarks --codspeed
-        env:
-          CODSPEED_RUNNER_MODE: "walltime"
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: uv run pytest tests/benchmarks --codspeed
+
+  moors-benchmarks:
+    name: Run moors benchmarks (Rust)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache Rust compilation artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          # Cache the `moors/target` directory to speed up rebuilds
+          workspaces: |
+            moors -> target
+
+      - name: Install cargo-codspeed
+        run: cargo install cargo-codspeed --locked
+
+      - name: Build benchmarks
+        working-directory: moors
+        run: cargo codspeed build
+
+      - name: Run moors CodSpeed benchmarks
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          working-directory: moors
+          token: ${{ secrets.CODSPEED_TOKEN }}
+          run: cargo codspeed run

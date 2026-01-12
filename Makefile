@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 #-------------------------------------------------
-# Root Makefile for my-project
+# Root Makefile for moors
 #-------------------------------------------------
 
 .PHONY: help pymoors-% moors-%
