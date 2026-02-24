@@ -65,7 +65,7 @@ fn generate_py_operator_mutation(inner: Ident) -> proc_macro2::TokenStream {
     };
 
     quote! {
-        #[pyo3::prelude::pyclass(name = #inner_name_lit)]
+        #[pyo3::prelude::pyclass(name = #inner_name_lit, from_py_object)]
         #[derive(Debug, Clone)]
         pub struct #wrapper_ident {
             pub inner: #inner,
@@ -114,7 +114,7 @@ fn generate_py_operator_crossover(inner: Ident) -> proc_macro2::TokenStream {
     };
 
     quote! {
-        #[pyo3::prelude::pyclass(name = #inner_name_lit)]
+        #[pyo3::prelude::pyclass(name = #inner_name_lit,from_py_object)]
         #[derive(Debug, Clone)]
         pub struct #wrapper_ident {
             pub inner: #inner,
@@ -157,7 +157,7 @@ fn generate_py_operator_sampling(inner: Ident) -> proc_macro2::TokenStream {
     };
 
     quote! {
-        #[pyo3::prelude::pyclass(name = #inner_name_lit)]
+        #[pyo3::prelude::pyclass(name = #inner_name_lit, from_py_object)]
         #[derive(Debug, Clone)]
         pub struct #wrapper_ident {
             pub inner: #inner,
@@ -207,7 +207,7 @@ fn generate_py_operator_duplicates(inner: Ident) -> proc_macro2::TokenStream {
     };
 
     quote! {
-        #[pyo3::prelude::pyclass(name = #inner_name_lit)]
+        #[pyo3::prelude::pyclass(name = #inner_name_lit, from_py_object)]
         #[derive(Debug, Clone)]
         pub struct #wrapper_ident {
             pub inner: #inner,
@@ -236,7 +236,7 @@ pub fn py_operator_duplicates(input: TokenStream) -> TokenStream {
 /// - Implement `moors::operators::MutationOperator` by delegating `mutate(...)`
 /// - Emit `py_operator_mutation!(Type)` for each Rust‐native operator
 /// - Add a constructor
-///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
+///     `fn from_python_operator(py_obj: Py<PyAny>) -> PyResult<Self>`
 ///   that extracts the correct variant from a Python object.
 ///
 /// Note: this macro will also honor a variant named
@@ -333,9 +333,9 @@ pub fn register_py_operators_mutation(_attr: TokenStream, item: TokenStream) -> 
         impl #enum_ident {
             /// Convert a Python‐side operator into this dispatcher.
             pub fn from_python_operator(
-                py_obj: pyo3::PyObject
+                py_obj: pyo3::Py<PyAny>
             ) -> pyo3::PyResult<Self> {
-                pyo3::Python::with_gil(|py| {
+                pyo3::Python::attach(|py| {
                     #(#extract_arms)*
                     Err(pyo3::exceptions::PyValueError::new_err(
                         "Could not extract a valid mutation operator",
@@ -365,8 +365,8 @@ pub fn register_py_operators_mutation(_attr: TokenStream, item: TokenStream) -> 
 /// - Implement `moors::operators::CrossoverOperator` by delegating `crossover(...)`
 /// - Emit a call to `py_operator_crossover!(Type)` so the Python wrapper is registered
 /// - Add an associated constructor:
-///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
-///   which extracts the correct variant from a `PyObject`.
+///     `fn from_python_operator(py_obj: Py<PyAny>) -> PyResult<Self>`
+///   which extracts the correct variant from a `Py<PyAny>`.
 #[proc_macro_attribute]
 pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse the enum the user provided
@@ -459,9 +459,9 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
         impl #enum_ident {
             /// Convert a Python-side operator instance into this dispatcher.
             pub fn from_python_operator(
-                py_obj: pyo3::PyObject
+                py_obj: pyo3::Py<PyAny>
             ) -> pyo3::PyResult<Self> {
-                pyo3::Python::with_gil(|py| {
+                pyo3::Python::attach(|py| {
                     #(#extract_arms)*
                     Err(pyo3::exceptions::PyValueError::new_err(
                         "Could not extract a valid crossover operator",
@@ -492,8 +492,8 @@ pub fn register_py_operators_crossover(_attr: TokenStream, item: TokenStream) ->
 ///   `sample_individual(num_vars, rng)`
 /// - Emit a call to `py_operator_sampling!(Type)` so that the Python wrapper is registered
 /// - Add an associated constructor:
-///     `fn from_python_operator(py_obj: PyObject) -> PyResult<Self>`
-///   which extracts the correct variant from a `PyObject`.
+///     `fn from_python_operator(py_obj: Py<PyAny>) -> PyResult<Self>`
+///   which extracts the correct variant from a `Py<PyAny>`.
 #[proc_macro_attribute]
 pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse the enum the user wrote.
@@ -585,9 +585,9 @@ pub fn register_py_operators_sampling(_attr: TokenStream, item: TokenStream) -> 
         impl #enum_ident {
             /// Convert a Python-side sampling operator into this dispatcher.
             pub fn from_python_operator(
-                py_obj: pyo3::PyObject
+                py_obj: pyo3::Py<PyAny>
             ) -> pyo3::PyResult<Self> {
-                pyo3::Python::with_gil(|py| {
+                pyo3::Python::attach(|py| {
                     #(#extract_arms)*
                     Err(pyo3::exceptions::PyValueError::new_err(
                         "Could not extract a valid sampling operator",
@@ -667,7 +667,7 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
         quote! { pymoors_macros::py_operator_duplicates!(#ty); }
     });
 
-    // Constructor to extract from PyObject
+    // Constructor to extract from Py<PyAny>
     let extract_arms = ops.iter().map(|(var, _)| {
         let wrapper = format_ident!("Py{}", var);
         quote! {
@@ -681,7 +681,7 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
             /// Convert an optional Python-side duplicates operator into this dispatcher.
             /// If `py_obj_opt` is `None`, returns the `NoDuplicatesCleaner` variant.
             pub fn from_python_operator(
-                py_obj_opt: Option<pyo3::PyObject>
+                py_obj_opt: Option<pyo3::Py<PyAny>>
             ) -> pyo3::PyResult<Self> {
                 // Early return for no-op cleaner
                 if py_obj_opt.is_none() {
@@ -690,7 +690,7 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
                     );
                 }
                 let py_obj = py_obj_opt.unwrap();
-                pyo3::Python::with_gil(|py| {
+                pyo3::Python::attach(|py| {
                     #(#extract_arms)*
                     Err(pyo3::exceptions::PyValueError::new_err(
                         "Could not extract a valid duplicates operator",
@@ -716,7 +716,7 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
 /// and generates an implementation block (with `#[pymethods]`) that defines:
 ///
 /// - `run(&mut self) -> PyResult<()>`: calls `self.algorithm.run()` and maps any error.
-/// - A getter `population(&self, py: Python) -> PyResult<PyObject>` that converts the
+/// - A getter `population(&self, py: Python) -> PyResult<Py<PyAny>>` that converts the
 ///   algorithm's population data to a Python object.
 ///
 /// # Example
@@ -724,7 +724,7 @@ pub fn register_py_operators_duplicates(_attr: TokenStream, item: TokenStream) -
 /// Assuming you have defined:
 ///
 /// ```rust
-/// #[pyclass(name = "Nsga2", unsendable)]
+/// #[pyclass(name = "Nsga2", unsendable, from_py_object)]
 /// pub struct PyNsga2 {
 ///     pub algorithm: Nsga2,
 /// }
@@ -758,7 +758,7 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
             /// It converts the internal population members (genes, fitness, rank, constraints)
             /// to Python objects using NumPy.
             #[getter]
-            pub fn population(&self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
+            pub fn population(&self, py: pyo3::Python) -> pyo3::PyResult<pyo3::Py<PyAny>> {
                 let schemas_module = py.import("pymoors.schemas")?;
                 let population_class = schemas_module.getattr("Population")?;
                 let population = self
@@ -770,19 +770,19 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
                 let py_constraints = population.constraints.to_pyarray(py);
 
                 let py_rank = if let Some(ref r) = population.rank {
-                    r.to_pyarray(py).into_py(py)
+                    r.to_pyarray(py).into_any().unbind()
                 } else {
-                    py.None().into_py(py)
+                    py.None()
                 };
                 let py_survival_score = if let Some(ref r) = population.survival_score {
-                    r.to_pyarray(py).into_py(py)
+                    r.to_pyarray(py).into_any().unbind()
                 } else {
-                    py.None().into_py(py)
+                    py.None()
                 };
                 let py_survival_score = if let Some(ref r) = population.survival_score {
-                    r.to_pyarray(py).into_py(py)
+                    r.to_pyarray(py).into_any().unbind()
                 } else {
-                    py.None().into_py(py)
+                    py.None()
                 };
                 let kwargs = pyo3::types::PyDict::new(py);
                 kwargs.set_item("genes", py_genes)?;
@@ -791,7 +791,7 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
                 kwargs.set_item("constraints", py_constraints)?;
                 kwargs.set_item("survival_score", py_survival_score)?;
                 let py_instance = population_class.call((), Some(&kwargs))?;
-                Ok(py_instance.into_py(py))
+                Ok(py_instance.into_any().unbind())
             }
         }
     };

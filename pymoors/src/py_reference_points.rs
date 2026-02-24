@@ -7,7 +7,7 @@ use pyo3::prelude::*;
 // TODO: Once we define more ref points, this should be part of a macro
 
 /// Expose the DanAndDenisReferencePoints struct to Python.
-#[pyclass(name = "DanAndDenisReferencePoints")]
+#[pyclass(name = "DanAndDenisReferencePoints", from_py_object)]
 #[derive(Debug, Clone)]
 pub struct PyDanAndDenisReferencePoints {
     pub inner: DanAndDenisReferencePoints,
@@ -34,8 +34,10 @@ pub enum PyStructuredReferencePointsDispatcher {
 }
 
 /// Implement extraction for the enum.
-impl<'py> FromPyObject<'py> for PyStructuredReferencePointsDispatcher {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'a, 'py> FromPyObject<'a, 'py> for PyStructuredReferencePointsDispatcher {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'_, 'py, pyo3::PyAny>) -> Result<Self, Self::Error> {
         if let Ok(dan) = ob.extract::<PyDanAndDenisReferencePoints>() {
             Ok(PyStructuredReferencePointsDispatcher::DanAndDenis(dan))
         } else {

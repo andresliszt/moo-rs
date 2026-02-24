@@ -46,10 +46,10 @@ impl PySpea2 {
     ))]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        sampler: PyObject,
-        crossover: PyObject,
-        mutation: PyObject,
-        fitness_fn: PyObject,
+        sampler: Py<PyAny>,
+        crossover: Py<PyAny>,
+        mutation: Py<PyAny>,
+        fitness_fn: Py<PyAny>,
         num_vars: usize,
         population_size: usize,
         num_offsprings: usize,
@@ -58,8 +58,8 @@ impl PySpea2 {
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        duplicates_cleaner: Option<PyObject>,
-        constraints_fn: Option<PyObject>,
+        duplicates_cleaner: Option<Py<PyAny>>,
+        constraints_fn: Option<Py<PyAny>>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
         // Unwrap the operator objects using the previously generated unwrap functions.

@@ -1,5 +1,6 @@
 use ndarray::{Array1, Array2, ArrayViewMut1, Axis, s};
 use numpy::{IntoPyArray, PyArray2, PyArrayMethods};
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 
 use moors::{CrossoverOperator, MutationOperator, RandomGenerator, SamplingOperator};
@@ -29,7 +30,7 @@ fn select_individuals_idx(
 /// the same shape.
 #[derive(Debug)]
 pub struct CustomPyMutationOperatorWrapper {
-    pub inner: PyObject,
+    pub inner: Py<PyAny>,
 }
 
 impl MutationOperator for CustomPyMutationOperatorWrapper {
@@ -44,7 +45,7 @@ impl MutationOperator for CustomPyMutationOperatorWrapper {
         rng: &mut impl RandomGenerator,
     ) {
         // Acquire the GIL and convert our Rust view into a NumPy array...
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let population_size = population.nrows();
             let sel = select_individuals_idx(population_size, mutation_rate, rng);
             let filtered_population = population.select(Axis(0), &sel);
@@ -58,7 +59,7 @@ impl MutationOperator for CustomPyMutationOperatorWrapper {
 
             let mutated_pyarray = mutated_population
                 .bind(py)
-                .downcast::<PyArray2<f64>>()
+                .cast::<PyArray2<f64>>()
                 .expect("Expected a 2D float64 array, output of the operate method");
 
             let readonly: numpy::PyReadonlyArray2<'_, f64> = mutated_pyarray.readonly();
@@ -70,15 +71,17 @@ impl MutationOperator for CustomPyMutationOperatorWrapper {
     }
 }
 
-impl<'py> FromPyObject<'py> for CustomPyMutationOperatorWrapper {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'a, 'py> FromPyObject<'a, 'py> for CustomPyMutationOperatorWrapper {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'_, 'py, pyo3::PyAny>) -> Result<Self, Self::Error> {
         if !ob.hasattr("operate")? {
-            return Err(pyo3::exceptions::PyTypeError::new_err(
+            return Err(PyTypeError::new_err(
                 "Custom mutation operator class must define a 'operate' method",
             ));
         }
         Ok(CustomPyMutationOperatorWrapper {
-            inner: ob.clone().unbind(),
+            inner: ob.to_owned().unbind(),
         })
     }
 }
@@ -92,7 +95,7 @@ impl<'py> FromPyObject<'py> for CustomPyMutationOperatorWrapper {
 /// parents_a and parents_b and returns a NumPy array of offsprings.
 #[derive(Debug)]
 pub struct CustomPyCrossoverOperatorWrapper {
-    pub inner: PyObject,
+    pub inner: Py<PyAny>,
 }
 
 impl CrossoverOperator for CustomPyCrossoverOperatorWrapper {
@@ -112,7 +115,7 @@ impl CrossoverOperator for CustomPyCrossoverOperatorWrapper {
         cossover_rate: f64,
         rng: &mut impl RandomGenerator,
     ) -> Array2<f64> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let population_size = parents_a.nrows();
             // Build the mask with the mutation rate
             let sel = select_individuals_idx(population_size, cossover_rate, rng);
@@ -132,7 +135,7 @@ impl CrossoverOperator for CustomPyCrossoverOperatorWrapper {
 
             let offsprings_pyarray = offsprings
                 .bind(py)
-                .downcast::<PyArray2<f64>>()
+                .cast::<PyArray2<f64>>()
                 .expect("Expected a 2D float64 array, output of the operate method");
 
             let offsprings_rust = offsprings_pyarray.to_owned_array();
@@ -141,15 +144,17 @@ impl CrossoverOperator for CustomPyCrossoverOperatorWrapper {
     }
 }
 
-impl<'py> FromPyObject<'py> for CustomPyCrossoverOperatorWrapper {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'a, 'py> FromPyObject<'a, 'py> for CustomPyCrossoverOperatorWrapper {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'_, 'py, pyo3::PyAny>) -> Result<Self, Self::Error> {
         if !ob.hasattr("operate")? {
-            return Err(pyo3::exceptions::PyTypeError::new_err(
+            return Err(PyTypeError::new_err(
                 "Custom mutation operator class must define a 'operate' method",
             ));
         }
         Ok(CustomPyCrossoverOperatorWrapper {
-            inner: ob.clone().unbind(),
+            inner: ob.to_owned().unbind(),
         })
     }
 }
@@ -162,7 +167,7 @@ impl<'py> FromPyObject<'py> for CustomPyCrossoverOperatorWrapper {
 /// samples of shape (population_size, num_vars).
 #[derive(Debug)]
 pub struct CustomPySamplingOperatorWrapper {
-    pub inner: PyObject,
+    pub inner: Py<PyAny>,
 }
 
 impl SamplingOperator for CustomPySamplingOperatorWrapper {
@@ -176,7 +181,7 @@ impl SamplingOperator for CustomPySamplingOperatorWrapper {
         _num_vars: usize,
         _rng: &mut impl RandomGenerator,
     ) -> Array2<f64> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             // Call the Python-side operate method
             let sample = self
                 .inner
@@ -185,7 +190,7 @@ impl SamplingOperator for CustomPySamplingOperatorWrapper {
 
             let sample_pyarray = sample
                 .bind(py)
-                .downcast::<PyArray2<f64>>()
+                .cast::<PyArray2<f64>>()
                 .expect("Expected a 2D float64 array, output of the operate method");
 
             let sample_rust = sample_pyarray.to_owned_array();
@@ -194,15 +199,17 @@ impl SamplingOperator for CustomPySamplingOperatorWrapper {
     }
 }
 
-impl<'py> FromPyObject<'py> for CustomPySamplingOperatorWrapper {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+impl<'a, 'py> FromPyObject<'a, 'py> for CustomPySamplingOperatorWrapper {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'_, 'py, pyo3::PyAny>) -> Result<Self, Self::Error> {
         if !ob.hasattr("operate")? {
-            return Err(pyo3::exceptions::PyTypeError::new_err(
+            return Err(PyTypeError::new_err(
                 "Custom sampling operator class must define an 'operate' method",
             ));
         }
         Ok(CustomPySamplingOperatorWrapper {
-            inner: ob.clone().unbind(),
+            inner: ob.to_owned().unbind(),
         })
     }
 }

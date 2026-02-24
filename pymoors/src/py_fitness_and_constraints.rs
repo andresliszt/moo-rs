@@ -10,12 +10,14 @@ use pyo3::prelude::*;
 /// (`ndarray::Array2<f64>`) and returns a 2D NumPy array of floats.
 /// Implements `FitnessFn` with `Dim = Ix2`.
 pub struct PyFitnessFnWrapper {
-    py_fitness_fn: PyObject,
+    py_fitness_fn: Py<PyAny>,
 }
 
 impl PyFitnessFnWrapper {
-    pub fn from_python_fitness(py_fitness_fn: PyObject) -> Self {
-        Self { py_fitness_fn }
+    pub fn from_python_fitness(py_fitness_fn: Py<PyAny>) -> Self {
+        Self {
+            py_fitness_fn: py_fitness_fn,
+        }
     }
 }
 
@@ -23,7 +25,7 @@ impl FitnessFn for PyFitnessFnWrapper {
     type Dim = ndarray::Ix2;
 
     fn call(&self, genes: &Array2<f64>) -> Fitness<Self::Dim> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             // Convert the Rust Array2<f64> to a Python ndarray
             let py_input = genes.to_pyarray(py);
             // Call the Python function
@@ -33,7 +35,7 @@ impl FitnessFn for PyFitnessFnWrapper {
                 .expect("Failed to call Python fitness_fn function");
             // Downcast to PyArray2<f64>
             let py_array = result
-                .downcast_bound::<PyArray2<f64>>(py)
+                .cast_bound::<PyArray2<f64>>(py)
                 .expect("Expected a PyArray2<f64> return");
             // Read-only view and convert back to an owned Array2
             py_array.readonly().as_array().to_owned()
@@ -47,19 +49,21 @@ impl FitnessFn for PyFitnessFnWrapper {
 /// (`ndarray::Array2<f64>`) and returns a 1D NumPy array of floats.
 /// Implements `FitnessFn` with `Dim = Ix1`.
 pub struct PyFitnessFnWrapper1D {
-    py_fitness_fn: PyObject,
+    py_fitness_fn: Py<PyAny>,
 }
 
 impl PyFitnessFnWrapper1D {
-    pub fn from_python_fitness(py_fitness_fn: PyObject) -> Self {
-        Self { py_fitness_fn }
+    pub fn from_python_fitness(py_fitness_fn: Py<PyAny>) -> Self {
+        Self {
+            py_fitness_fn: py_fitness_fn,
+        }
     }
 }
 
 impl FitnessFn for PyFitnessFnWrapper1D {
     type Dim = ndarray::Ix1;
     fn call(&self, genes: &Array2<f64>) -> Fitness<Self::Dim> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             // Convert the Rust Array2<f64> to a Python ndarray
             let py_input = genes.to_pyarray(py);
             // Call the Python function
@@ -69,7 +73,7 @@ impl FitnessFn for PyFitnessFnWrapper1D {
                 .expect("Failed to call Python fitness_fn function");
             // Downcast to PyArray2<f64>
             let py_array = result
-                .downcast_bound::<PyArray1<f64>>(py)
+                .cast_bound::<PyArray1<f64>>(py)
                 .expect("Expected a PyArray1<f64> return");
             // Read-only view and convert back to an owned Array2
             py_array.readonly().as_array().to_owned()
@@ -82,7 +86,7 @@ impl FitnessFn for PyFitnessFnWrapper1D {
 /// Wraps a Python callable that accepts a 2D NumPy array and returns a
 /// 2D NumPy array of constraint values. Optional bounds can be provided.
 pub struct PyConstraints {
-    py_constraints_fn: PyObject,
+    py_constraints_fn: Py<PyAny>,
     lower_bound: Option<f64>,
     upper_bound: Option<f64>,
 }
@@ -97,7 +101,7 @@ impl PyConstraints {
     /// * `lower_bound` – Optional minimum constraint value.
     /// * `upper_bound` – Optional maximum constraint value.
     pub fn new(
-        py_constraints_fn: PyObject,
+        py_constraints_fn: Py<PyAny>,
         lower_bound: Option<f64>,
         upper_bound: Option<f64>,
     ) -> Self {
@@ -113,7 +117,7 @@ impl ConstraintsFn for PyConstraints {
     type Dim = ndarray::Ix2;
 
     fn call(&self, genes: &Array2<f64>) -> Constraints<Self::Dim> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             // Convert the Rust Array2<f64> to a Python ndarray
             let py_input = genes.to_pyarray(py);
             // Call the Python function
@@ -123,7 +127,7 @@ impl ConstraintsFn for PyConstraints {
                 .expect("Failed to call Python constraints_fn function");
             // Downcast to PyArray2<f64>
             let py_array = result
-                .downcast_bound::<PyArray2<f64>>(py)
+                .cast_bound::<PyArray2<f64>>(py)
                 .expect("Expected a PyArray2<f64> return");
             // Read-only view and convert back to an owned Array2
             py_array.readonly().as_array().to_owned()
@@ -145,9 +149,9 @@ pub enum PyConstraintsFnWrapper {
 }
 
 impl PyConstraintsFnWrapper {
-    pub fn from_python_constraints(pyobj: Option<PyObject>) -> PyConstraintsFnWrapper {
+    pub fn from_python_constraints(pyobj: Option<Py<PyAny>>) -> PyConstraintsFnWrapper {
         if let Some(py_obj) = pyobj {
-            Python::with_gil(|py| {
+            Python::attach(|py| {
                 let any = py_obj.bind(py);
                 let lb = any
                     .getattr("lower_bound")

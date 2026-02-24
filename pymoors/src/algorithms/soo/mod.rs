@@ -51,10 +51,10 @@ impl PyGeneticAlgorithmSOO {
     ))]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        sampler: PyObject,
-        crossover: PyObject,
-        mutation: PyObject,
-        fitness_fn: PyObject,
+        sampler: Py<PyAny>,
+        crossover: Py<PyAny>,
+        mutation: Py<PyAny>,
+        fitness_fn: Py<PyAny>,
         num_vars: usize,
         population_size: usize,
         num_offsprings: usize,
@@ -63,8 +63,8 @@ impl PyGeneticAlgorithmSOO {
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        duplicates_cleaner: Option<PyObject>,
-        constraints_fn: Option<PyObject>,
+        duplicates_cleaner: Option<Py<PyAny>>,
+        constraints_fn: Option<Py<PyAny>>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
         // Unwrap the operator objects using the previously generated unwrap functions.
@@ -112,7 +112,7 @@ impl PyGeneticAlgorithmSOO {
     /// It converts the internal population members (genes, fitness, rank, constraints)
     /// to Python objects using NumPy.
     #[getter]
-    pub fn population(&self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
+    pub fn population(&self, py: pyo3::Python) -> pyo3::PyResult<pyo3::Py<PyAny>> {
         let schemas_module = py.import("pymoors.schemas")?;
         let population_class = schemas_module.getattr("Population")?;
         let population = self.algorithm.population.as_ref().unwrap();
@@ -121,14 +121,14 @@ impl PyGeneticAlgorithmSOO {
         let py_constraints = population.constraints.to_pyarray(py);
 
         let py_rank = if let Some(ref r) = population.rank {
-            r.to_pyarray(py).into_py(py)
+            r.to_pyarray(py).into_any().unbind()
         } else {
-            py.None().into_py(py)
+            py.None()
         };
         let py_survival_score = if let Some(ref r) = population.survival_score {
-            r.to_pyarray(py).into_py(py)
+            r.to_pyarray(py).into_any().unbind()
         } else {
-            py.None().into_py(py)
+            py.None()
         };
         let kwargs = pyo3::types::PyDict::new(py);
         kwargs.set_item("genes", py_genes)?;
@@ -137,7 +137,7 @@ impl PyGeneticAlgorithmSOO {
         kwargs.set_item("constraints", py_constraints)?;
         kwargs.set_item("survival_score", py_survival_score)?;
         let py_instance = population_class.call((), Some(&kwargs))?;
-        Ok(py_instance.into_py(py))
+        Ok(py_instance.into_any().unbind())
     }
 
     pub fn run(&mut self) -> pyo3::PyResult<()> {

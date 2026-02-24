@@ -53,10 +53,10 @@ impl PyRnsga2 {
     ))]
     pub fn new(
         reference_points: Py<PyArray2<f64>>,
-        sampler: PyObject,
-        crossover: PyObject,
-        mutation: PyObject,
-        fitness_fn: PyObject,
+        sampler: Py<PyAny>,
+        crossover: Py<PyAny>,
+        mutation: Py<PyAny>,
+        fitness_fn: Py<PyAny>,
         num_vars: usize,
         population_size: usize,
         num_offsprings: usize,
@@ -66,8 +66,8 @@ impl PyRnsga2 {
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        duplicates_cleaner: Option<PyObject>,
-        constraints_fn: Option<PyObject>,
+        duplicates_cleaner: Option<Py<PyAny>>,
+        constraints_fn: Option<Py<PyAny>>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
         let rp = reference_points_from_python(reference_points);
@@ -117,7 +117,7 @@ impl PyRnsga2 {
 /// Auxiliary function: grabs the GIL, borrows the array as read‑only,
 /// and clones it into an `ndarray::Array2<f64>`.
 fn reference_points_from_python(reference_points: Py<PyArray2<f64>>) -> Array2<f64> {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let array_ref: &Bound<'_, PyArray2<f64>> = reference_points.bind(py);
         let readonly: PyReadonlyArray2<f64> = array_ref.readonly();
         readonly.as_array().to_owned()

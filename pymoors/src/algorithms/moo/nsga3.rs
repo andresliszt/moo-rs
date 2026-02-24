@@ -51,11 +51,11 @@ impl PyNsga3 {
         seed=None
     ))]
     pub fn new(
-        reference_points: PyObject,
-        sampler: PyObject,
-        crossover: PyObject,
-        mutation: PyObject,
-        fitness_fn: PyObject,
+        reference_points: Py<PyAny>,
+        sampler: Py<PyAny>,
+        crossover: Py<PyAny>,
+        mutation: Py<PyAny>,
+        fitness_fn: Py<PyAny>,
         num_vars: usize,
         population_size: usize,
         num_offsprings: usize,
@@ -64,8 +64,8 @@ impl PyNsga3 {
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        duplicates_cleaner: Option<PyObject>,
-        constraints_fn: Option<PyObject>,
+        duplicates_cleaner: Option<Py<PyAny>>,
+        constraints_fn: Option<Py<PyAny>>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
         let rp = reference_points_from_python(reference_points)?;
@@ -112,14 +112,16 @@ impl PyNsga3 {
     }
 }
 
-fn reference_points_from_python(reference_points: PyObject) -> Result<Nsga3ReferencePoints, PyErr> {
-    Python::with_gil(|py| {
+fn reference_points_from_python(
+    reference_points: Py<PyAny>,
+) -> Result<Nsga3ReferencePoints, PyErr> {
+    Python::attach(|py| {
         // First, try to extract the object as our custom type.
         let rp: Nsga3ReferencePoints = if let Ok(custom_obj) =
             reference_points.extract::<PyStructuredReferencePointsDispatcher>(py)
         {
             Nsga3ReferencePoints::new(custom_obj.generate(), false)
-        } else if let Ok(rp_maybe_array) = reference_points.downcast_bound::<PyArray2<f64>>(py) {
+        } else if let Ok(rp_maybe_array) = reference_points.cast_bound::<PyArray2<f64>>(py) {
             Nsga3ReferencePoints::new(rp_maybe_array.readonly().as_array().to_owned(), true)
         } else {
             return Err(PyTypeError::new_err(
