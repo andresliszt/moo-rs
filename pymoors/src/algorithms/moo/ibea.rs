@@ -51,10 +51,10 @@ impl PyIbea {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         reference_points: Py<PyArray1<f64>>,
-        sampler: PyObject,
-        crossover: PyObject,
-        mutation: PyObject,
-        fitness_fn: PyObject,
+        sampler: Py<PyAny>,
+        crossover: Py<PyAny>,
+        mutation: Py<PyAny>,
+        fitness_fn: Py<PyAny>,
         num_vars: usize,
         population_size: usize,
         num_offsprings: usize,
@@ -64,8 +64,8 @@ impl PyIbea {
         crossover_rate: f64,
         keep_infeasible: bool,
         verbose: bool,
-        duplicates_cleaner: Option<PyObject>,
-        constraints_fn: Option<PyObject>,
+        duplicates_cleaner: Option<Py<PyAny>>,
+        constraints_fn: Option<Py<PyAny>>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
         let rp = reference_points_from_python(reference_points);
@@ -115,7 +115,7 @@ impl PyIbea {
 /// Auxiliary function: grabs the GIL, borrows the array as read‑only,
 /// and clones it into an `ndarray::Array1<f64>`.
 fn reference_points_from_python(reference_points: Py<PyArray1<f64>>) -> Array1<f64> {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let array_ref: &Bound<'_, PyArray1<f64>> = reference_points.bind(py);
         let readonly: PyReadonlyArray1<f64> = array_ref.readonly();
         readonly.as_array().to_owned()

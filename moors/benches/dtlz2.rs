@@ -7,8 +7,7 @@ use ndarray::{Array2, Axis, stack};
 
 use moors::{
     CloseDuplicatesCleaner, DanAndDenisReferencePoints, GaussianMutation, Nsga3Builder,
-    Nsga3ReferencePointsSurvival, RandomSamplingFloat, SimulatedBinaryCrossover,
-    StructuredReferencePoints, impl_constraints_fn,
+    RandomSamplingFloat, SimulatedBinaryCrossover, StructuredReferencePoints, impl_constraints_fn,
 };
 
 /// DTLZ2 for 3 objectives (m = 3) with k = 0 (so num_vars = m−1 = 2):
