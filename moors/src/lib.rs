@@ -99,6 +99,7 @@ pub mod non_dominated_sorting;
 pub mod operators;
 mod private;
 pub mod random;
+pub mod surrogate;
 pub use algorithms::{
     AgeMoea, AgeMoeaBuilder, AlgorithmBuilder, AlgorithmBuilderError, AlgorithmError,
     GeneticAlgorithm, Ibea, IbeaBuilder, InitializationError, Nsga2, Nsga2Builder, Nsga3,
@@ -127,3 +128,6 @@ pub use operators::{
     UniformRealMutation, evolve::EvolveError,
 };
 pub use random::{MOORandomGenerator, NoopRandomGenerator, RandomGenerator, TestDummyRng};
+#[cfg(feature = "surrogate")]
+pub use surrogate::GaussianProcessSurrogate;
+pub use surrogate::{SurrogateConfig, SurrogateFitnessFn, SurrogateModel};
