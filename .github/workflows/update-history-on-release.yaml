@@ -11,6 +11,9 @@ jobs:
   sync-history:
     if: startsWith(github.event.release.tag_name, 'moors-') || startsWith(github.event.release.tag_name, 'pymoors-')
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      RELEASE_BODY: ${{ github.event.release.body }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -19,10 +22,11 @@ jobs:
 
       - name: Update HISTORY files
         run: |
-          TAG="${{ github.event.release.tag_name }}"
+          set -euo pipefail
+
           DATE="$(date -u +%F)"
           BODY_FILE="release_body.md"
-          printf "%s" "${{ github.event.release.body }}" > "$BODY_FILE"
+          printf '%s' "$RELEASE_BODY" > "$BODY_FILE"
 
           if [[ "$TAG" == moors-* ]]; then
             HISTORY_PATH="moors/HISTORY.md"
@@ -43,18 +47,20 @@ jobs:
           } > "$TMP"
           mkdir -p "$(dirname "$HISTORY_PATH")"
           mv "$TMP" "$HISTORY_PATH"
+          rm -f "$BODY_FILE"
 
       - name: Commit & push
         run: |
+          set -euo pipefail
+
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          TAG="${{ github.event.release.tag_name }}"
           if [[ "$TAG" == moors-* ]]; then
             git add moors/HISTORY.md
           else
             git add pymoors/HISTORY.md
           fi
 
-          git commit -m "docs(history): update from release ${{ github.event.release.tag_name }}" || echo "No changes"
+          git commit -m "docs(history): update from release $TAG" || echo "No changes"
           git push
