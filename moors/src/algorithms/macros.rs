@@ -127,6 +127,7 @@ macro_rules! define_algorithm_and_builder {
                 #[inline] pub fn crossover(mut self, v: Cross) -> Self { self.inner = self.inner.crossover(v); self }
                 #[inline] pub fn mutation(mut self, v: Mut) -> Self { self.inner = self.inner.mutation(v); self }
                 #[inline] pub fn repair(mut self, v: impl $crate::operators::RepairOperator + 'static) -> Self { self.inner = self.inner.repair(v); self }
+                #[inline] pub fn controller(mut self, v: impl $crate::algorithms::helpers::AdaptiveController<F::Dim, G::Dim> + 'static) -> Self { self.inner = self.inner.controller(v); self }
                 #[inline] pub fn selector(mut self, v: $selector) -> Self { self.inner = self.inner.selector(v); self }
                 #[inline] pub fn survivor(mut self, v: $survivor) -> Self { self.inner = self.inner.survivor(v); self }
                 #[inline] pub fn fitness_fn(mut self, v: F) -> Self { self.inner = self.inner.fitness_fn(v); self }

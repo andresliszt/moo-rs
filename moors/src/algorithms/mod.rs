@@ -15,4 +15,7 @@ pub use moo::revea::{Revea, ReveaBuilder};
 pub use moo::rnsga2::{Rnsga2, Rnsga2Builder};
 pub use moo::spea2::{Spea2, Spea2Builder};
 
-pub use helpers::{AlgorithmError, InitializationError};
+pub use helpers::{
+    AdaptiveController, AlgorithmContext, AlgorithmError, ControlSignal, InitializationError,
+    NoController,
+};

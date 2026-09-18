@@ -37,7 +37,7 @@ use derive_builder::Builder;
 use crate::{
     algorithms::GeneticAlgorithm,
     algorithms::helpers::{
-        AlgorithmContextBuilder,
+        AdaptiveController, AlgorithmContextBuilder, NoController,
         validators::{validate_bounds, validate_positive, validate_probability},
     },
     duplicates::{NoDuplicatesCleaner, PopulationCleaner},
@@ -74,6 +74,8 @@ where
     duplicates_cleaner: Arc<dyn PopulationCleaner>,
     #[builder(default = "Arc::new(NoRepair)", setter(custom))]
     repair: Arc<dyn RepairOperator>,
+    #[builder(default = "Box::new(NoController)", setter(custom))]
+    controller: Box<dyn AdaptiveController<F::Dim, G::Dim>>,
     fitness_fn: F,
     constraints_fn: G,
     num_vars: usize,
@@ -110,6 +112,11 @@ where
 
     pub fn repair(mut self, v: impl RepairOperator + 'static) -> Self {
         self.repair = Some(Arc::new(v));
+        self
+    }
+
+    pub fn controller(mut self, v: impl AdaptiveController<F::Dim, G::Dim> + 'static) -> Self {
+        self.controller = Some(Box::new(v));
         self
     }
 
@@ -187,6 +194,7 @@ where
             context,
             params.verbose,
             rng,
+            params.controller,
         ))
     }
 }

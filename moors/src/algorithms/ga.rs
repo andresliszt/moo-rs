@@ -3,7 +3,9 @@ use std::marker::PhantomData;
 use ndarray::{Axis, concatenate};
 
 use crate::{
-    algorithms::helpers::{AlgorithmContext, AlgorithmError, initialization::Initialization},
+    algorithms::helpers::{
+        AdaptiveController, AlgorithmContext, AlgorithmError, initialization::Initialization,
+    },
     evaluator::{ConstraintsFn, Evaluator, FitnessFn},
     genetic::Population,
     helpers::printer::algorithm_printer,
@@ -33,6 +35,7 @@ where
     pub context: AlgorithmContext,
     verbose: bool,
     rng: MOORandomGenerator,
+    controller: Box<dyn AdaptiveController<F::Dim, G::Dim>>,
     phantom: PhantomData<S>,
 }
 
@@ -55,6 +58,7 @@ where
         context: AlgorithmContext,
         verbose: bool,
         rng: MOORandomGenerator,
+        controller: Box<dyn AdaptiveController<F::Dim, G::Dim>>,
     ) -> Self {
         Self {
             population: population,
@@ -65,6 +69,7 @@ where
             context: context,
             verbose: verbose,
             rng: rng,
+            controller: controller,
             phantom: PhantomData,
         }
     }
@@ -134,6 +139,21 @@ where
                 Err(e) => return Err(e),
             }
             self.context.set_current_iteration(current_iter);
+
+            let signal = self.controller.observe(
+                current_iter,
+                self.population.as_ref().unwrap(),
+                &self.context,
+            );
+            if let Some(mutation_rate) = signal.mutation_rate {
+                self.evolve.set_mutation_rate(mutation_rate);
+            }
+            if let Some(crossover_rate) = signal.crossover_rate {
+                self.evolve.set_crossover_rate(crossover_rate);
+            }
+            if signal.stop {
+                break;
+            }
         }
         Ok(())
     }

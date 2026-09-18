@@ -1,10 +1,12 @@
-use ndarray::{Array2, Axis, array, stack};
+use ndarray::{Array2, Axis, Ix2, array, stack};
 use ordered_float::OrderedFloat;
 use std::collections::HashSet;
+use std::sync::{Arc, Mutex};
 
 use moors::{
-    AgeMoeaBuilder, ArithmeticCrossover, CloseDuplicatesCleaner, GaussianMutation, IbeaBuilder,
-    Nsga2Builder, Nsga3Builder, PopulationMOO, RandomSamplingFloat, ReveaBuilder, Rnsga2Builder,
+    AdaptiveController, AgeMoeaBuilder, AlgorithmContext, ArithmeticCrossover,
+    CloseDuplicatesCleaner, ControlSignal, GaussianMutation, IbeaBuilder, Nsga2Builder,
+    Nsga3Builder, PopulationMOO, RandomSamplingFloat, ReveaBuilder, Rnsga2Builder,
     SimulatedBinaryCrossover, Spea2Builder, UniformRealMutation, impl_constraints_fn,
     survival::moo::{DanAndDenisReferencePoints, StructuredReferencePoints},
 };
@@ -315,4 +317,66 @@ fn test_same_seed_same_result() {
         .expect("population should have been initialized");
 
     assert_eq!(population1.genes, population2.genes)
+}
+
+/// Stops the run after a fixed number of `observe` calls and doubles the
+/// mutation rate on the first call, exercising both `ControlSignal` fields.
+#[derive(Debug, Clone)]
+struct StopAfterN {
+    max_calls: usize,
+    calls: Arc<Mutex<usize>>,
+}
+
+impl AdaptiveController<Ix2, Ix2> for StopAfterN {
+    fn observe(
+        &mut self,
+        _iteration: usize,
+        _population: &PopulationMOO,
+        _context: &AlgorithmContext,
+    ) -> ControlSignal {
+        let mut calls = self.calls.lock().unwrap();
+        *calls += 1;
+        ControlSignal {
+            mutation_rate: if *calls == 1 { Some(0.8) } else { None },
+            stop: *calls >= self.max_calls,
+            ..Default::default()
+        }
+    }
+}
+
+#[test]
+fn test_adaptive_controller_stops_early() {
+    let calls = Arc::new(Mutex::new(0));
+    let controller = StopAfterN {
+        max_calls: 3,
+        calls: calls.clone(),
+    };
+
+    let mut algorithm = Nsga2Builder::default()
+        .sampler(RandomSamplingFloat::new(0.0, 1.0))
+        .crossover(SimulatedBinaryCrossover::new(15.0))
+        .mutation(GaussianMutation::new(0.5, 0.01))
+        .duplicates_cleaner(CloseDuplicatesCleaner::new(1e-6))
+        .fitness_fn(fitness_biobjective)
+        .constraints_fn(MyConstr)
+        .num_vars(2)
+        .population_size(20)
+        .num_offsprings(20)
+        .num_iterations(100)
+        .mutation_rate(0.1)
+        .crossover_rate(0.9)
+        .keep_infeasible(false)
+        .verbose(false)
+        .seed(42)
+        .controller(controller)
+        .build()
+        .expect("failed to build NSGA2");
+
+    algorithm.run().expect("NSGA2 run failed");
+
+    assert_eq!(
+        *calls.lock().unwrap(),
+        3,
+        "controller should stop the run after exactly 3 generations"
+    );
 }
