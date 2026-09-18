@@ -78,6 +78,18 @@ where
         offsprings
     }
 
+    /// Overrides the mutation rate used for subsequent matings (e.g. from an
+    /// `AdaptiveController`).
+    pub fn set_mutation_rate(&mut self, mutation_rate: f64) {
+        self.mutation_rate = mutation_rate;
+    }
+
+    /// Overrides the crossover rate used for subsequent matings (e.g. from an
+    /// `AdaptiveController`).
+    pub fn set_crossover_rate(&mut self, crossover_rate: f64) {
+        self.crossover_rate = crossover_rate;
+    }
+
     /// Generates up to `num_offsprings` unique offspring in multiple iterations (up to `max_iter`).
     ///
     /// The logic is as follows:
