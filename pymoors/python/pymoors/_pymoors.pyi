@@ -6,6 +6,7 @@ from pymoors.constraints import Constraints
 from pymoors.schemas import Population
 from pymoors.typing import (
     ConstraintsCallable,
+    ControllerLike,
     CrossoverLike,
     FitnessCallable,
     MutationLike,
@@ -338,6 +339,8 @@ class _AlgorithmKwargs(TypedDict, total=False):
         verbose (bool, optional): Whether to print detailed information during the run. Defaults to True.
         duplicates_cleaner (DuplicatesCleaner, optional): Cleaner to remove duplicates. Defaults to None.
         constraints_fn (ConstraintsCallable | Constraints, optional): Function to handle constraints_fn. Defaults to None.
+        controller (ControllerLike, optional): Adaptive controller observing each iteration and optionally
+            adjusting mutation/crossover rates or stopping the run early. Defaults to None.
         seed (int, optional): Optional seed to control experiments. Defaults to None.
     """
 
@@ -355,6 +358,7 @@ class _AlgorithmKwargs(TypedDict, total=False):
     verbose: bool
     duplicates_cleaner: DuplicatesCleaner | None
     constraints_fn: ConstraintsCallable | Constraints | None
+    controller: ControllerLike | None
     seed: int | None
 
 class Nsga2:

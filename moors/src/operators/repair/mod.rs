@@ -7,7 +7,7 @@ use ndarray::{Array2, ArrayViewMut1};
 ///
 /// The default [`operate`] implementation calls [`repair`] on every individual.
 /// Override [`operate`] if you need selective or batch repair logic.
-pub trait RepairOperator: std::fmt::Debug {
+pub trait RepairOperator: std::fmt::Debug + Send + Sync {
     /// Repairs a single individual in place.
     fn repair(&self, individual: ArrayViewMut1<f64>);
 

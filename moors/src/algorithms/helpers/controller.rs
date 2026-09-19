@@ -21,7 +21,7 @@ pub struct ControlSignal {
 
 /// Observes the population produced at the end of each generation and may
 /// request rate changes or an early stop for the next one.
-pub trait AdaptiveController<FDim, ConstrDim>: fmt::Debug
+pub trait AdaptiveController<FDim, ConstrDim>: fmt::Debug + Send + Sync
 where
     FDim: D12,
     ConstrDim: D12,

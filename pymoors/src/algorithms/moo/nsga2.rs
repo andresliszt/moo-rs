@@ -3,6 +3,7 @@ use numpy::ToPyArray;
 use pymoors_macros::py_algorithm_impl;
 use pyo3::prelude::*;
 
+use crate::custom_py_operators::controller_from_python;
 use crate::py_error::AlgorithmErrorWrapper;
 use crate::py_fitness_and_constraints::{PyConstraintsFnWrapper, PyFitnessFnWrapper};
 use crate::py_operators::{
@@ -18,7 +19,6 @@ pub struct PyNsga2 {
         MutationOperatorDispatcher,
         PyFitnessFnWrapper,
         PyConstraintsFnWrapper,
-        DuplicatesCleanerDispatcher,
     >,
 }
 
@@ -42,6 +42,7 @@ impl PyNsga2 {
         verbose=true,
         duplicates_cleaner=None,
         constraints_fn=None,
+        controller=None,
         seed=None
     ))]
     #[allow(clippy::too_many_arguments)]
@@ -60,6 +61,7 @@ impl PyNsga2 {
         verbose: bool,
         duplicates_cleaner: Option<Py<PyAny>>,
         constraints_fn: Option<Py<PyAny>>,
+        controller: Option<Py<PyAny>>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
         // Unwrap the operator objects using the previously generated unwrap functions.
@@ -68,6 +70,7 @@ impl PyNsga2 {
         let mutation = MutationOperatorDispatcher::from_python_operator(mutation)?;
         let duplicates_cleaner =
             DuplicatesCleanerDispatcher::from_python_operator(duplicates_cleaner)?;
+        let controller = controller_from_python(controller)?;
         // Build the mandatory population-level fitness_fn.
         let fitness_fn = PyFitnessFnWrapper::from_python_fitness(fitness_fn);
         // Build the optional constraints_fn.
@@ -92,6 +95,9 @@ impl PyNsga2 {
 
         if let Some(seed) = seed {
             builder = builder.seed(seed)
+        }
+        if let Some(controller) = controller {
+            builder = builder.controller(controller)
         }
 
         let algorithm = builder.build().map_err(AlgorithmErrorWrapper::from)?;
