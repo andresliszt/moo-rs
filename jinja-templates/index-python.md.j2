@@ -1,0 +1,78 @@
+{% extends 'markdown/index' %}
+
+{% set exclude_input_prompt = True %}
+{% set exclude_output_prompt = True %}
+
+{# --------------------------------------------------------------
+   REPL MODE (v6): single ```python block without tabs or extra spaces,
+   and with the first '>>>' correctly separated from the fence.
+   Activation per cell: tag 'repl' or first line '# repl' | '# nbconvert: repl' | '# repl: on'.
+   Only if all outputs are textual (stream/error/text/plain).
+   -------------------------------------------------------------- #}
+{% block codecell %}
+  {% set tags = (cell.metadata.tags if cell.metadata is defined and cell.metadata.tags is defined else []) %}
+  {% set has_repl_tag = ('repl' in tags) %}
+  {% set first_line = (cell.source.splitlines()[0] if cell.source else '') %}
+  {% set first_line_norm = first_line.strip().lower() %}
+  {% set has_repl_comment = first_line_norm in ['# repl', '# nbconvert: repl', '# repl: on'] %}
+  {% set want_repl = has_repl_tag or has_repl_comment or (cell.metadata.get('repl', False) if cell.metadata is defined else False) %}
+
+  {# Detect rich outputs #}
+  {% set has_rich = False %}
+  {% for output in (cell.outputs or []) %}
+    {% if output.output_type in ['execute_result','display_data'] %}
+      {% set data = output.data %}
+      {% if data and ('text/plain' not in data) %}
+        {% set has_rich = True %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if want_repl and not has_rich %}
+    {# Prepare buffer #}
+    {% set src_text = (cell.source | replace('\r\n','\n') | replace('\r','\n') | trim) %}
+    {% set src_lines = (src_text.split('\n') if src_text else []) %}
+    {% if has_repl_comment and src_lines %}
+      {% set _ = src_lines.pop(0) %}
+    {% endif %}
+    {% set ns = namespace(out='', last_blank=True) %}
+
+    {# Input with prompts: collapse multiple blanks into one #}
+    {% for raw in src_lines %}
+      {% set l = raw.rstrip() %}
+      {% if l.strip() == '' %}
+        {% if not ns.last_blank %}{% set ns.out = ns.out + '\n' %}{% endif %}
+        {% set ns.last_blank = True %}
+      {% elif l.lstrip().startswith('#') %}
+        {% set ns.out = ns.out + l + '\n' %}
+        {% set ns.last_blank = False %}
+      {% else %}
+        {% set ns.out = ns.out + '>>> ' + l + '\n' %}
+        {% set ns.last_blank = False %}
+      {% endif %}
+    {% endfor %}
+
+    {# Textual outputs #}
+    {% for output in (cell.outputs or []) %}
+      {% if output.output_type == 'stream' %}
+        {% set t = (output.text | default('') | replace('\r\n','\n') | replace('\r','\n')) %}
+        {% set t = t.rstrip('\n') + '\n' if t else '' %}
+        {% set ns.out = ns.out + t %}
+      {% elif output.output_type == 'error' %}
+        {% set hdr = (output.ename ~ ': ' ~ output.evalue) + '\n' %}
+        {% set tb = ((output.traceback or []) | join('\n')) + ('\n' if output.traceback else '') %}
+        {% set ns.out = ns.out + hdr + tb %}
+      {% elif output.output_type in ['execute_result','display_data'] and 'text/plain' in output.data %}
+        {% set t = (output.data['text/plain'] | replace('\r\n','\n') | replace('\r','\n')) %}
+        {% set t = t.rstrip('\n') + '\n' if t else '' %}
+        {% set ns.out = ns.out + t %}
+      {% endif %}
+    {% endfor %}
+
+```python
+{{ ns.out }}
+```
+  {% else %}
+{{ super() }}
+  {% endif %}
+{% endblock codecell %}
