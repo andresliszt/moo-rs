@@ -763,8 +763,13 @@ pub fn py_algorithm_impl(input: TokenStream) -> TokenStream {
                 let population_class = schemas_module.getattr("Population")?;
                 let population = self
                     .algorithm
-                    .population()
-                    .map_err(|e| AlgorithmErrorWrapper(e.into()))?;
+                    .population
+                    .as_ref()
+                    .ok_or_else(|| {
+                        crate::py_error::InitializationError::new_err(
+                            "Algorithm has not been run yet",
+                        )
+                    })?;
                 let py_genes = population.genes.to_pyarray(py);
                 let py_fitness = population.fitness.to_pyarray(py);
                 let py_constraints = population.constraints.to_pyarray(py);

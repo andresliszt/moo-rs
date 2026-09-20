@@ -1,12 +1,11 @@
-use moors::{
-    Nsga3, Nsga3Builder, Nsga3ReferencePoints, Nsga3ReferencePointsSurvival,
-    StructuredReferencePoints,
-};
+use moors::{Nsga3, Nsga3Builder, StructuredReferencePoints};
+use ndarray::Array2;
 use numpy::{PyArray2, PyArrayMethods, ToPyArray};
 use pymoors_macros::py_algorithm_impl;
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 
+use crate::custom_py_operators::controller_from_python;
 use crate::py_error::AlgorithmErrorWrapper;
 use crate::py_fitness_and_constraints::{PyConstraintsFnWrapper, PyFitnessFnWrapper};
 use crate::py_operators::{
@@ -23,7 +22,6 @@ pub struct PyNsga3 {
         MutationOperatorDispatcher,
         PyFitnessFnWrapper,
         PyConstraintsFnWrapper,
-        DuplicatesCleanerDispatcher,
     >,
 }
 
@@ -48,6 +46,7 @@ impl PyNsga3 {
         verbose=true,
         duplicates_cleaner=None,
         constraints_fn=None,
+        controller=None,
         seed=None
     ))]
     pub fn new(
@@ -66,10 +65,10 @@ impl PyNsga3 {
         verbose: bool,
         duplicates_cleaner: Option<Py<PyAny>>,
         constraints_fn: Option<Py<PyAny>>,
+        controller: Option<Py<PyAny>>,
         seed: Option<u64>,
     ) -> PyResult<Self> {
-        let rp = reference_points_from_python(reference_points)?;
-        let survival = Nsga3ReferencePointsSurvival::new(rp);
+        let (rp, are_aspirational) = reference_points_from_python(reference_points)?;
 
         // Unwrap the operator objects using the previously generated unwrap functions.
         let sampler = SamplingOperatorDispatcher::from_python_operator(sampler)?;
@@ -77,6 +76,7 @@ impl PyNsga3 {
         let mutation = MutationOperatorDispatcher::from_python_operator(mutation)?;
         let duplicates_cleaner =
             DuplicatesCleanerDispatcher::from_python_operator(duplicates_cleaner)?;
+        let controller = controller_from_python(controller)?;
         // Build the mandatory population-level fitness_fn.
         let fitness_fn = PyFitnessFnWrapper::from_python_fitness(fitness_fn);
         // Build the optional constraints_fn.
@@ -87,7 +87,8 @@ impl PyNsga3 {
             .sampler(sampler)
             .crossover(crossover)
             .mutation(mutation)
-            .survivor(survival)
+            .reference_points(rp)
+            .are_aspirational(are_aspirational)
             .duplicates_cleaner(duplicates_cleaner)
             .fitness_fn(fitness_fn)
             .constraints_fn(constraints_fn)
@@ -103,6 +104,9 @@ impl PyNsga3 {
         if let Some(seed) = seed {
             builder = builder.seed(seed)
         }
+        if let Some(controller) = controller {
+            builder = builder.controller(controller)
+        }
 
         let algorithm = builder.build().map_err(AlgorithmErrorWrapper::from)?;
 
@@ -112,22 +116,19 @@ impl PyNsga3 {
     }
 }
 
-fn reference_points_from_python(
-    reference_points: Py<PyAny>,
-) -> Result<Nsga3ReferencePoints, PyErr> {
+fn reference_points_from_python(reference_points: Py<PyAny>) -> Result<(Array2<f64>, bool), PyErr> {
     Python::attach(|py| {
         // First, try to extract the object as our custom type.
-        let rp: Nsga3ReferencePoints = if let Ok(custom_obj) =
+        if let Ok(custom_obj) =
             reference_points.extract::<PyStructuredReferencePointsDispatcher>(py)
         {
-            Nsga3ReferencePoints::new(custom_obj.generate(), false)
+            Ok((custom_obj.generate(), false))
         } else if let Ok(rp_maybe_array) = reference_points.cast_bound::<PyArray2<f64>>(py) {
-            Nsga3ReferencePoints::new(rp_maybe_array.readonly().as_array().to_owned(), true)
+            Ok((rp_maybe_array.readonly().as_array().to_owned(), true))
         } else {
-            return Err(PyTypeError::new_err(
+            Err(PyTypeError::new_err(
                 "reference_points must be either a custom reference points class or a NumPy array.",
-            ));
-        };
-        Ok(rp)
+            ))
+        }
     })
 }

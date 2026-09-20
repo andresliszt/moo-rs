@@ -1,4 +1,4 @@
-from typing import Annotated, Callable, Protocol, TypeAlias, TypeVar
+from typing import Annotated, Callable, Protocol, TypeAlias, TypedDict, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -10,6 +10,26 @@ TwoDArray: TypeAlias = Annotated[npt.NDArray[DType], "ndim=2"]
 
 FitnessCallable: TypeAlias = Callable[[TwoDArray], TwoDArray]
 ConstraintsCallable: TypeAlias = Callable[[TwoDArray], TwoDArray]
+
+
+class AlgorithmContext(TypedDict):
+    """Runtime state passed to a controller's `observe` method on every iteration."""
+
+    num_vars: int
+    population_size: int
+    num_offsprings: int
+    num_iterations: int
+    current_iteration: int
+    upper_bound: float | None
+    lower_bound: float | None
+
+
+class ControlSignal(TypedDict, total=False):
+    """Optional adjustments a controller may return from `observe` to steer the algorithm."""
+
+    mutation_rate: float
+    crossover_rate: float
+    stop: bool
 
 
 class CrossoverProtocol(Protocol):
@@ -40,6 +60,18 @@ class SamplingProtocolNoArgs(Protocol):
     def operate(self) -> TwoDArray: ...
 
 
+class ControllerProtocol(Protocol):
+    def observe(
+        self,
+        iteration: int,
+        genes: TwoDArray,
+        fitness: TwoDArray,
+        constraints: TwoDArray,
+        context: AlgorithmContext,
+    ) -> ControlSignal | None: ...
+
+
 CrossoverLike = CrossoverProtocol | CrossoverProtocolNoSeed
 MutationLike = MutationProtocol | MutationProtocolNoSeed
 SamplingLike = SamplingProtocol | SamplingProtocolNoArgs
+ControllerLike = ControllerProtocol

@@ -1,9 +1,13 @@
-use ndarray::{Array1, Array2, ArrayViewMut1, Axis, s};
-use numpy::{IntoPyArray, PyArray2, PyArrayMethods};
+use ndarray::{Array1, Array2, ArrayViewMut1, Axis, Ix1, Ix2, s};
+use numpy::{IntoPyArray, PyArray2, PyArrayMethods, ToPyArray};
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
+use pyo3::types::{PyDict, PyDictMethods};
 
-use moors::{CrossoverOperator, MutationOperator, RandomGenerator, SamplingOperator};
+use moors::{
+    AdaptiveController, AlgorithmContext, ControlSignal, CrossoverOperator, MutationOperator,
+    Population, RandomGenerator, SamplingOperator,
+};
 
 fn select_individuals_idx(
     population_size: usize,
@@ -213,3 +217,139 @@ impl<'a, 'py> FromPyObject<'a, 'py> for CustomPySamplingOperatorWrapper {
         })
     }
 }
+
+/// Wrapper for a custom Python adaptive controller.
+///
+/// Delegates per-generation observation to a Python-side class defining an
+/// `observe` method with signature
+/// `observe(iteration, genes, fitness, constraints, context) -> dict | None`,
+/// where `context` is a dict with keys `num_vars`, `population_size`,
+/// `num_offsprings`, `num_iterations`, `current_iteration`, `upper_bound`,
+/// `lower_bound`. The returned dict may set `mutation_rate` (float),
+/// `crossover_rate` (float) and/or `stop` (bool); omitted keys (or `None`)
+/// leave the corresponding value unchanged, and `stop` defaults to `False`.
+#[derive(Debug)]
+pub struct CustomPyControllerWrapper {
+    pub inner: Py<PyAny>,
+}
+
+impl<'a, 'py> FromPyObject<'a, 'py> for CustomPyControllerWrapper {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'_, 'py, pyo3::PyAny>) -> Result<Self, Self::Error> {
+        if !ob.hasattr("observe")? {
+            return Err(PyTypeError::new_err(
+                "Custom controller class must define an 'observe' method",
+            ));
+        }
+        Ok(CustomPyControllerWrapper {
+            inner: ob.to_owned().unbind(),
+        })
+    }
+}
+
+/// Converts an optional Python-side controller into a wrapper, wiring it into
+/// the algorithm builder. Returns `None` (i.e. keep the default `NoController`)
+/// when `py_obj_opt` is `None`.
+pub fn controller_from_python(
+    py_obj_opt: Option<Py<PyAny>>,
+) -> PyResult<Option<CustomPyControllerWrapper>> {
+    match py_obj_opt {
+        None => Ok(None),
+        Some(py_obj) => {
+            Python::attach(|py| Ok(Some(py_obj.extract::<CustomPyControllerWrapper>(py)?)))
+        }
+    }
+}
+
+macro_rules! impl_custom_py_controller {
+    ($fdim:ty) => {
+        impl AdaptiveController<$fdim, Ix2> for CustomPyControllerWrapper {
+            fn observe(
+                &mut self,
+                iteration: usize,
+                population: &Population<$fdim, Ix2>,
+                context: &AlgorithmContext,
+            ) -> ControlSignal {
+                Python::attach(|py| {
+                    let genes_py = population.genes.to_pyarray(py);
+                    let fitness_py = population.fitness.to_pyarray(py);
+                    let constraints_py = population.constraints.to_pyarray(py);
+
+                    let context_dict = PyDict::new(py);
+                    context_dict
+                        .set_item("num_vars", context.num_vars)
+                        .expect("failed to build controller context dict");
+                    context_dict
+                        .set_item("population_size", context.population_size)
+                        .expect("failed to build controller context dict");
+                    context_dict
+                        .set_item("num_offsprings", context.num_offsprings)
+                        .expect("failed to build controller context dict");
+                    context_dict
+                        .set_item("num_iterations", context.num_iterations)
+                        .expect("failed to build controller context dict");
+                    context_dict
+                        .set_item("current_iteration", context.current_iteration)
+                        .expect("failed to build controller context dict");
+                    context_dict
+                        .set_item("upper_bound", context.upper_bound)
+                        .expect("failed to build controller context dict");
+                    context_dict
+                        .set_item("lower_bound", context.lower_bound)
+                        .expect("failed to build controller context dict");
+
+                    let result = self
+                        .inner
+                        .call_method1(
+                            py,
+                            "observe",
+                            (
+                                iteration,
+                                genes_py,
+                                fitness_py,
+                                constraints_py,
+                                context_dict,
+                            ),
+                        )
+                        .expect("Error calling custom controller observe");
+
+                    if result.is_none(py) {
+                        return ControlSignal::default();
+                    }
+
+                    let result_dict = result
+                        .bind(py)
+                        .cast::<PyDict>()
+                        .expect("Expected a dict (or None), output of the observe method");
+
+                    let mutation_rate = result_dict
+                        .get_item("mutation_rate")
+                        .expect("failed to read mutation_rate")
+                        .filter(|v| !v.is_none())
+                        .map(|v| v.extract::<f64>().expect("mutation_rate must be a float"));
+                    let crossover_rate = result_dict
+                        .get_item("crossover_rate")
+                        .expect("failed to read crossover_rate")
+                        .filter(|v| !v.is_none())
+                        .map(|v| v.extract::<f64>().expect("crossover_rate must be a float"));
+                    let stop = result_dict
+                        .get_item("stop")
+                        .expect("failed to read stop")
+                        .filter(|v| !v.is_none())
+                        .map(|v| v.extract::<bool>().expect("stop must be a bool"))
+                        .unwrap_or(false);
+
+                    ControlSignal {
+                        mutation_rate,
+                        crossover_rate,
+                        stop,
+                    }
+                })
+            }
+        }
+    };
+}
+
+impl_custom_py_controller!(Ix1);
+impl_custom_py_controller!(Ix2);
