@@ -69,6 +69,7 @@
 pub mod crossover;
 pub mod evolve;
 pub mod mutation;
+pub mod pso;
 pub mod repair;
 pub mod sampling;
 pub mod selection;
@@ -83,6 +84,9 @@ pub use evolve::{Evolve, EvolveBuilder, EvolveError};
 pub use mutation::{
     BitFlipMutation, DisplacementMutation, GaussianMutation, InversionMutation, MutationOperator,
     NoMutation, ScrambleMutation, SwapMutation, UniformBinaryMutation, UniformRealMutation,
+};
+pub use pso::{
+    ConstrictionVelocityUpdate, MeritOperator, RankCrowdingMerit, VelocityUpdateOperator,
 };
 pub use repair::{NoRepair, RepairOperator};
 pub use sampling::{
