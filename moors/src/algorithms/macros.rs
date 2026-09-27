@@ -216,3 +216,110 @@ macro_rules! define_algorithm_and_builder {
     };
 
 }
+
+/// PSO counterpart of [`define_algorithm_and_builder!`]: generates a
+/// [`Pso`](crate::algorithms::Pso) type alias and a wrapper builder around
+/// [`PsoBuilder`](crate::algorithms::PsoBuilder) that presets the
+/// velocity-update and merit operators, exposing their own parameters
+/// (each with a default value) instead of the raw operator structs.
+#[macro_export]
+macro_rules! define_pso_algorithm_and_builder {
+    (
+        $(#[$meta:meta])*
+        $algorithm:ident, $velocity:ty, $merit:ty
+        $(, velocity_args = [ $( $(#[$vmeta:meta])* $varg:ident : $vty:ty = $vdef:expr ),* $(,)? ])?
+        $(, merit_args = [ $( $(#[$mmeta:meta])* $marg:ident : $mty:ty = $mdef:expr ),* $(,)? ])?
+        $(,)?
+    ) => {
+        ::paste::paste! {
+            $(#[$meta])*
+            pub type $algorithm<F, G> = $crate::algorithms::Pso<$velocity, $merit, F, G>;
+
+            // -------- Builder ---------------------------------------------------
+            pub struct [<$algorithm Builder>]<F, G>
+            where
+                F: $crate::evaluator::FitnessFn<Dim = ::ndarray::Ix2>,
+                G: $crate::evaluator::ConstraintsFn,
+            {
+                inner: $crate::algorithms::PsoBuilder<F, G, $velocity, $merit>,
+                $( $( $varg: $vty, )* )?
+                $( $( $marg: $mty, )* )?
+            }
+
+            impl<F, G> ::core::default::Default for [<$algorithm Builder>]<F, G>
+            where
+                F: $crate::evaluator::FitnessFn<Dim = ::ndarray::Ix2>,
+                G: $crate::evaluator::ConstraintsFn,
+            {
+                fn default() -> Self {
+                    Self {
+                        inner: ::core::default::Default::default(),
+                        $( $( $varg: $vdef, )* )?
+                        $( $( $marg: $mdef, )* )?
+                    }
+                }
+            }
+
+            impl<F, G> [<$algorithm Builder>]<F, G>
+            where
+                F: $crate::evaluator::FitnessFn<Dim = ::ndarray::Ix2>,
+                G: $crate::evaluator::ConstraintsFn,
+            {
+                // === Public setters (velocity/merit tunables) ========================
+                $(
+                    $(
+                        $(#[$vmeta])*
+                        #[inline]
+                        pub fn $varg(mut self, v: $vty) -> Self {
+                            self.$varg = v;
+                            self
+                        }
+                    )*
+                )?
+                $(
+                    $(
+                        $(#[$mmeta])*
+                        #[inline]
+                        pub fn $marg(mut self, v: $mty) -> Self {
+                            self.$marg = v;
+                            self
+                        }
+                    )*
+                )?
+
+                // === Inner Forwards ===================================================
+                #[inline] pub fn fitness_fn(mut self, v: F) -> Self { self.inner = self.inner.fitness_fn(v); self }
+                #[inline] pub fn constraints_fn(mut self, v: G) -> Self { self.inner = self.inner.constraints_fn(v); self }
+                #[inline] pub fn num_vars(mut self, v: usize) -> Self { self.inner = self.inner.num_vars(v); self }
+                #[inline] pub fn population_size(mut self, v: usize) -> Self { self.inner = self.inner.population_size(v); self }
+                #[inline] pub fn num_iterations(mut self, v: usize) -> Self { self.inner = self.inner.num_iterations(v); self }
+                #[inline] pub fn lower_bound(mut self, v: f64) -> Self { self.inner = self.inner.lower_bound(v); self }
+                #[inline] pub fn upper_bound(mut self, v: f64) -> Self { self.inner = self.inner.upper_bound(v); self }
+                /// Number of consecutive non-improving iterations before a growing subset
+                /// of particles gets reinitialized at random positions. Defaults to `20`.
+                #[inline] pub fn stagnation_threshold(mut self, v: usize) -> Self { self.inner = self.inner.stagnation_threshold(v); self }
+                #[inline] pub fn keep_infeasible(mut self, v: bool) -> Self { self.inner = self.inner.keep_infeasible(v); self }
+                #[inline] pub fn verbose(mut self, v: bool) -> Self { self.inner = self.inner.verbose(v); self }
+                #[inline] pub fn seed(mut self, v: u64) -> Self { self.inner = self.inner.seed(v); self }
+
+                // === Build =============================================================
+                pub fn build(self) -> ::core::result::Result<$algorithm<F, G>, $crate::algorithms::PsoBuilderError> {
+                    let velocity_val = define_pso_algorithm_and_builder!(
+                        @call_op $velocity ; ( $( $( self.$varg ),* )? )
+                    );
+                    let merit_val = define_pso_algorithm_and_builder!(
+                        @call_op $merit ; ( $( $( self.$marg ),* )? )
+                    );
+
+                    self.inner
+                        .velocity_update(velocity_val)
+                        .merit(merit_val)
+                        .build()
+                }
+            }
+        }
+    };
+
+    (@call_op $ty:ty ; () ) => { < $ty >::new() };
+    (@call_op $ty:ty ; ( $( $a:expr ),+ ) ) => { < $ty >::new( $( $a ),+ ) };
+}
