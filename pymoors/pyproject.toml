@@ -41,7 +41,6 @@ dev = ["maturin"]
 release = ["maturin"]
 testing = [
     { include-group = "dev" },
-    "scipy",
     "pytest",
     "pytest-cov",
     "pytest-benchmark",

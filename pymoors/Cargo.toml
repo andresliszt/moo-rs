@@ -22,8 +22,6 @@ rayon = "1.10.0"
 ndarray-stats = "0.6.0"
 pymoors_macros = { path = "pymoors_macros"}
 moors = { path = "../moors", version = "0.2.12" }
-faer-ext = { version = "0.7.1", features = ["ndarray"] }
-faer = { version = "0.23.1", default-features = false, features = ["std"] }
 
 [features]
 extension-module = ["pyo3/extension-module"]

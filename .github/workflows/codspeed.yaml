@@ -93,7 +93,7 @@ jobs:
       - name: Run pymoors CodSpeed benchmarks
         uses: CodSpeedHQ/action@v4
         with:
-          mode: walltime
+          mode: instrumentation
           working-directory: pymoors
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: uv run pytest tests/benchmarks --codspeed
