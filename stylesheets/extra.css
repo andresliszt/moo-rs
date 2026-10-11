@@ -1,0 +1,356 @@
+/* ============================================================
+   Language selector (header dropdown: pymoors | moors)
+   ============================================================ */
+.moo-lang-select-wrap {
+  display: flex;
+  align-items: center;
+  margin-left: 0.75rem;
+  flex-shrink: 0;
+}
+
+.moo-lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.08)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.55)'/%3E%3C/svg%3E")
+    no-repeat right 8px center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  padding: 5px 26px 5px 10px;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.moo-lang-select:hover {
+  border-color: var(--md-accent-fg-color);
+  color: #fff;
+}
+
+.moo-lang-select:focus {
+  outline: none;
+  border-color: var(--md-accent-fg-color);
+}
+
+.moo-lang-select option {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+/* Language-specific content blocks */
+html[data-lang="moors"]   .lang-python { display: none; }
+html[data-lang="pymoors"] .lang-rust   { display: none; }
+
+/* Default (no selection yet): show pymoors */
+html:not([data-lang]) .lang-rust { display: none; }
+
+/* Hero language nav links */
+.moo-hero__lang-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.moo-hero__lang-link {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.moo-hero__lang-link:hover {
+  color: var(--md-accent-fg-color);
+  border-color: var(--md-accent-fg-color);
+}
+
+.moo-hero__lang-link--moors {
+  color: rgba(255, 200, 80, 0.8);
+  border-color: rgba(255, 200, 80, 0.3);
+}
+
+.moo-hero__lang-link--moors:hover {
+  color: var(--md-accent-fg-color);
+  border-color: var(--md-accent-fg-color);
+}
+
+.moo-hero__lang-sep {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.85rem;
+}
+
+/* ============================================================
+   Header sizing
+   ============================================================ */
+.md-header {
+  --md-header-height: 75px !important;
+  min-height: 75px !important;
+  align-items: center;
+}
+
+.md-header__button.md-logo img {
+  max-height: none !important;
+  height: 65px !important;
+  width: auto !important;
+}
+
+.md-header-nav {
+  top: var(--md-header-height) !important;
+}
+
+/* ============================================================
+   Code font in example admonitions
+   ============================================================ */
+.md-typeset .admonition.example pre > code,
+.md-typeset .admonition.example .highlight pre {
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+/* ============================================================
+   Hero section
+   ============================================================ */
+.moo-hero {
+  background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #16213e 100%);
+  padding: 4rem 1rem 3.5rem;
+  border-bottom: 2px solid var(--md-accent-fg-color);
+}
+
+[data-md-color-scheme="default"] .moo-hero {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.moo-hero__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.moo-hero__text {
+  flex: 1;
+}
+
+.moo-hero__title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.5rem;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.moo-hero__subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 2rem;
+  line-height: 1.6;
+}
+
+.moo-hero__subtitle strong {
+  color: var(--md-accent-fg-color);
+}
+
+.moo-hero__cta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.moo-btn-python.md-button--primary {
+  background-color: var(--md-accent-fg-color) !important;
+  border-color: var(--md-accent-fg-color) !important;
+  color: #000 !important;
+  font-weight: 700;
+  padding: 0.6rem 1.4rem;
+  border-radius: 6px;
+}
+
+.moo-btn-rust.md-button {
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  color: #fff !important;
+  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.moo-btn-rust.md-button:hover {
+  border-color: var(--md-accent-fg-color) !important;
+  color: var(--md-accent-fg-color) !important;
+}
+
+.moo-hero__badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.moo-hero__badges img {
+  height: 20px;
+}
+
+.moo-hero__logo {
+  flex-shrink: 0;
+}
+
+.moo-hero__logo img {
+  width: 160px;
+  height: auto;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 24px rgba(255, 193, 7, 0.3));
+}
+
+@media (max-width: 768px) {
+  .moo-hero__inner {
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+  .moo-hero__title {
+    font-size: 2.5rem;
+  }
+  .moo-hero__cta {
+    justify-content: center;
+  }
+  .moo-hero__badges {
+    justify-content: center;
+  }
+  .moo-hero__logo img {
+    width: 100px;
+  }
+}
+
+/* ============================================================
+   Feature grid
+   ============================================================ */
+.moo-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.moo-feature {
+  background: var(--md-code-bg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 10px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.moo-feature:hover {
+  border-color: var(--md-accent-fg-color);
+  transform: translateY(-3px);
+}
+
+.moo-feature__icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.moo-feature h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.moo-feature p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--md-default-fg-color--light);
+  line-height: 1.55;
+}
+
+/* ============================================================
+   Arya section
+   ============================================================ */
+.moo-arya {
+  text-align: center;
+  margin: 2rem auto;
+}
+
+.moo-arya img {
+  max-width: 480px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.moo-arya p {
+  margin-top: 0.75rem;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.9rem;
+}
+
+/* ============================================================
+   Algorithm cards grid
+   ============================================================ */
+.moo-algo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+@media (max-width: 1100px) {
+  .moo-algo-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .moo-algo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.moo-algo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem;
+  background: var(--md-code-bg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 10px;
+  text-decoration: none !important;
+  transition: border-color 0.18s;
+}
+
+.moo-algo-card:hover {
+  border-color: var(--md-accent-fg-color);
+  text-decoration: none !important;
+}
+
+.moo-algo-card__name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--md-default-fg-color);
+}
+
+.moo-algo-card__desc {
+  font-size: 0.8rem;
+  color: var(--md-default-fg-color--light);
+  line-height: 1.5;
+}
+
+.moo-algo-card--custom {
+  border-style: dashed;
+  border-color: var(--md-accent-fg-color);
+}
+
+.moo-algo-card--custom .moo-algo-card__name {
+  color: var(--md-accent-fg-color);
+}

@@ -1,0 +1,1853 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Multi-objective optimization using genetic algorithms in Rust and Python.">
+      
+      
+        <meta name="author" content="Andrés Sandoval">
+      
+      
+      
+        <link rel="prev" href="../duplicates/duplicates.html">
+      
+      
+        <link rel="next" href="../algorithms/introduction/introduction.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../images/moors-logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Quality Metrics - moo-rs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#quality-metrics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../index.html" title="moo-rs" class="md-header__button md-logo" aria-label="moo-rs" data-md-component="logo">
+      
+  <img src="../../images/moors-logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            moo-rs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Quality Metrics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/andresliszt/moo-rs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    andresliszt/moo-rs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../index.html" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/quick_start.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../fitness_and_constraints/fitness_and_constraints.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/setup_environment.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference.html" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+
+        
+      
+
+
+
+
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../index.html" title="moo-rs" class="md-nav__button md-logo" aria-label="moo-rs" data-md-component="logo">
+      
+  <img src="../../images/moors-logo.png" alt="logo">
+
+    </a>
+    moo-rs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/andresliszt/moo-rs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    andresliszt/moo-rs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quick_start.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/installation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/knapsack.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Knapsack Problem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/real_valued.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Real-Valued Problem
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fitness_and_constraints/fitness_and_constraints.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fitness & Constraints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operators/operators.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Genetic Operators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../duplicates/duplicates.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Duplicates Cleaner
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quality Metrics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="metrics.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quality Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#hypervolume-hv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hypervolume (HV)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generational-distance-gd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generational Distance (GD)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inverted-generational-distance-igd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inverted Generational Distance (IGD)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spacing-sp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spacing (SP)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spread (Δ)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithms
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Algorithms
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/introduction/introduction.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/custom/custom.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/nsga2.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NSGA-II
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/rnsga2.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RNSGA-II
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/nsga3.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NSGA-III
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/agemoea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AGE-MOEA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/revea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REVEA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/spea2.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SPEA-II
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../algorithms/ibea.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IBEA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/setup_environment.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/setup_algorithm.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithm Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/from_moors_to_pymoors.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    From moors to pymoors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://docs.rs/moors/latest/moors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rust API (docs.rs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#hypervolume-hv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hypervolume (HV)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generational-distance-gd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generational Distance (GD)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inverted-generational-distance-igd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inverted Generational Distance (IGD)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spacing-sp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spacing (SP)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spread" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spread (Δ)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../index.html" class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../fitness_and_constraints/fitness_and_constraints.html" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    User Guide
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="quality-metrics">Quality Metrics</h1>
+<p>A genetic algorithm for multi-objective optimization doesn't return a single "best" solution — it returns an approximation of the <strong>Pareto front</strong>: a set of mutually non-dominated trade-off solutions. Comparing two such sets (e.g. two algorithms, or two runs with different hyperparameters) by eye only works in 2 objectives. <strong>Quality indicators</strong> turn a front into one or more numbers so fronts can be ranked and compared objectively.</p>
+<p>Broadly, indicators fall into three families:</p>
+<ul>
+<li><strong>Convergence</strong>: how close is the obtained front to the true/optimal one?</li>
+<li><strong>Diversity / spread</strong>: how uniformly and how widely do the points cover the front?</li>
+<li><strong>Combined</strong>: a single number capturing both convergence and diversity (e.g. hypervolume).</li>
+</ul>
+<p><code>moors</code> implements five of the most widely used indicators, all under the convention that <strong>every objective is minimized</strong> and fitness matrices have shape <code>(n_individuals, n_objectives)</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th style="text-align: center;">Needs reference front?</th>
+<th style="text-align: center;">Needs reference point?</th>
+<th>Captures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#hypervolume-hv">Hypervolume (HV)</a></td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">yes</td>
+<td>convergence + diversity</td>
+</tr>
+<tr>
+<td><a href="#generational-distance-gd">Generational Distance (GD)</a></td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">no</td>
+<td>convergence</td>
+</tr>
+<tr>
+<td><a href="#inverted-generational-distance-igd">Inverted Generational Distance (IGD)</a></td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">no</td>
+<td>convergence + coverage</td>
+</tr>
+<tr>
+<td><a href="#spacing-sp">Spacing (SP)</a></td>
+<td style="text-align: center;">no</td>
+<td style="text-align: center;">no</td>
+<td>diversity (uniformity)</td>
+</tr>
+<tr>
+<td><a href="#spread">Spread (Δ)</a></td>
+<td style="text-align: center;">yes</td>
+<td style="text-align: center;">no</td>
+<td>diversity (uniformity + extent), 2 objectives only</td>
+</tr>
+</tbody>
+</table>
+<div class="lang-rust">
+<p>To use quality metrics in <code>moors</code> just import the function you need from the crate root and call it with <code>ndarray</code> arrays. All metrics assume <strong>minimization</strong> and expect fitness matrices of shape <code>(n_individuals, n_objectives)</code>, exactly like <a href="https://docs.rs/moors/latest/moors/genetic/struct.Population.html"><code>Population::fitness</code></a>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">use</span><span class="w"> </span><span class="n">ndarray</span><span class="p">::</span><span class="n">array</span><span class="p">;</span>
+<span class="k">use</span><span class="w"> </span><span class="n">moors</span><span class="p">::{</span><span class="n">generational_distance</span><span class="p">,</span><span class="w"> </span><span class="n">hypervolume</span><span class="p">,</span><span class="w"> </span><span class="n">inverted_generational_distance</span><span class="p">,</span><span class="w"> </span><span class="n">spacing</span><span class="p">,</span><span class="w"> </span><span class="n">spread</span><span class="p">};</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">front</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">array</span><span class="o">!</span><span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">4.0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">3.0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">3.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">4.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">]];</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">reference_front</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">front</span><span class="p">.</span><span class="n">clone</span><span class="p">();</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">reference_point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">array</span><span class="o">!</span><span class="p">[</span><span class="mf">5.0</span><span class="p">,</span><span class="w"> </span><span class="mf">5.0</span><span class="p">];</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">hv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hypervolume</span><span class="p">(</span><span class="o">&amp;</span><span class="n">front</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_point</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">gd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">generational_distance</span><span class="p">(</span><span class="o">&amp;</span><span class="n">front</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_front</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">igd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">inverted_generational_distance</span><span class="p">(</span><span class="o">&amp;</span><span class="n">front</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_front</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">sp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">spacing</span><span class="p">(</span><span class="o">&amp;</span><span class="n">front</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="n">delta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">spread</span><span class="p">(</span><span class="o">&amp;</span><span class="n">front</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reference_front</span><span class="p">);</span><span class="w"> </span><span class="c1">// only defined for 2 objectives</span>
+</code></pre></div>
+</div>
+<div class="lang-python">
+<p>To use quality metrics in <code>pymoors</code> just import the function you need; they accept NumPy arrays of shape <code>(n_individuals, n_objectives)</code> (and a 1D <code>(n_objectives,)</code> reference point for hypervolume), assuming <strong>minimization</strong>.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pymoors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">generational_distance</span><span class="p">,</span>
+    <span class="n">hypervolume</span><span class="p">,</span>
+    <span class="n">inverted_generational_distance</span><span class="p">,</span>
+    <span class="n">spacing</span><span class="p">,</span>
+    <span class="n">spread</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">front</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]])</span>
+<span class="n">reference_front</span> <span class="o">=</span> <span class="n">front</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">reference_point</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">])</span>
+
+<span class="n">hv</span> <span class="o">=</span> <span class="n">hypervolume</span><span class="p">(</span><span class="n">front</span><span class="p">,</span> <span class="n">reference_point</span><span class="p">)</span>
+<span class="n">gd</span> <span class="o">=</span> <span class="n">generational_distance</span><span class="p">(</span><span class="n">front</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">)</span>
+<span class="n">igd</span> <span class="o">=</span> <span class="n">inverted_generational_distance</span><span class="p">(</span><span class="n">front</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">)</span>
+<span class="n">sp</span> <span class="o">=</span> <span class="n">spacing</span><span class="p">(</span><span class="n">front</span><span class="p">)</span>
+<span class="n">delta</span> <span class="o">=</span> <span class="n">spread</span><span class="p">(</span><span class="n">front</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">)</span>  <span class="c1"># only defined for 2 objectives</span>
+</code></pre></div>
+</div>
+<h2 id="hypervolume-hv">Hypervolume (HV)</h2>
+<p>For a minimization front <span class="arithmatex">\(A\)</span> and a reference point <span class="arithmatex">\(r\)</span> dominated by every point of <span class="arithmatex">\(A\)</span>, the hypervolume is the Lebesgue measure of the region jointly dominated by <span class="arithmatex">\(A\)</span> and bounded above by <span class="arithmatex">\(r\)</span>:</p>
+<div class="arithmatex">\[
+HV(A, r) = \Lambda\left( \bigcup_{a \in A} [a, r] \right)
+\]</div>
+<p>where <span class="arithmatex">\([a, r]\)</span> is the axis-aligned hyper-rectangle with corners <span class="arithmatex">\(a\)</span> and <span class="arithmatex">\(r\)</span>, and <span class="arithmatex">\(\Lambda\)</span> is the Lebesgue measure (area in 2D, volume in 3D, ...).</p>
+<p>Hypervolume is the only indicator in common use that is <strong>strictly Pareto-compliant</strong>: if front <span class="arithmatex">\(A\)</span> weakly dominates front <span class="arithmatex">\(B\)</span>, then <span class="arithmatex">\(HV(A) \geq HV(B)\)</span>, with equality only when the fronts are equal. This makes it the de-facto standard for comparing MOO algorithms, at the cost of needing a reference point and being more expensive to compute as the number of objectives grows.</p>
+<p><code>moors</code> computes HV with the recursive dimension-slicing algorithm ("Hypervolume by Slicing Objectives", While, Hingston, Barone &amp; Huband, 2006). Any point of <span class="arithmatex">\(A\)</span> that is worse than <span class="arithmatex">\(r\)</span> in some objective is clamped to <span class="arithmatex">\(r\)</span> in that objective (i.e. it simply contributes no extra volume there).</p>
+<div class="admonition info">
+<p class="admonition-title">Higher is better</p>
+<p>Larger hypervolume means a front that converges further and/or spreads wider.</p>
+</div>
+<h2 id="generational-distance-gd">Generational Distance (GD)</h2>
+<p>Introduced by Van Veldhuizen &amp; Lamont (1998), GD measures how far an obtained front <span class="arithmatex">\(A\)</span> is from a reference front <span class="arithmatex">\(Z\)</span> (the true Pareto front, or a very dense approximation of it):</p>
+<div class="arithmatex">\[
+GD(A, Z) = \frac{\sqrt{\sum_{a \in A} d(a, Z)^2}}{|A|}, \qquad d(a, Z) = \min_{z \in Z} \lVert a - z \rVert_2
+\]</div>
+<p><span class="arithmatex">\(GD = 0\)</span> if and only if every point of <span class="arithmatex">\(A\)</span> lies exactly on <span class="arithmatex">\(Z\)</span>. GD says nothing about <em>coverage</em>: a single point sitting exactly on <span class="arithmatex">\(Z\)</span> gives <span class="arithmatex">\(GD=0\)</span> regardless of how little of the front it represents — this is why GD is usually reported alongside a diversity metric, or IGD is used instead.</p>
+<div class="admonition info">
+<p class="admonition-title">Lower is better</p>
+</div>
+<h2 id="inverted-generational-distance-igd">Inverted Generational Distance (IGD)</h2>
+<p>Introduced by Coello Coello &amp; Cortés (2005), IGD swaps the roles of GD, measuring the average distance from each reference point to the nearest solution actually obtained:</p>
+<div class="arithmatex">\[
+IGD(A, Z) = \frac{\sum_{z \in Z} d(z, A)}{|Z|}, \qquad d(z, A) = \min_{a \in A} \lVert z - a \rVert_2
+\]</div>
+<p>Because <em>every</em> reference point must be close to some solution in <span class="arithmatex">\(A\)</span>, a front with gaps or poor coverage of <span class="arithmatex">\(Z\)</span> is penalized even if the points it does have are perfectly converged — unlike GD. This makes IGD a good single proxy for both convergence and diversity when a reference front is available.</p>
+<div class="admonition info">
+<p class="admonition-title">Lower is better</p>
+</div>
+<h2 id="spacing-sp">Spacing (SP)</h2>
+<p>Schott's spacing (1995) measures how <strong>uniformly</strong> solutions are distributed along a front, without requiring any reference front:</p>
+<div class="arithmatex">\[
+SP(A) = \sqrt{\frac{1}{n-1}\sum_{i=1}^{n} (\bar d - d_i)^2}
+\]</div>
+<p>where <span class="arithmatex">\(d_i = \min_{j \neq i} \sum_{k=1}^{M} \lvert f_k(i) - f_k(j) \rvert\)</span> is the <span class="arithmatex">\(L_1\)</span> (Manhattan) distance from solution <span class="arithmatex">\(i\)</span> to its nearest neighbor in objective space, and <span class="arithmatex">\(\bar d\)</span> is the mean of all <span class="arithmatex">\(d_i\)</span>.</p>
+<p><span class="arithmatex">\(SP = 0\)</span> means every nearest-neighbor distance is identical (a perfectly even spread); a larger <span class="arithmatex">\(SP\)</span> indicates clustering or uneven coverage. Because it needs no reference front, spacing is useful to monitor diversity during/after a single run when the true Pareto front is unknown.</p>
+<div class="admonition info">
+<p class="admonition-title">Lower is better</p>
+</div>
+<h2 id="spread">Spread (Δ)</h2>
+<p>Introduced in the original NSGA-II paper (Deb, Pratap, Agarwal &amp; Meyarivan, 2002), spread combines <strong>extent</strong> and <strong>uniformity</strong> of a front <span class="arithmatex">\(A\)</span> against a reference front <span class="arithmatex">\(Z\)</span>. Sorting <span class="arithmatex">\(A\)</span> by its first objective:</p>
+<div class="arithmatex">\[
+\Delta(A, Z) = \frac{d_f + d_l + \sum_{i=1}^{n-1} \lvert d_i - \bar d \rvert}{d_f + d_l + (n-1)\bar d}
+\]</div>
+<p>where <span class="arithmatex">\(d_i\)</span> is the Euclidean distance between consecutive solutions <span class="arithmatex">\(i\)</span> and <span class="arithmatex">\(i+1\)</span>, <span class="arithmatex">\(\bar d\)</span> is their mean, and <span class="arithmatex">\(d_f\)</span>/<span class="arithmatex">\(d_l\)</span> are the Euclidean distances between the extreme (boundary) solutions of <span class="arithmatex">\(A\)</span> and the extreme solutions of <span class="arithmatex">\(Z\)</span>.</p>
+<p><span class="arithmatex">\(\Delta = 0\)</span> for a perfectly uniform front that also reaches both extremes of <span class="arithmatex">\(Z\)</span>; larger values indicate gaps, clustering, or a front that fails to reach the true extremes.</p>
+<div class="admonition warning">
+<p class="admonition-title">2 objectives only</p>
+<p>"Consecutive solutions along the front" is only unambiguous when sorting by a single objective, so <code>moors</code> only implements Δ for 2-objective fronts.</p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Lower is better</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "content.code.copy", "announce.dismiss", "navigation.tabs", "navigation.tabs.sticky", "navigation.indexes", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.path", "navigation.sections", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../js/custom_mathjax.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="../../js/mathjax-reload.js"></script>
+      
+        <script src="../../js/language-selector.js"></script>
+      
+    
+  </body>
+</html>
