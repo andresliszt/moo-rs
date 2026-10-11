@@ -1,11 +1,11 @@
 use crate::genetic::{D01, IndividualSOO};
-use crate::operators::selection::{DuelResult, SelectionOperator};
+use crate::operators::selection::{DuelResult, DuelSelection, SelectionOperator};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
 pub struct RankSelection;
 
-impl SelectionOperator for RankSelection {
+impl DuelSelection for RankSelection {
     type FDim = ndarray::Ix1;
     /// Runs tournament selection on the given population and returns the duel result.
     /// This assumes binary tournaments (pressure = 2).

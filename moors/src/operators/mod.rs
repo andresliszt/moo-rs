@@ -68,6 +68,7 @@
 
 pub mod crossover;
 pub mod evolve;
+pub(crate) mod grea;
 pub mod mutation;
 pub mod pso;
 pub mod repair;
@@ -94,7 +95,7 @@ pub use sampling::{
     SamplingOperator,
 };
 pub use selection::{
-    SelectionOperator,
+    DuelSelection, SelectionOperator,
     moo::{
         RandomSelection as RandomSelectionMOO,
         RankAndScoringSelection as RankAndScoringSelectionMOO,
@@ -103,7 +104,7 @@ pub use selection::{
 pub use survival::{
     SurvivalOperator,
     moo::{
-        AgeMoeaSurvival, DanAndDenisReferencePoints, FrontsAndRankingBasedSurvival,
+        AgeMoeaSurvival, DanAndDenisReferencePoints, FrontsAndRankingBasedSurvival, GreaSurvival,
         IbeaHyperVolumeSurvivalOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePointsSurvival,
         ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, Spea2KnnSurvival,
         StructuredReferencePoints,

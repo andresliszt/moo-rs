@@ -3,8 +3,11 @@ use ndarray::{Array1, Array2, ArrayView1, Axis};
 use crate::genetic::{D12, Fronts, PopulationMOO};
 
 /// Inlines the check for "does f1 dominate f2?" to reduce call overhead.
+/// Generic over any ordered coordinate type, so the same lexicographic
+/// dominance check applies to both `f64` objective vectors and `usize`
+/// grid coordinates (see `operators::grea`).
 #[inline]
-pub fn dominates(f1: &ArrayView1<f64>, f2: &ArrayView1<f64>) -> bool {
+pub fn dominates<T: PartialOrd + Copy>(f1: ArrayView1<T>, f2: ArrayView1<T>) -> bool {
     let mut better = false;
     // We assume f1.len() == f2.len()
     for (&a, &b) in f1.iter().zip(f2.iter()) {
@@ -51,11 +54,11 @@ pub fn fast_non_dominated_sorting(
     // Sequential pairwise comparisons: for each pair (p, q) with p < q
     for p in 0..population_size {
         for q in (p + 1)..population_size {
-            if dominates(&fitness_rows[p], &fitness_rows[q]) {
+            if dominates(fitness_rows[p], fitness_rows[q]) {
                 // p dominates q
                 dominated_sets[p].push(q);
                 domination_count[q] += 1;
-            } else if dominates(&fitness_rows[q], &fitness_rows[p]) {
+            } else if dominates(fitness_rows[q], fitness_rows[p]) {
                 // q dominates p
                 dominated_sets[q].push(p);
                 domination_count[p] += 1;
@@ -137,22 +140,22 @@ mod tests {
         // Test case 1: The first vector dominates the second
         let a = array![1.0, 2.0, 3.0];
         let b = array![2.0, 3.0, 4.0];
-        assert_eq!(dominates(&a.view(), &b.view()), true);
+        assert_eq!(dominates(a.view(), b.view()), true);
 
         // Test case 2: The second vector dominates the first
         let a = array![3.0, 3.0, 3.0];
         let b = array![2.0, 4.0, 5.0];
-        assert_eq!(dominates(&a.view(), &b.view()), false);
+        assert_eq!(dominates(a.view(), b.view()), false);
 
         // Test case 3: Neither vector dominates the other
         let a = array![1.0, 2.0, 3.0];
         let b = array![2.0, 1.0, 3.0];
-        assert_eq!(dominates(&a.view(), &b.view()), false);
+        assert_eq!(dominates(a.view(), b.view()), false);
 
         // Test case 4: Equal vectors
         let a = array![1.0, 2.0, 3.0];
         let b = array![1.0, 2.0, 3.0];
-        assert_eq!(dominates(&a.view(), &b.view()), false);
+        assert_eq!(dominates(a.view(), b.view()), false);
     }
 
     #[test]

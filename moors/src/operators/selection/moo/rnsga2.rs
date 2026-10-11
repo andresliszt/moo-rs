@@ -1,5 +1,5 @@
 use crate::operators::{
-    selection::{SelectionOperator, moo::RankAndScoringSelection},
+    selection::{DuelSelection, moo::RankAndScoringSelection},
     survival::moo::SurvivalScoringComparison,
 };
 
@@ -16,8 +16,8 @@ impl Rnsga2RankScoringSelection {
     }
 }
 
-impl SelectionOperator for Rnsga2RankScoringSelection {
-    type FDim = <RankAndScoringSelection as SelectionOperator>::FDim;
+impl DuelSelection for Rnsga2RankScoringSelection {
+    type FDim = <RankAndScoringSelection as DuelSelection>::FDim;
 
     fn tournament_duel<'a, ConstrDim>(
         &self,

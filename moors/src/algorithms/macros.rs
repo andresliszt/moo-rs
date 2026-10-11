@@ -7,6 +7,7 @@ macro_rules! define_algorithm_and_builder {
         $(, selection_args = [ $( $larg:ident : $lty:ty ),* $(,)? ])?
         $(, survival_args  = [ $( $sarg:ident : $sty:ty ),* $(,)? ])?
         $(, shared_survival_args = [ $( $ss:ident : $ssty:ty ),* $(,)? ])?
+        $(, shared_args = [ $( $barg:ident : $bty:ty ),* $(,)? ])?
         , override_build_method = $ov:tt
         $(,)?
     ) => {
@@ -16,6 +17,7 @@ macro_rules! define_algorithm_and_builder {
             selection: [ $( $( $larg : $lty ),* )? ],
             survival:  [ $( $( $sarg : $sty ),* )? ],
             shared:    [ $( $( $ss   : $ssty),* )? ],
+            both:      [ $( $( $barg : $bty ),* )? ],
             override_build: $ov
         }
     };
@@ -27,6 +29,7 @@ macro_rules! define_algorithm_and_builder {
         $(, selection_args = [ $( $larg:ident : $lty:ty ),* $(,)? ])?
         $(, survival_args  = [ $( $sarg:ident : $sty:ty ),* $(,)? ])?
         $(, shared_survival_args = [ $( $ss:ident : $ssty:ty ),* $(,)? ])?
+        $(, shared_args = [ $( $barg:ident : $bty:ty ),* $(,)? ])?
         $(,)? // trailing comma opcional
     ) => {
         define_algorithm_and_builder!(
@@ -35,6 +38,7 @@ macro_rules! define_algorithm_and_builder {
             selection_args = [ $( $( $larg : $lty ),* )? ],
             survival_args  = [ $( $( $sarg : $sty ),* )? ],
             shared_survival_args = [ $( $( $ss : $ssty ),* )? ],
+            shared_args = [ $( $( $barg : $bty ),* )? ],
             override_build_method = false
         );
     };
@@ -45,6 +49,7 @@ macro_rules! define_algorithm_and_builder {
         selection: [ $( $larg:ident : $lty:ty ),* ],
         survival:  [ $( $sarg:ident : $sty:ty ),* ],
         shared:    [ $( $ss:ident   : $ssty:ty ),* ],
+        both:      [ $( $barg:ident : $bty:ty ),* ],
         override_build: $ov:tt
     ) => {
         ::paste::paste! {
@@ -71,6 +76,7 @@ macro_rules! define_algorithm_and_builder {
 
                 $( $larg: ::core::option::Option<$lty>, )*
                 $( $sarg: ::core::option::Option<$sty>, )*
+                $( $barg: ::core::option::Option<$bty>, )*
             }
 
             impl<S, Cross, Mut, F, G> ::core::default::Default
@@ -92,6 +98,7 @@ macro_rules! define_algorithm_and_builder {
                         inner: ::core::default::Default::default(),
                         $( $larg: ::core::option::Option::None, )*
                         $( $sarg: ::core::option::Option::None, )*
+                        $( $barg: ::core::option::Option::None, )*
                     }
                 }
             }
@@ -118,6 +125,14 @@ macro_rules! define_algorithm_and_builder {
                     #[inline]
                     pub fn $sarg(mut self, v: $sty) -> Self {
                         self.$sarg = ::core::option::Option::Some(v);
+                        self
+                    }
+                )*
+                // === Public setters (shared between selection AND survival) ==
+                $(
+                    #[inline]
+                    pub fn $barg(mut self, v: $bty) -> Self {
+                        self.$barg = ::core::option::Option::Some(v);
                         self
                     }
                 )*
@@ -153,7 +168,16 @@ macro_rules! define_algorithm_and_builder {
                         return self.inner.build();
                     }
 
-                    // --- Selector::new( selection_args... ) ---
+                    // --- args shared by BOTH selector and survivor constructors ---
+                    $(
+                        let $barg = self.$barg.ok_or(
+                            $crate::algorithms::AlgorithmBuilderError::UninitializedField(
+                                ::core::concat!(::core::module_path!(), "::", ::core::stringify!($barg))
+                            )
+                        )?;
+                    )*
+
+                    // --- Selector::new( selection_args..., shared... ) ---
                     $(
                         let $larg = self.$larg.ok_or(
                             $crate::algorithms::AlgorithmBuilderError::UninitializedField(
@@ -161,10 +185,12 @@ macro_rules! define_algorithm_and_builder {
                             )
                         )?;
                     )*
-                    let selector_val = define_algorithm_and_builder!(@call_selector $selector ; ( $( $larg ),* ));
+                    let selector_val = define_algorithm_and_builder!(
+                        @call_selector $selector ; ( $( $larg ),* ) ( $( $barg.clone() ),* )
+                    );
                     self.inner = self.inner.selector(selector_val);
 
-                    // --- Survivor::new( shared..., survival_args... ) ---
+                    // --- Survivor::new( survival_args..., shared_survival_args..., shared... ) ---
                     $(
                         let $ss = self.inner.[<$ss>].ok_or(
                             $crate::algorithms::AlgorithmBuilderError::UninitializedField(
@@ -181,7 +207,7 @@ macro_rules! define_algorithm_and_builder {
                     )*
 
                     let survivor_val = define_algorithm_and_builder!(
-                        @call_survivor $survivor ; ( $( $sarg ),* ) ( $( $ss ),* )
+                        @call_survivor $survivor ; ( $( $sarg ),* ) ( $( $ss ),* ) ( $( $barg ),* )
                     );
 
                     self.inner = self.inner.survivor(survivor_val);
@@ -192,27 +218,49 @@ macro_rules! define_algorithm_and_builder {
         }
     };
 
-    (@call_selector $ty:ty ; () ) => { < $ty >::new() };
-    (@call_selector $ty:ty ; ( $( $a:ident ),+ ) ) => { < $ty >::new( $( $a ),+ ) };
+    (@call_selector $ty:ty ; () () ) => { < $ty >::new() };
+    (@call_selector $ty:ty ; ( $( $a:ident ),+ ) () ) => { < $ty >::new( $( $a ),+ ) };
+    (@call_selector $ty:ty ; () ( $( $c:expr ),+ ) ) => { < $ty >::new( $( $c ),+ ) };
+    (@call_selector $ty:ty ; ( $( $a:ident ),+ ) ( $( $c:expr ),+ ) ) => { < $ty >::new( $( $a ),+ , $( $c ),+ ) };
 
-    // 0/0
-    (@call_survivor $ty:ty ; () () ) => {
+    // 0/0/0
+    (@call_survivor $ty:ty ; () () () ) => {
         < $ty >::new()
     };
 
-    // A/0  (A = survival_args)
-    (@call_survivor $ty:ty ; ( $( $a:ident ),+ ) () ) => {
+    // A/0/0  (A = survival_args)
+    (@call_survivor $ty:ty ; ( $( $a:ident ),+ ) () () ) => {
         < $ty >::new( $( $a ),+ )
     };
 
-    // 0/B  (B = shared_survival_args)
-    (@call_survivor $ty:ty ; () ( $( $b:ident ),+ ) ) => {
+    // 0/B/0  (B = shared_survival_args)
+    (@call_survivor $ty:ty ; () ( $( $b:ident ),+ ) () ) => {
         < $ty >::new( $( $b ),+ )
     };
 
-    // A/B  (survival first, then shared)
-    (@call_survivor $ty:ty ; ( $( $a:ident ),+ ) ( $( $b:ident ),+ ) ) => {
+    // A/B/0  (survival first, then shared_survival_args)
+    (@call_survivor $ty:ty ; ( $( $a:ident ),+ ) ( $( $b:ident ),+ ) () ) => {
         < $ty >::new( $( $a ),+ , $( $b ),+ )
+    };
+
+    // 0/0/C  (C = shared_args, i.e. shared with the selector too)
+    (@call_survivor $ty:ty ; () () ( $( $c:ident ),+ ) ) => {
+        < $ty >::new( $( $c ),+ )
+    };
+
+    // A/0/C
+    (@call_survivor $ty:ty ; ( $( $a:ident ),+ ) () ( $( $c:ident ),+ ) ) => {
+        < $ty >::new( $( $a ),+ , $( $c ),+ )
+    };
+
+    // 0/B/C
+    (@call_survivor $ty:ty ; () ( $( $b:ident ),+ ) ( $( $c:ident ),+ ) ) => {
+        < $ty >::new( $( $b ),+ , $( $c ),+ )
+    };
+
+    // A/B/C
+    (@call_survivor $ty:ty ; ( $( $a:ident ),+ ) ( $( $b:ident ),+ ) ( $( $c:ident ),+ ) ) => {
+        < $ty >::new( $( $a ),+ , $( $b ),+ , $( $c ),+ )
     };
 
 }

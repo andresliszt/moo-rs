@@ -1,5 +1,5 @@
 use crate::genetic::{D01, IndividualSOO};
-use crate::operators::selection::{DuelResult, SelectionOperator};
+use crate::operators::selection::{DuelResult, DuelSelection, SelectionOperator};
 use crate::random::RandomGenerator;
 
 #[derive(Debug, Clone)]
@@ -11,7 +11,7 @@ impl RandomSelection {
     }
 }
 
-impl SelectionOperator for RandomSelection {
+impl DuelSelection for RandomSelection {
     type FDim = ndarray::Ix1;
 
     fn tournament_duel<'a, ConstrDim>(
