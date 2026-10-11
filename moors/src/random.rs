@@ -53,8 +53,6 @@
 //!
 //! ---
 //!
-use std::usize;
-
 use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
