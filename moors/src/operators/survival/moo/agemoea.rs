@@ -73,14 +73,10 @@ impl FrontsAndRankingBasedSurvival for AgeMoeaSurvival {
             // In this case, return a survival score vect or with the same number of elements as front_fitness,
             // filled entirely with infinity.
             if central_point.iter().all(|&x| x == 0.0) {
-                first_front
-                    .set_survival_score(Array1::from_elem(first_front.len(), std::f64::INFINITY));
+                first_front.set_survival_score(Array1::from_elem(first_front.len(), f64::INFINITY));
                 // Process the remaining fronts with the standard function
                 for front in other_fronts.iter_mut() {
-                    front.set_survival_score(Array1::from_elem(
-                        first_front.len(),
-                        std::f64::INFINITY,
-                    ))
+                    front.set_survival_score(Array1::from_elem(first_front.len(), f64::INFINITY))
                 }
             } else {
                 let p = compute_exponent_p(&central_point);

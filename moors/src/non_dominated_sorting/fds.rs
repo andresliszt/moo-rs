@@ -21,7 +21,7 @@ pub fn dominates<T: PartialOrd + Copy>(f1: ArrayView1<T>, f2: ArrayView1<T>) -> 
 }
 
 #[inline]
-pub fn dominates_weak(f1: &ArrayView1<f64>, f2: &ArrayView1<f64>) -> bool {
+pub fn dominates_weak(f1: ArrayView1<f64>, f2: ArrayView1<f64>) -> bool {
     for (&a, &b) in f1.iter().zip(f2.iter()) {
         if a > b {
             return false;
