@@ -148,6 +148,11 @@ mod tests {
     }
 
     #[test]
+    fn hv_recursive_of_empty_points_is_zero() {
+        assert_eq!(hv_recursive(&[], &[1.0, 2.0]), 0.0);
+    }
+
+    #[test]
     fn point_outside_reference_is_clamped() {
         // Point worse than reference in the second objective contributes 0 there.
         let front = array![[1.0, 5.0]];
