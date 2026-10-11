@@ -102,10 +102,10 @@ pub mod random;
 pub mod surrogate;
 pub use algorithms::{
     AdaptiveController, AgeMoea, AgeMoeaBuilder, AlgorithmBuilder, AlgorithmBuilderError,
-    AlgorithmContext, AlgorithmError, ControlSignal, GeneticAlgorithm, Ibea, IbeaBuilder,
-    InitializationError, MoEtpso, MoEtpsoBuilder, NoController, Nsga2, Nsga2Builder, Nsga3,
-    Nsga3Builder, Pso, PsoBuilder, PsoBuilderError, Revea, ReveaBuilder, Rnsga2, Rnsga2Builder,
-    Spea2, Spea2Builder, Swarm,
+    AlgorithmContext, AlgorithmError, ControlSignal, GeneticAlgorithm, Grea, GreaBuilder, Ibea,
+    IbeaBuilder, InitializationError, MoEtpso, MoEtpsoBuilder, NoController, Nsga2, Nsga2Builder,
+    Nsga3, Nsga3Builder, Pso, PsoBuilder, PsoBuilderError, Revea, ReveaBuilder, Rnsga2,
+    Rnsga2Builder, Spea2, Spea2Builder, Swarm,
 };
 pub use duplicates::{
     CloseDuplicatesCleaner, ExactDuplicatesCleaner, NoDuplicatesCleaner, PopulationCleaner,
@@ -120,10 +120,10 @@ pub use operators::survival;
 pub use operators::{
     AgeMoeaSurvival, ArithmeticCrossover, BitFlipMutation, ConstrictionVelocityUpdate,
     CrossoverOperator, DanAndDenisReferencePoints, DisplacementMutation, ExponentialCrossover,
-    FrontsAndRankingBasedSurvival, GaussianMutation, InversionMutation, MeritOperator,
-    MutationOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePointsSurvival, OrderCrossover,
-    PermutationSampling, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
-    RandomSelectionMOO, RankAndScoringSelectionMOO, RankCrowdingMerit,
+    FrontsAndRankingBasedSurvival, GaussianMutation, GreaSurvival, InversionMutation,
+    MeritOperator, MutationOperator, Nsga2RankCrowdingSurvival, Nsga3ReferencePointsSurvival,
+    OrderCrossover, PermutationSampling, RandomSamplingBinary, RandomSamplingFloat,
+    RandomSamplingInt, RandomSelectionMOO, RankAndScoringSelectionMOO, RankCrowdingMerit,
     ReveaReferencePointsSurvival, Rnsga2ReferencePointsSurvival, SamplingOperator,
     ScrambleMutation, SelectionOperator, SimulatedBinaryCrossover, SinglePointBinaryCrossover,
     Spea2KnnSurvival, StructuredReferencePoints, SurvivalOperator, SwapMutation,

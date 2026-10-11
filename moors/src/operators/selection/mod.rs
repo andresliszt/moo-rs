@@ -83,6 +83,38 @@ pub trait SelectionOperator {
         result
     }
 
+    /// Produces two offspring-parent populations for `n_crossovers` matings.
+    ///
+    /// Implement [`DuelSelection`] instead (only `tournament_duel` is
+    /// required there) and get this method for free via its blanket impl.
+    /// Only implement `operate` directly when picking a winner needs context
+    /// beyond a single pairwise duel — e.g. whole-population state computed
+    /// once per call, as in
+    /// [`GreaTournamentSelection`](crate::operators::selection::moo::GreaTournamentSelection).
+    fn operate<ConstrDim>(
+        &self,
+        population: &Population<Self::FDim, ConstrDim>,
+        n_crossovers: usize,
+        rng: &mut impl RandomGenerator,
+    ) -> (
+        Population<Self::FDim, ConstrDim>,
+        Population<Self::FDim, ConstrDim>,
+    )
+    where
+        ConstrDim: D12,
+        <ConstrDim as Dimension>::Smaller: D01,
+        <Self::FDim as Dimension>::Smaller: D01;
+}
+
+/// Selection operators that pick a winner via independent pairwise duels,
+/// with no context beyond the two [`Individual`]s themselves.
+///
+/// Implementing only [`tournament_duel`](DuelSelection::tournament_duel) is
+/// enough: the blanket impl below provides [`SelectionOperator::operate`]
+/// for any type implementing this trait.
+pub trait DuelSelection {
+    type FDim: D12;
+
     /// Tournament between 2 individuals.
     fn tournament_duel<'a, ConstrDim>(
         &self,
@@ -93,6 +125,10 @@ pub trait SelectionOperator {
     where
         <Self::FDim as Dimension>::Smaller: D01,
         ConstrDim: D01;
+}
+
+impl<T: DuelSelection> SelectionOperator for T {
+    type FDim = T::FDim;
 
     fn operate<ConstrDim>(
         &self,

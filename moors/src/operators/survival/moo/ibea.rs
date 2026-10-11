@@ -91,7 +91,7 @@ impl Indicator for HyperVolumeIndicator {
         let hv_f1 = self.hypervolume_singleton(f1);
         let hv_f2 = self.hypervolume_singleton(f2);
 
-        if dominates_weak(&f1, &f2) {
+        if dominates_weak(f1, f2) {
             return hv_f2 - hv_f1;
         }
         let inter: f64 = self

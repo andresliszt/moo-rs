@@ -10,6 +10,7 @@ mod swarm;
 pub use builders::{AlgorithmBuilder, AlgorithmBuilderError, PsoBuilder, PsoBuilderError};
 pub use ga::GeneticAlgorithm;
 pub use moo::agemoea::{AgeMoea, AgeMoeaBuilder};
+pub use moo::grea::{Grea, GreaBuilder};
 pub use moo::ibea::{Ibea, IbeaBuilder};
 pub use moo::nsga2::{Nsga2, Nsga2Builder};
 pub use moo::nsga3::{Nsga3, Nsga3Builder};

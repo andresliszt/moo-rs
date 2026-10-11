@@ -1,6 +1,6 @@
 use crate::genetic::{D01, IndividualMOO};
 use crate::operators::{
-    selection::{DuelResult, SelectionOperator},
+    selection::{DuelResult, DuelSelection, SelectionOperator},
     survival::moo::SurvivalScoringComparison,
 };
 use crate::random::RandomGenerator;
@@ -46,7 +46,7 @@ impl Default for RankAndScoringSelection {
     }
 }
 
-impl SelectionOperator for RankAndScoringSelection {
+impl DuelSelection for RankAndScoringSelection {
     type FDim = ndarray::Ix2;
     /// Runs tournament selection on the given population and returns the duel result.
     /// This assumes binary tournaments (pressure = 2).

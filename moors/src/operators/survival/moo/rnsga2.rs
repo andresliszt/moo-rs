@@ -224,8 +224,6 @@ fn assign_crowding_distance_splitting_front(
 
 #[cfg(test)]
 mod tests {
-    use core::f64;
-
     use super::*;
     use ndarray::array;
 

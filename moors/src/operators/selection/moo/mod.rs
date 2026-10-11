@@ -1,4 +1,5 @@
 pub(crate) mod ageomoea;
+pub(crate) mod grea;
 pub(crate) mod ibea;
 pub(crate) mod nsga2;
 pub(crate) mod nsga3;
@@ -9,6 +10,7 @@ pub(crate) mod rnsga2;
 pub(crate) mod spea2;
 
 pub use ageomoea::AgeMoeaRankCrowdingSelection;
+pub use grea::GreaTournamentSelection;
 pub use ibea::IbeaScoringSelection;
 pub use nsga2::Nsga2RankAndScoringSelection;
 pub use nsga3::Nsga3RandomSelection;

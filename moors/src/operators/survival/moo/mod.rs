@@ -6,6 +6,7 @@ use crate::{
 };
 
 pub(crate) mod agemoea;
+pub(crate) mod grea;
 pub(crate) mod helpers;
 pub(crate) mod ibea;
 pub(crate) mod nsga2;
@@ -16,6 +17,7 @@ pub(crate) mod rnsga2;
 pub(crate) mod spea2;
 
 pub use agemoea::AgeMoeaSurvival;
+pub use grea::GreaSurvival;
 pub use ibea::IbeaHyperVolumeSurvivalOperator;
 pub use nsga2::Nsga2RankCrowdingSurvival;
 pub use nsga3::Nsga3ReferencePointsSurvival;

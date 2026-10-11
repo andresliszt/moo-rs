@@ -15,8 +15,8 @@ impl Nsga2RankAndScoringSelection {
     }
 }
 
-impl crate::operators::selection::SelectionOperator for Nsga2RankAndScoringSelection {
-    type FDim = <RankAndScoringSelection as crate::operators::selection::SelectionOperator>::FDim;
+impl crate::operators::selection::DuelSelection for Nsga2RankAndScoringSelection {
+    type FDim = <RankAndScoringSelection as crate::operators::selection::DuelSelection>::FDim;
 
     fn tournament_duel<'a, ConstrDim>(
         &self,

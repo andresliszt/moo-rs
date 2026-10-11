@@ -170,7 +170,7 @@ fn asf(x: &Array1<f64>, w: &Array1<f64>) -> f64 {
     // Compute the element-wise ratio: f'_i(x) / w_i.
     let ratios = x / w;
     // The ASF is the maximum of these ratios.
-    ratios.fold(std::f64::MIN, |acc, &val| acc.max(val))
+    ratios.fold(f64::MIN, |acc, &val| acc.max(val))
 }
 
 /// Associates each solution s (each row in st) with the reference w (each row in zr)
