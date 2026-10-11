@@ -6,6 +6,7 @@ pub mod algorithms;
 pub mod custom_py_operators;
 pub mod py_error;
 pub mod py_fitness_and_constraints;
+pub mod py_metrics;
 pub mod py_operators;
 pub mod py_reference_points;
 
@@ -15,6 +16,10 @@ pub use algorithms::{
     PyAgeMoea, PyGeneticAlgorithmSOO, PyIbea, PyNsga2, PyNsga3, PyRevea, PyRnsga2, PySpea2,
 };
 pub use py_error::{InitializationError, InvalidParameterError, NoFeasibleIndividualsError};
+pub use py_metrics::{
+    py_generational_distance, py_hypervolume, py_inverted_generational_distance, py_spacing,
+    py_spread,
+};
 pub use py_operators::{
     PyArithmeticCrossover, PyBitFlipMutation, PyCloseDuplicatesCleaner, PyDisplacementMutation,
     PyExactDuplicatesCleaner, PyExponentialCrossover, PyGaussianMutation, PyInversionMutation,
@@ -72,6 +77,13 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Rerefence points
     m.add_class::<PyDanAndDenisReferencePoints>()?;
+
+    // Quality metrics
+    m.add_function(wrap_pyfunction!(py_hypervolume, m)?)?;
+    m.add_function(wrap_pyfunction!(py_generational_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_inverted_generational_distance, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spacing, m)?)?;
+    m.add_function(wrap_pyfunction!(py_spread, m)?)?;
 
     Ok(())
 }
