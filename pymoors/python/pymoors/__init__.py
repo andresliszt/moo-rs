@@ -36,6 +36,11 @@ from ._pymoors import (
     TwoPointBinaryCrossover,
     UniformBinaryCrossover,
     UniformBinaryMutation,
+    generational_distance,
+    hypervolume,
+    inverted_generational_distance,
+    spacing,
+    spread,
 )
 
 
@@ -163,4 +168,9 @@ __all__ = (
     "available_operators",
     "DanAndDenisReferencePoints",
     "Constraints",
+    "hypervolume",
+    "generational_distance",
+    "inverted_generational_distance",
+    "spacing",
+    "spread",
 )

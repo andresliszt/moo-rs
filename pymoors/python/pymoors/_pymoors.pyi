@@ -583,3 +583,66 @@ class InvalidParameterError(BaseException):
 
 class InitializationError(BaseException):
     """Raise this error when an error happens in the initialization step"""
+
+# Quality metrics
+
+def hypervolume(front: TwoDArray, reference: OneDArray) -> float:
+    """
+    Hypervolume (HV) of `front` with respect to `reference` (minimization).
+
+    Args:
+        front: Array of shape (n_individuals, n_objectives).
+        reference: Reference point of shape (n_objectives,), dominated by every row of `front`.
+
+    Returns:
+        float: The hypervolume indicator value.
+    """
+
+def generational_distance(front: TwoDArray, reference_front: TwoDArray) -> float:
+    """
+    Generational Distance (GD) of `front` with respect to `reference_front`.
+
+    Args:
+        front: Array of shape (n_individuals, n_objectives).
+        reference_front: Array of shape (n_reference, n_objectives).
+
+    Returns:
+        float: The generational distance value.
+    """
+
+def inverted_generational_distance(
+    front: TwoDArray, reference_front: TwoDArray
+) -> float:
+    """
+    Inverted Generational Distance (IGD) of `front` with respect to `reference_front`.
+
+    Args:
+        front: Array of shape (n_individuals, n_objectives).
+        reference_front: Array of shape (n_reference, n_objectives).
+
+    Returns:
+        float: The inverted generational distance value.
+    """
+
+def spacing(front: TwoDArray) -> float:
+    """
+    Spacing (SP) of `front`.
+
+    Args:
+        front: Array of shape (n_individuals, n_objectives), at least 2 rows.
+
+    Returns:
+        float: The spacing value.
+    """
+
+def spread(front: TwoDArray, reference_front: TwoDArray) -> float:
+    """
+    Spread (Delta) of `front` with respect to `reference_front`. Only defined for 2 objectives.
+
+    Args:
+        front: Array of shape (n_individuals, 2), at least 2 rows.
+        reference_front: Array of shape (n_reference, 2).
+
+    Returns:
+        float: The spread value.
+    """

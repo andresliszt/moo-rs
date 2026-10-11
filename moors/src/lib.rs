@@ -95,6 +95,7 @@ pub mod duplicates;
 pub mod evaluator;
 pub mod genetic;
 pub(crate) mod helpers;
+pub mod metrics;
 pub mod non_dominated_sorting;
 pub mod operators;
 mod private;
@@ -115,6 +116,9 @@ pub use genetic::{
     Individual, IndividualMOO, IndividualSOO, Population, PopulationMOO, PopulationSOO,
 };
 pub use helpers::linalg::cross_euclidean_distances;
+pub use metrics::{
+    generational_distance, hypervolume, inverted_generational_distance, spacing, spread,
+};
 pub use operators::selection;
 pub use operators::survival;
 pub use operators::{

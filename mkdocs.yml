@@ -79,6 +79,7 @@ nav:
     - Fitness & Constraints: user_guide/fitness_and_constraints/fitness_and_constraints.md
     - Genetic Operators: user_guide/operators/operators.md
     - Duplicates Cleaner: user_guide/duplicates/duplicates.md
+    - Quality Metrics: user_guide/metrics/metrics.md
     - Algorithms:
       - Introduction: user_guide/algorithms/introduction/introduction.md
       - Custom Algorithms: user_guide/algorithms/custom/custom.md
