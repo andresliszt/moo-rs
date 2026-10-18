@@ -10,6 +10,7 @@ from pymoors.typing import (
     CrossoverLike,
     FitnessCallable,
     MutationLike,
+    RepairLike,
     SamplingLike,
     TwoDArray,
     OneDArray,
@@ -170,6 +171,32 @@ class UniformBinaryMutation(MutationOperator):
     with a specified per-gene mutation probability.
     """
     def __init__(self, gene_mutation_rate: float): ...
+
+class UniformRealMutation(MutationOperator):
+    """
+    Mutation operator that resets each real-valued gene to a new draw from U(lower, upper)
+    with a specified per-gene mutation probability.
+
+    Args:
+        gene_mutation_rate (float): The probability of mutating each gene.
+        lower (float): Lower bound of the uniform draw.
+        upper (float): Upper bound of the uniform draw.
+    """
+    def __init__(
+        self, gene_mutation_rate: float, lower: float, upper: float
+    ) -> None: ...
+
+class NoMutation(MutationOperator):
+    """No-op mutation operator: leaves every individual unchanged."""
+    def __init__(self) -> None: ...
+
+class NoCrossover(CrossoverOperator):
+    """No-op crossover operator: returns the parents unchanged as offspring."""
+    def __init__(self) -> None: ...
+
+class NoRepair:
+    """No-op repair operator (same as not passing `repair`)."""
+    def __init__(self) -> None: ...
 
 class OrderCrossover(CrossoverOperator):
     """
@@ -342,6 +369,9 @@ class _AlgorithmKwargs(TypedDict, total=False):
         controller (ControllerLike, optional): Adaptive controller observing each iteration and optionally
             adjusting mutation/crossover rates or stopping the run early. Defaults to None.
         seed (int, optional): Optional seed to control experiments. Defaults to None.
+        repair (RepairLike | NoRepair, optional): Operator applied to the offspring after mutation.
+            A custom repair is any object with `operate(population) -> population` (same shape).
+            Defaults to None.
     """
 
     sampler: SamplingLike
@@ -360,6 +390,7 @@ class _AlgorithmKwargs(TypedDict, total=False):
     constraints_fn: ConstraintsCallable | Constraints | None
     controller: ControllerLike | None
     seed: int | None
+    repair: RepairLike | NoRepair | None
 
 class Nsga2:
     """
@@ -526,6 +557,94 @@ class Ibea:
 
         Returns:
             Population: The current population.
+        """
+
+    def run(self) -> None: ...
+
+class _GreaKwargs(_AlgorithmKwargs, total=False):
+    div: int
+
+class Grea:
+    """
+    Implementation of GrEA (Grid-based Evolutionary Algorithm).
+
+    GrEA partitions the objective space into a hyper-grid with `div` divisions per
+    objective and uses grid ranking, grid crowding distance and grid coordinate
+    point distance in both mating and environmental selection, which keeps
+    selection pressure in many-objective problems.
+
+    Reference:
+        Yang, S., Li, M., Liu, X., & Zheng, J. (2013). A Grid-Based Evolutionary Algorithm
+        for Many-Objective Optimization. IEEE Transactions on Evolutionary Computation,
+        17(5), 721-736.
+    """
+
+    def __init__(self, **kwargs: Unpack[_GreaKwargs]) -> None: ...
+    @property
+    def population(self) -> Population:
+        """
+        Get the current population.
+
+        Returns:
+            Population: The current population of individuals.
+        """
+
+    def run(self) -> None: ...
+
+class _MoEtpsoKwargs(TypedDict, total=False):
+    """
+    Args:
+        fitness_fn (FitnessCallable): Function to evaluate the fitness of the swarm.
+        num_vars (int): Number of variables in the optimization problem.
+        population_size (int): Number of particles in the swarm.
+        num_iterations (int): Number of iterations to run.
+        lower_bound (float): Lower bound of every variable.
+        upper_bound (float): Upper bound of every variable.
+        inertia_weight (float, optional): Inertia weight `w`. Defaults to 1.0.
+        cognitive_coefficient (float, optional): Pull towards a particle's own best. Defaults to 2.05.
+        social_coefficient (float, optional): Pull towards the swarm's best. Defaults to 2.05.
+        stagnation_threshold (int, optional): Non-improving iterations before part of the swarm
+            is re-randomized. Defaults to 20.
+        verbose (bool, optional): Whether to print progress. Defaults to True.
+        constraints_fn (ConstraintsCallable | Constraints, optional): Constraints function. Defaults to None.
+        seed (int, optional): Optional seed to control experiments. Defaults to None.
+    """
+
+    fitness_fn: FitnessCallable
+    num_vars: int
+    population_size: int
+    num_iterations: int
+    lower_bound: float
+    upper_bound: float
+    inertia_weight: float
+    cognitive_coefficient: float
+    social_coefficient: float
+    stagnation_threshold: int
+    verbose: bool
+    constraints_fn: ConstraintsCallable | Constraints | None
+    seed: int | None
+
+class MoEtpso:
+    """
+    Multi-Objective Elitist-Tournament Particle Swarm Optimization (MO-ETPSO).
+
+    Particles are guided by a personal best and a global best chosen with a merit score
+    (Pareto rank + product-based crowding distance - constraint violation), moved with a
+    constriction-factor velocity update, and partially re-randomized when the swarm stagnates.
+    Only real-valued variables inside [`lower_bound`, `upper_bound`] are supported.
+
+    Reference:
+        Fitas (2024), MO-ETPSO; constriction factor from Clerc & Kennedy (2002).
+    """
+
+    def __init__(self, **kwargs: Unpack[_MoEtpsoKwargs]) -> None: ...
+    @property
+    def population(self) -> Population:
+        """
+        Non-dominated (and, if any exist, feasible) subset of the swarm's personal bests.
+
+        Returns:
+            Population: The elitist archive of the swarm.
         """
 
     def run(self) -> None: ...

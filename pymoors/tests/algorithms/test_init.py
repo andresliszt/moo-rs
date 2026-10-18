@@ -6,6 +6,7 @@ from pymoors import (
     DanAndDenisReferencePoints,
     ExactDuplicatesCleaner,
     GaussianMutation,
+    Grea,
     Nsga2,
     Nsga3,
     Ibea,
@@ -49,6 +50,7 @@ def common_kwargs():
         (Nsga2, {}),
         (Spea2, {}),
         (Ibea, {"kappa": 0.001, "reference_points": np.array([1.005, 1.005, 1.005])}),
+        (Grea, {"div": 8}),
         (AgeMoea, {}),
         (
             Nsga3,

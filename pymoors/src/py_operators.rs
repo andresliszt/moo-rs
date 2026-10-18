@@ -1,34 +1,17 @@
 use numpy::PyArrayMethods;
 use pyo3::prelude::*;
 
+use moors::operators::{NoCrossover, NoMutation, NoRepair, RepairOperator};
 use moors::{
-    ArithmeticCrossover,
-    BitFlipMutation,
-    CloseDuplicatesCleaner,
-    CrossoverOperator,
-    DisplacementMutation,
-    ExactDuplicatesCleaner,
-    ExponentialCrossover,
-    GaussianMutation,
-    InversionMutation,
-    MutationOperator,
-    NoDuplicatesCleaner,
-    OrderCrossover,
-    PermutationSampling,
-    PopulationCleaner,
-    RandomSamplingBinary,
-    RandomSamplingFloat,
-    RandomSamplingInt,
-    SamplingOperator,
-    ScrambleMutation,
-    SimulatedBinaryCrossover,
-    SinglePointBinaryCrossover,
-    SwapMutation,
-    TwoPointBinaryCrossover,
-    UniformBinaryCrossover,
-    // UniformRealMutation, TODO: Need to implement Debug
-    UniformBinaryMutation,
+    ArithmeticCrossover, BitFlipMutation, CloseDuplicatesCleaner, CrossoverOperator,
+    DisplacementMutation, ExactDuplicatesCleaner, ExponentialCrossover, GaussianMutation,
+    InversionMutation, MutationOperator, NoDuplicatesCleaner, OrderCrossover, PermutationSampling,
+    PopulationCleaner, RandomSamplingBinary, RandomSamplingFloat, RandomSamplingInt,
+    SamplingOperator, ScrambleMutation, SimulatedBinaryCrossover, SinglePointBinaryCrossover,
+    SwapMutation, TwoPointBinaryCrossover, UniformBinaryCrossover, UniformBinaryMutation,
+    UniformRealMutation,
 };
+use ndarray::{Array2, ArrayViewMut1};
 
 use pymoors_macros::{
     register_py_operators_crossover, register_py_operators_duplicates,
@@ -37,7 +20,7 @@ use pymoors_macros::{
 
 use crate::custom_py_operators::{
     CustomPyCrossoverOperatorWrapper, CustomPyMutationOperatorWrapper,
-    CustomPySamplingOperatorWrapper,
+    CustomPyRepairOperatorWrapper, CustomPySamplingOperatorWrapper,
 };
 
 #[derive(Debug)]
@@ -50,6 +33,8 @@ pub enum MutationOperatorDispatcher {
     SwapMutation(SwapMutation),
     InversionMutation(InversionMutation),
     UniformBinaryMutation(UniformBinaryMutation),
+    UniformRealMutation(UniformRealMutation),
+    NoMutation(NoMutation),
 
     CustomPyMutationOperatorWrapper(CustomPyMutationOperatorWrapper),
 }
@@ -64,6 +49,7 @@ pub enum CrossoverOperatorDispatcher {
     UniformBinaryCrossover(UniformBinaryCrossover),
     ArithmeticCrossover(ArithmeticCrossover),
     TwoPointBinaryCrossover(TwoPointBinaryCrossover),
+    NoCrossover(NoCrossover),
 
     CustomPyCrossoverOperatorWrapper(CustomPyCrossoverOperatorWrapper),
 }
@@ -84,6 +70,66 @@ pub enum DuplicatesCleanerDispatcher {
     ExactDuplicatesCleaner(ExactDuplicatesCleaner),
     CloseDuplicatesCleaner(CloseDuplicatesCleaner),
     NoDuplicatesCleaner(NoDuplicatesCleaner),
+}
+
+/// Python-facing `NoRepair`: explicit no-op repair (same as passing `repair=None`).
+#[pyclass(name = "NoRepair", from_py_object)]
+#[derive(Debug, Clone)]
+pub struct PyNoRepair {
+    pub inner: NoRepair,
+}
+
+#[pymethods]
+impl PyNoRepair {
+    #[new]
+    pub fn new() -> Self {
+        Self { inner: NoRepair }
+    }
+}
+
+#[derive(Debug)]
+pub enum RepairOperatorDispatcher {
+    NoRepair(NoRepair),
+    CustomPyRepairOperatorWrapper(CustomPyRepairOperatorWrapper),
+}
+
+impl RepairOperator for RepairOperatorDispatcher {
+    fn repair(&self, individual: ArrayViewMut1<f64>) {
+        match self {
+            RepairOperatorDispatcher::NoRepair(inner) => inner.repair(individual),
+            RepairOperatorDispatcher::CustomPyRepairOperatorWrapper(inner) => {
+                inner.repair(individual)
+            }
+        }
+    }
+
+    fn operate(&self, population: &mut Array2<f64>) {
+        match self {
+            RepairOperatorDispatcher::NoRepair(inner) => inner.operate(population),
+            RepairOperatorDispatcher::CustomPyRepairOperatorWrapper(inner) => {
+                inner.operate(population)
+            }
+        }
+    }
+}
+
+impl RepairOperatorDispatcher {
+    /// Returns `None` when no repair operator was given, keeping the builder's default.
+    pub fn from_python_operator(py_obj_opt: Option<Py<PyAny>>) -> PyResult<Option<Self>> {
+        let Some(py_obj) = py_obj_opt else {
+            return Ok(None);
+        };
+        Python::attach(|py| {
+            if let Ok(extracted) = py_obj.extract::<PyNoRepair>(py) {
+                return Ok(Some(RepairOperatorDispatcher::NoRepair(extracted.inner)));
+            }
+            Ok(Some(
+                RepairOperatorDispatcher::CustomPyRepairOperatorWrapper(
+                    py_obj.extract::<CustomPyRepairOperatorWrapper>(py)?,
+                ),
+            ))
+        })
+    }
 }
 
 // --------------------------------------------------------------------------------
@@ -183,6 +229,44 @@ impl PyUniformBinaryMutation {
             inner: UniformBinaryMutation::new(gene_mutation_rate),
         }
     }
+
+    #[getter]
+    pub fn gene_mutation_rate(&self) -> f64 {
+        self.inner.gene_mutation_rate
+    }
+}
+
+#[pymethods]
+impl PyUniformRealMutation {
+    #[new]
+    pub fn new(gene_mutation_rate: f64, lower: f64, upper: f64) -> Self {
+        Self {
+            inner: UniformRealMutation::new(gene_mutation_rate, lower, upper),
+        }
+    }
+
+    #[getter]
+    pub fn gene_mutation_rate(&self) -> f64 {
+        self.inner.gene_mutation_rate
+    }
+    #[getter]
+    pub fn lower(&self) -> f64 {
+        self.inner.lower
+    }
+    #[getter]
+    pub fn upper(&self) -> f64 {
+        self.inner.upper
+    }
+}
+
+#[pymethods]
+impl PyNoMutation {
+    #[new]
+    pub fn new() -> Self {
+        Self {
+            inner: NoMutation::new(),
+        }
+    }
 }
 
 // --------------------------------------------------------------------------------
@@ -264,6 +348,16 @@ impl PyTwoPointBinaryCrossover {
     pub fn new() -> Self {
         Self {
             inner: TwoPointBinaryCrossover,
+        }
+    }
+}
+
+#[pymethods]
+impl PyNoCrossover {
+    #[new]
+    pub fn new() -> Self {
+        Self {
+            inner: NoCrossover::new(),
         }
     }
 }
