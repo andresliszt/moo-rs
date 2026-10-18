@@ -13,7 +13,8 @@ pub mod py_reference_points;
 use pyo3::prelude::*;
 
 pub use algorithms::{
-    PyAgeMoea, PyGeneticAlgorithmSOO, PyIbea, PyNsga2, PyNsga3, PyRevea, PyRnsga2, PySpea2,
+    PyAgeMoea, PyGeneticAlgorithmSOO, PyGrea, PyIbea, PyMoEtpso, PyNsga2, PyNsga3, PyRevea,
+    PyRnsga2, PySpea2,
 };
 pub use py_error::{InitializationError, InvalidParameterError, NoFeasibleIndividualsError};
 pub use py_metrics::{
@@ -23,10 +24,11 @@ pub use py_metrics::{
 pub use py_operators::{
     PyArithmeticCrossover, PyBitFlipMutation, PyCloseDuplicatesCleaner, PyDisplacementMutation,
     PyExactDuplicatesCleaner, PyExponentialCrossover, PyGaussianMutation, PyInversionMutation,
-    PyOrderCrossover, PyPermutationSampling, PyRandomSamplingBinary, PyRandomSamplingFloat,
-    PyRandomSamplingInt, PyScrambleMutation, PySimulatedBinaryCrossover,
-    PySinglePointBinaryCrossover, PySwapMutation, PyTwoPointBinaryCrossover,
-    PyUniformBinaryCrossover, PyUniformBinaryMutation,
+    PyNoCrossover, PyNoMutation, PyNoRepair, PyOrderCrossover, PyPermutationSampling,
+    PyRandomSamplingBinary, PyRandomSamplingFloat, PyRandomSamplingInt, PyScrambleMutation,
+    PySimulatedBinaryCrossover, PySinglePointBinaryCrossover, PySwapMutation,
+    PyTwoPointBinaryCrossover, PyUniformBinaryCrossover, PyUniformBinaryMutation,
+    PyUniformRealMutation,
 };
 pub use py_reference_points::PyDanAndDenisReferencePoints;
 
@@ -41,6 +43,8 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyRevea>()?;
     m.add_class::<PySpea2>()?;
     m.add_class::<PyIbea>()?;
+    m.add_class::<PyGrea>()?;
+    m.add_class::<PyMoEtpso>()?;
     m.add_class::<PyGeneticAlgorithmSOO>()?;
 
     // Add classes from operators
@@ -64,6 +68,10 @@ fn _pymoors(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PySimulatedBinaryCrossover>()?;
     m.add_class::<PyArithmeticCrossover>()?;
     m.add_class::<PyTwoPointBinaryCrossover>()?;
+    m.add_class::<PyUniformRealMutation>()?;
+    m.add_class::<PyNoMutation>()?;
+    m.add_class::<PyNoCrossover>()?;
+    m.add_class::<PyNoRepair>()?;
     // Py Errors
     m.add(
         "NoFeasibleIndividualsError",

@@ -8,6 +8,7 @@ use pyo3::prelude::*;
 use crate::custom_py_operators::controller_from_python;
 use crate::py_error::AlgorithmErrorWrapper;
 use crate::py_fitness_and_constraints::{PyConstraintsFnWrapper, PyFitnessFnWrapper};
+use crate::py_operators::RepairOperatorDispatcher;
 use crate::py_operators::{
     CrossoverOperatorDispatcher, DuplicatesCleanerDispatcher, MutationOperatorDispatcher,
     SamplingOperatorDispatcher,
@@ -51,7 +52,8 @@ impl PyRevea {
         duplicates_cleaner=None,
         constraints_fn=None,
         controller=None,
-        seed=None
+        seed=None,
+        repair=None
     ))]
     pub fn new(
         reference_points: Py<PyAny>,
@@ -73,6 +75,7 @@ impl PyRevea {
         constraints_fn: Option<Py<PyAny>>,
         controller: Option<Py<PyAny>>,
         seed: Option<u64>,
+        repair: Option<Py<PyAny>>,
     ) -> PyResult<Self> {
         let rp = reference_points_from_python(reference_points)?;
 
@@ -83,6 +86,7 @@ impl PyRevea {
         let duplicates_cleaner =
             DuplicatesCleanerDispatcher::from_python_operator(duplicates_cleaner)?;
         let controller = controller_from_python(controller)?;
+        let repair = RepairOperatorDispatcher::from_python_operator(repair)?;
         // Build the mandatory population-level fitness_fn.
         let fitness_fn = PyFitnessFnWrapper::from_python_fitness(fitness_fn);
         // Build the optional constraints_fn.
@@ -113,6 +117,9 @@ impl PyRevea {
         }
         if let Some(controller) = controller {
             builder = builder.controller(controller)
+        }
+        if let Some(repair) = repair {
+            builder = builder.repair(repair)
         }
 
         let algorithm = builder.build().map_err(AlgorithmErrorWrapper::from)?;

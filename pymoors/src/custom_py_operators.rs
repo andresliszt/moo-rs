@@ -4,6 +4,7 @@ use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyDictMethods};
 
+use moors::operators::RepairOperator;
 use moors::{
     AdaptiveController, AlgorithmContext, ControlSignal, CrossoverOperator, MutationOperator,
     Population, RandomGenerator, SamplingOperator,
@@ -213,6 +214,59 @@ impl<'a, 'py> FromPyObject<'a, 'py> for CustomPySamplingOperatorWrapper {
             ));
         }
         Ok(CustomPySamplingOperatorWrapper {
+            inner: ob.to_owned().unbind(),
+        })
+    }
+}
+
+/// Wrapper for a custom Python repair operator.
+///
+/// Delegates population-level repair to a Python-side class defining an
+/// `operate(population)` method that takes the offspring NumPy array of shape
+/// (n_individuals, n_genes) and returns a repaired array of the same shape.
+#[derive(Debug)]
+pub struct CustomPyRepairOperatorWrapper {
+    pub inner: Py<PyAny>,
+}
+
+impl RepairOperator for CustomPyRepairOperatorWrapper {
+    fn repair(&self, _individual: ArrayViewMut1<f64>) {
+        unimplemented!("Custom repair operator overwrites operate method only")
+    }
+
+    fn operate(&self, population: &mut Array2<f64>) {
+        Python::attach(|py| {
+            let population_py = population.to_pyarray(py);
+            let repaired = self
+                .inner
+                .call_method1(py, "operate", (population_py,))
+                .expect("Error calling custom repair operate");
+            let repaired_pyarray = repaired
+                .bind(py)
+                .cast::<PyArray2<f64>>()
+                .expect("Expected a 2D float64 array, output of the operate method");
+            let readonly = repaired_pyarray.readonly();
+            let repaired_view = readonly.as_array();
+            assert_eq!(
+                repaired_view.dim(),
+                population.dim(),
+                "Custom repair operator must return an array with the same shape as its input"
+            );
+            population.assign(&repaired_view);
+        })
+    }
+}
+
+impl<'a, 'py> FromPyObject<'a, 'py> for CustomPyRepairOperatorWrapper {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'_, 'py, pyo3::PyAny>) -> Result<Self, Self::Error> {
+        if !ob.hasattr("operate")? {
+            return Err(PyTypeError::new_err(
+                "Custom repair operator class must define an 'operate' method",
+            ));
+        }
+        Ok(CustomPyRepairOperatorWrapper {
             inner: ob.to_owned().unbind(),
         })
     }

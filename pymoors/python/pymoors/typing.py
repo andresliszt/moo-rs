@@ -71,7 +71,12 @@ class ControllerProtocol(Protocol):
     ) -> ControlSignal | None: ...
 
 
+class RepairProtocol(Protocol):
+    def operate(self, population: TwoDArray) -> TwoDArray: ...
+
+
 CrossoverLike = CrossoverProtocol | CrossoverProtocolNoSeed
 MutationLike = MutationProtocol | MutationProtocolNoSeed
 SamplingLike = SamplingProtocol | SamplingProtocolNoArgs
 ControllerLike = ControllerProtocol
+RepairLike = RepairProtocol

@@ -11,6 +11,7 @@ import pytest
 from pymoors import (
     ArithmeticCrossover,
     ExponentialCrossover,
+    NoCrossover,
     OrderCrossover,
     SimulatedBinaryCrossover,
     SinglePointBinaryCrossover,
@@ -30,6 +31,7 @@ from pymoors import (
         (SimulatedBinaryCrossover, {"distribution_index": 2}),
         (ArithmeticCrossover, {}),
         (TwoPointBinaryCrossover, {}),
+        (NoCrossover, {}),
     ],
 )
 def test_crossover_exposed_methods(operator_class, kwargs):

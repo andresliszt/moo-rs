@@ -13,6 +13,9 @@ from pymoors import (
     GaussianMutation,
     ScrambleMutation,
     SwapMutation,
+    NoMutation,
+    UniformBinaryMutation,
+    UniformRealMutation,
 )
 
 
@@ -24,6 +27,13 @@ from pymoors import (
         (GaussianMutation, {"gene_mutation_rate": 0.5, "sigma": 0.1}, "any"),
         (DisplacementMutation, {}, "any"),
         (ScrambleMutation, {}, "any"),
+        (UniformBinaryMutation, {"gene_mutation_rate": 0.5}, "binary"),
+        (
+            UniformRealMutation,
+            {"gene_mutation_rate": 0.5, "lower": 0.0, "upper": 1.0},
+            "any",
+        ),
+        (NoMutation, {}, "any"),
     ],
 )
 def test_mutation_exposed_methods(operator_class, kwargs, pop_type):
