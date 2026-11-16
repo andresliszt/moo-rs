@@ -37,22 +37,21 @@ dynamic = [
 ]
 
 [dependency-groups]
-dev = ["maturin"]
-release = ["maturin"]
+dev = ["maturin==1.16.0"]
+release = ["maturin==1.16.0"]
 testing = [
     { include-group = "dev" },
-    "pytest",
-    "pytest-cov",
-    "pytest-benchmark",
-    "pytest-codspeed",
-    "pre-commit"
+    "pytest==9.2.0",
+    "pytest-cov==7.1.0",
+    "pytest-benchmark==5.3.1",
+    "pytest-codspeed==5.0.4",
+    "pre-commit==4.6.2"
 ]
 linting = [
     { include-group = "dev" },
-    "pyright",
-    "ruff",
-    "isort",
-    "pytest"
+    "pyright==1.1.414",
+    "ruff==0.17.5",
+    "pytest==9.2.0"
 ]
 all = [
   { include-group = "testing" },
