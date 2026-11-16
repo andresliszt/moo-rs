@@ -96,13 +96,13 @@ build-pymoors-release:
 
 docs:  ## Build documentation
 	@echo "[docs] Building..."
-	@uv sync --group docs
-	@uv run mkdocs build --strict
+	@uv sync --project docs
+	@uv run --project docs mkdocs build --strict
 
 docs-serve:  ## Serve documentation locally
 	@echo "[docs] Serving at http://127.0.0.1:8000"
-	@uv sync --group docs
-	@uv run mkdocs serve
+	@uv sync --project docs
+	@uv run --project docs mkdocs serve
 
 clean:  ## Clean all build artifacts
 	@echo "Cleaning all artifacts..."

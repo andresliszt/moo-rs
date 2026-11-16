@@ -1,0 +1,20 @@
+[project]
+name = "moo-rs-docs"
+version = "0.1.0"
+description = "Documentation tooling for moo-rs (MkDocs)."
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib==3.11.2",
+    "mkdocs==1.6.1",
+    "mkdocs-jupyter==0.27.0",
+    "mkdocs-material==9.8.1",
+    "pymdown-extensions==13.1",
+    "neoteroi-mkdocs==1.2.0",
+    "mkdocs-include-markdown-plugin==7.3.2",
+    "mkdocs-macros-plugin==1.5.0",
+    "mkdocstrings==1.0.8",
+    "mkdocstrings-python==2.0.11",
+]
+
+[tool.uv]
+package = false

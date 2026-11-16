@@ -14,7 +14,7 @@ env:
 jobs:
   pymoors-benchmarks:
     name: Run pymoors benchmarks (Python)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v3
@@ -100,7 +100,7 @@ jobs:
 
   moors-benchmarks:
     name: Run moors benchmarks (Rust)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository

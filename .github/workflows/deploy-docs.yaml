@@ -34,5 +34,5 @@ jobs:
 
       - name: Deploy to GitHub Pages
         run: |
-          uv sync --group docs
-          uv run mkdocs gh-deploy --force
+          uv sync --project docs
+          uv run --project docs mkdocs gh-deploy --force

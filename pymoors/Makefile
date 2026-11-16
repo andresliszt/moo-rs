@@ -72,9 +72,9 @@ coverage:  ## Run coverage & generate lcov
 	  && uv run coverage run -m pytest --ignore=tests/benchmarks \
 	  && uv run coverage xml
 
-docs:  ## Build documentation
+docs:  ## Build documentation (delegates to the root Makefile)
 	@echo "[pymoors] docs" \
-	  && uv run mkdocs build --strict
+	  && $(MAKE) -C .. docs
 
 # Format
 fmt-rust:  ## cargo fmt
