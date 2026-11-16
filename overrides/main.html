@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block tabs %}
+{{ super() }}
+
+{% if page and page.file and page.file.src_path == "index.md" %}
+<style>.md-content__inner > h1 { display: none !important; }</style>
+<section class="moo-hero">
+  <div class="moo-hero__inner">
+    <div class="moo-hero__text">
+      <h1 class="moo-hero__title">moo&#8209;rs</h1>
+      <p class="moo-hero__subtitle">
+        Multi-objective evolutionary algorithms —<br>
+        <strong>blazing fast in Rust</strong>, ergonomic in Python.
+      </p>
+      <div class="moo-hero__lang-nav">
+        <a class="moo-hero__lang-link moo-hero__lang-link--moors"
+           href="getting_started/quick_start.html"
+           data-setlang="moors">moors docs</a>
+        <span class="moo-hero__lang-sep">·</span>
+        <a class="moo-hero__lang-link"
+           href="getting_started/quick_start.html"
+           data-setlang="pymoors">pymoors docs</a>
+      </div>
+      <div class="moo-hero__cta">
+        <a href="getting_started/quick_start.html" class="md-button md-button--primary moo-btn-python">
+          Quickstart
+        </a>
+        <a href="getting_started/installation.html" class="md-button moo-btn-rust">
+          Installation
+        </a>
+      </div>
+      <div class="moo-hero__badges">
+        <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
+        <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue" alt="Python">
+        <a href="https://pypi.org/project/pymoors/" target="_blank" rel="noopener">
+          <img src="https://img.shields.io/pypi/v/pymoors.svg" alt="PyPI">
+        </a>
+        <a href="https://crates.io/crates/moors" target="_blank" rel="noopener">
+          <img src="https://img.shields.io/crates/v/moors.svg" alt="crates.io">
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
