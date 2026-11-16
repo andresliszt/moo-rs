@@ -1,5 +1,4 @@
 import numpy as np
-
 from pymoors import CloseDuplicatesCleaner, ExactDuplicatesCleaner
 
 # 1729 is the most beautiful number, is the smallest number that can be written as the sum of two cubes

@@ -1,5 +1,4 @@
 import numpy as np
-
 from pymoors import Nsga2
 from pymoors.typing import TwoDArray
 

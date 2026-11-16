@@ -1,4 +1,5 @@
-from typing import Annotated, Callable, Protocol, TypeAlias, TypedDict, TypeVar
+from collections.abc import Callable
+from typing import Annotated, Protocol, TypeAlias, TypedDict, TypeVar
 
 import numpy as np
 import numpy.typing as npt

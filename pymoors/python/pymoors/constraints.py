@@ -1,7 +1,9 @@
-from typing import Callable, TypeAlias
+from collections.abc import Callable
+from typing import TypeAlias
+
 import numpy as np
 
-from pymoors.typing import TwoDArray, OneDArray
+from pymoors.typing import OneDArray, TwoDArray
 
 ConstraintSpec: TypeAlias = (
     Callable[[TwoDArray], OneDArray]

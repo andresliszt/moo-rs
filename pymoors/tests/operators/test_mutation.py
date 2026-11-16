@@ -6,7 +6,6 @@ is done extensively in the Rust modules where they are defined.
 
 import numpy as np
 import pytest
-
 from pymoors import (
     BitFlipMutation,
     DisplacementMutation,

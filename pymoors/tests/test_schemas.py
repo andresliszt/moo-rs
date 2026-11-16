@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from pymoors.schemas import Individual, Population
 
 

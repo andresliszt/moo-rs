@@ -1,5 +1,4 @@
 import numpy as np
-
 from pymoors import (
     CloseDuplicatesCleaner,
     Constraints,

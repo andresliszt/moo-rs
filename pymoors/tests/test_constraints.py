@@ -2,10 +2,8 @@
 
 import numpy as np
 import pytest
-
 from pymoors import ExponentialCrossover, GaussianMutation, RandomSamplingFloat, Spea2
 from pymoors.constraints import Constraints
-
 
 # -----------------------
 # __init__ validation

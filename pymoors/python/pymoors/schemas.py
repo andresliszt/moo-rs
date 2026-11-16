@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Iterator, List, Union, overload
+from collections.abc import Iterator
+from typing import overload
 
 import numpy as np
 
@@ -93,9 +94,9 @@ class Population:
         )
 
         return (
-            f"Population(Size: {str(population_size)}, "
-            f"Num Genes: {str(num_genes)}, Num Objectives: {str(num_objectives)}, "
-            f"Num Constraints: {str(num_constraints)})"
+            f"Population(Size: {population_size!s}, "
+            f"Num Genes: {num_genes!s}, Num Objectives: {num_objectives!s}, "
+            f"Num Constraints: {num_constraints!s})"
         )
 
     __repr__ = __str__
@@ -104,11 +105,9 @@ class Population:
     def __getitem__(self, index: int) -> Individual: ...
 
     @overload
-    def __getitem__(self, index: slice) -> List[Individual]: ...
+    def __getitem__(self, index: slice) -> list[Individual]: ...
 
-    def __getitem__(
-        self, index: Union[int, slice]
-    ) -> Union[Individual, List[Individual]]:
+    def __getitem__(self, index: int | slice) -> Individual | list[Individual]:
         if isinstance(index, int):
             return Individual(
                 genes=self.genes[index],
@@ -146,7 +145,7 @@ class Population:
         return len(self.genes)
 
     @property
-    def best(self) -> List[Individual]:
+    def best(self) -> list[Individual]:
         if self._best is None:
             if self.rank is None:
                 self._best = [i for i in self]
