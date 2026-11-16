@@ -24,6 +24,7 @@ node_modules/
 /.pytest_cache/
 /.vscode/
 /.venv/
+/docs/.venv/
 /flame/
 /pytest-speed/
 /sandbox/

@@ -75,8 +75,8 @@ jobs:
 
       - name: Build documentation
         run: |
-          uv sync --group docs
-          uv run mkdocs build --strict
+          uv sync --project docs
+          uv run --project docs mkdocs build --strict
 
   test-python:
     name: Test on Python ${{ matrix.python-version }}

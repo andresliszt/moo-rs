@@ -3,6 +3,13 @@ site_author: Andrés Sandoval
 site_description: Multi-objective optimization using genetic algorithms in Rust and Python.
 use_directory_urls: false
 
+# Defaults (.* and /templates/) plus the docs tooling files that live in docs/
+exclude_docs: |
+  .*
+  /templates/
+  /pyproject.toml
+  /uv.lock
+
 theme:
   language: en
   logo: images/moors-logo.png
