@@ -1,14 +1,13 @@
 import numpy as np
 import pytest
-
 from pymoors import (
     AgeMoea,
     DanAndDenisReferencePoints,
     ExactDuplicatesCleaner,
     GaussianMutation,
+    Ibea,
     Nsga2,
     Nsga3,
-    Ibea,
     RandomSamplingFloat,
     Revea,
     Rnsga2,

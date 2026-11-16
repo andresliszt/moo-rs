@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from pymoors import (
     GaussianMutation,
     GeneticAlgorithmSOO,
@@ -62,7 +61,6 @@ class RecordingController:
                 "context": context,
             }
         )
-        return None
 
 
 class StoppingController:

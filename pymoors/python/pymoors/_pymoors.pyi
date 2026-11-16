@@ -10,9 +10,9 @@ from pymoors.typing import (
     CrossoverLike,
     FitnessCallable,
     MutationLike,
+    OneDArray,
     SamplingLike,
     TwoDArray,
-    OneDArray,
 )
 
 # pylint: disable=W0622, W0231
