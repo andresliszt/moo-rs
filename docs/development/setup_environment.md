@@ -16,7 +16,7 @@ curl --proto ‘=https’ --tlsv1.2 https://sh.rustup.rs -sSf | sh
 ```
 
 ### Python
-Minimum version: **3.10**
+Minimum version: **3.11**
 
 ```bash
 # We recommend using uv for Python dependency management

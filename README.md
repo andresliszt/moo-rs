@@ -7,7 +7,7 @@
 > _Evolution is a mystery_
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![Python Versions](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
+![Python Versions](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
 [![PyPI version](https://img.shields.io/pypi/v/pymoors.svg)](https://pypi.org/project/pymoors/)
 [![crates.io](https://img.shields.io/crates/v/moors.svg)](https://crates.io/crates/moors)
 [![codecov](https://codecov.io/gh/andresliszt/moo-rs/graph/badge.svg?token=KC6EAVYGHX)](https://codecov.io/gh/andresliszt/moo-rs)
